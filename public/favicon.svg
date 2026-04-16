@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect x="2" y="2" width="28" height="28" fill="#0A0014" stroke="#00D9FF" stroke-width="2"/>
+  <path d="M8 8 L8 4 L4 4 M24 4 L28 4 L28 8 M28 24 L28 28 L24 28 M4 24 L4 28 L8 28" stroke="#00D9FF" stroke-width="1.5"/>
+  <text x="16" y="21" font-family="monospace" font-size="10" fill="#00D9FF" text-anchor="middle">FD</text>
+</svg>
