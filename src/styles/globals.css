@@ -117,13 +117,13 @@
     /* 关键：防止移动端某个子元素超宽导致整个页面横向滚动 */
     overflow-x: hidden;
   }
-  /* 大字体模式（仅桌面）：字号 18px + 字重 600。
+  /* 大字体模式（仅桌面）：字号 20px + 字重 600，放大 1.25 倍有明显感知。
      移动端布局本来就紧凑，大字体加粗容易导致 Header / Nav 挤爆，
      所以 sm 断点以下强制不生效 —— FontSizeSwitcher UI 也在移动端
      隐藏（见 Header），两边互相兜底。 */
   @media (min-width: 640px) {
     html.font-large {
-      font-size: 18px;
+      font-size: 20px;
     }
     html.font-large body {
       font-weight: 600;
