@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { aprsStore, type AprsAction } from './store'
 import { AprsHistory } from './components/aprs-history'
 import { AprsParamsForm } from './components/aprs-params-form'
+import { LocalControl } from './components/local-control'
 import { AlertTriangle, Pause, Play, Power } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -44,13 +45,20 @@ export function AprsView() {
 
   return (
     <div className="flex flex-col gap-6">
+      <LocalControl />
+
       <section className="hud-frame flex flex-col gap-4 p-6">
-        <h2 className="hud-title text-primary">[ APRS PARAMS ]</h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="hud-title text-primary">[ APRS PARAMS ]</h2>
+          <span className="hud-mono text-xs text-muted-foreground">
+            APRS 远程控制（走 APRS-IS · 可跨网络）
+          </span>
+        </div>
         <AprsParamsForm />
       </section>
 
       <section className="hud-frame flex flex-col gap-4 p-6">
-        <h2 className="hud-title text-primary">[ CONTROL ]</h2>
+        <h2 className="hud-title text-primary">[ APRS REMOTE CONTROL ]</h2>
         <div className="flex flex-wrap gap-3">
           {ACTIONS.map(({ key, label, icon: Icon, variant }) => (
             <Button

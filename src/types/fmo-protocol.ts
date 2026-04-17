@@ -31,11 +31,17 @@ export type QsoSubType = 'getList' | 'getDetail' | 'getListResponse' | 'getDetai
 
 export type UserSubType = 'getInfo' | 'getInfoResponse'
 
+export type UiSubType = 'setScreenMode' | 'setScreenModeResponse'
+
+export type ConfigSubType = 'restartAprsService' | 'restartAprsServiceResponse'
+
 export type FmoRequest =
   | { type: 'message'; subType: MessageSubType; reqId?: string; data?: unknown }
   | { type: 'station'; subType: StationSubType; reqId?: string; data?: unknown }
   | { type: 'qso'; subType: QsoSubType; reqId?: string; data?: unknown }
   | { type: 'user'; subType: UserSubType; reqId?: string; data?: unknown }
+  | { type: 'ui'; subType: UiSubType; reqId?: string; data?: unknown }
+  | { type: 'config'; subType: ConfigSubType; reqId?: string; data?: unknown }
 
 export interface FmoResponseBase {
   code: number
@@ -48,3 +54,5 @@ export type FmoResponse =
   | ({ type: 'station'; subType: StationSubType } & FmoResponseBase)
   | ({ type: 'qso'; subType: QsoSubType } & FmoResponseBase)
   | ({ type: 'user'; subType: UserSubType } & FmoResponseBase)
+  | ({ type: 'ui'; subType: UiSubType } & FmoResponseBase)
+  | ({ type: 'config'; subType: ConfigSubType } & FmoResponseBase)
