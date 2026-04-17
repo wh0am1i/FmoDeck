@@ -76,7 +76,7 @@ export const aprsStore = create<AprsState>()(
         const tocallInput = state.tocall.trim() || mycallInput
 
         if (!mycallInput) throw new Error('请输入登录呼号')
-        if (!passcode) throw new Error('请输入 APRS 密钥')
+        if (!passcode) throw new Error('请输入 APRS Passcode（APRS-IS 登录密码）')
         if (!secret) throw new Error('请输入设备密钥')
 
         const { call: myCall, ssid: mySsid } = parseCallsignSsid(mycallInput)

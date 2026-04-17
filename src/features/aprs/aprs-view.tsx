@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { aprsStore, type AprsAction } from './store'
 import { AprsHistory } from './components/aprs-history'
 import { AprsParamsForm } from './components/aprs-params-form'
-import { Pause, Play, Power } from 'lucide-react'
+import { AlertTriangle, Pause, Play, Power } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const ACTIONS: { key: AprsAction; label: string; icon: typeof Play; variant: string }[] = [
@@ -15,7 +15,18 @@ const ACTIONS: { key: AprsAction; label: string; icon: typeof Play; variant: str
 export function AprsView() {
   const status = aprsStore((s) => s.status)
   const lastMessage = aprsStore((s) => s.lastMessage)
+  const mycall = aprsStore((s) => s.mycall)
+  const passcode = aprsStore((s) => s.passcode)
+  const secret = aprsStore((s) => s.secret)
   const sending = status === 'sending'
+
+  // 必填字段检查（和 store.sendCommand 校验一致）
+  const missing: string[] = []
+  if (!mycall.trim()) missing.push('登录呼号')
+  if (!passcode.trim()) missing.push('APRS Passcode')
+  if (!secret.trim()) missing.push('设备密钥')
+  const ready = missing.length === 0
+  const disabled = !ready || sending
 
   async function handleSend(action: AprsAction) {
     try {
@@ -45,7 +56,7 @@ export function AprsView() {
             <Button
               key={key}
               variant={variant as 'default' | 'secondary' | 'destructive'}
-              disabled={sending}
+              disabled={disabled}
               onClick={() => void handleSend(key)}
               className="min-w-32"
             >
@@ -54,6 +65,17 @@ export function AprsView() {
             </Button>
           ))}
         </div>
+        {!ready && (
+          <div
+            role="status"
+            className="hud-mono flex items-start gap-2 rounded-sm border border-accent bg-accent/10 px-3 py-2 text-xs text-accent"
+          >
+            <AlertTriangle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+            <span>
+              需先在上方填写：<span className="font-bold">{missing.join(' · ')}</span>
+            </span>
+          </div>
+        )}
         {lastMessage && (
           <p
             className={cn(

@@ -47,7 +47,7 @@ describe('aprs store · sendCommand', () => {
 
   it('缺少 passcode 抛错', async () => {
     aprsStore.getState().setParams({ passcode: '' })
-    await expect(aprsStore.getState().sendCommand('NORMAL')).rejects.toThrow(/APRS 密钥/)
+    await expect(aprsStore.getState().sendCommand('NORMAL')).rejects.toThrow(/APRS Passcode/)
   })
 
   it('成功响应：status=success + 历史增加 send + success 两条', async () => {
