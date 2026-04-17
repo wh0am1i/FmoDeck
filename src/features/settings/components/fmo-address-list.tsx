@@ -5,7 +5,15 @@ import { Check, Trash2 } from 'lucide-react'
 
 const MODE_LABEL: Record<SyncMode, string> = {
   all: '全量',
-  today: '仅当天'
+  today: '仅当天',
+  incremental: '增量'
+}
+
+/** 徽章点击的循环顺序：all → today → incremental → all。 */
+const NEXT_MODE: Record<SyncMode, SyncMode> = {
+  all: 'today',
+  today: 'incremental',
+  incremental: 'all'
 }
 
 export function FmoAddressList() {
@@ -25,7 +33,7 @@ export function FmoAddressList() {
       {addresses.map((a) => {
         const isActive = a.id === activeId
         const mode: SyncMode = a.syncMode ?? 'all'
-        const nextMode: SyncMode = mode === 'all' ? 'today' : 'all'
+        const nextMode: SyncMode = NEXT_MODE[mode]
         return (
           <li
             key={a.id}
@@ -51,9 +59,10 @@ export function FmoAddressList() {
               onClick={() => settingsStore.getState().updateAddress(a.id, { syncMode: nextMode })}
               className={cn(
                 'hud-mono rounded-sm border px-2 py-0.5 text-xs',
-                mode === 'today'
-                  ? 'border-accent bg-accent/10 text-accent'
-                  : 'border-border text-muted-foreground hover:border-primary hover:text-primary'
+                mode === 'today' && 'border-accent bg-accent/10 text-accent',
+                mode === 'incremental' && 'border-primary bg-primary/10 text-primary',
+                mode === 'all' &&
+                  'border-border text-muted-foreground hover:border-primary hover:text-primary'
               )}
               aria-label={`同步模式：${MODE_LABEL[mode]}（点击切换）`}
               title="点击切换同步模式"

@@ -88,7 +88,7 @@ describe('SettingsView', () => {
     expect(addrs[0]?.syncMode).toBe('today')
   })
 
-  it('列表徽章点击切换 syncMode', async () => {
+  it('列表徽章点击循环 all → today → incremental → all', async () => {
     settingsStore.setState({
       fmoAddresses: [{ id: '1', host: 'fmo.local', syncMode: 'all' }]
     })
@@ -96,5 +96,19 @@ describe('SettingsView', () => {
     render(<SettingsView />)
     await user.click(screen.getByRole('button', { name: /同步模式：全量/ }))
     expect(settingsStore.getState().fmoAddresses[0]?.syncMode).toBe('today')
+    await user.click(screen.getByRole('button', { name: /同步模式：仅当天/ }))
+    expect(settingsStore.getState().fmoAddresses[0]?.syncMode).toBe('incremental')
+    await user.click(screen.getByRole('button', { name: /同步模式：增量/ }))
+    expect(settingsStore.getState().fmoAddresses[0]?.syncMode).toBe('all')
+  })
+
+  it('Dialog 可选择"增量同步"', async () => {
+    const user = userEvent.setup()
+    render(<SettingsView />)
+    await user.click(screen.getByRole('button', { name: /添加地址/ }))
+    await user.type(await screen.findByPlaceholderText('fmo.local'), 'fmo.local')
+    await user.click(screen.getByRole('radio', { name: /增量同步/ }))
+    await user.click(screen.getByRole('button', { name: '添加' }))
+    expect(settingsStore.getState().fmoAddresses[0]?.syncMode).toBe('incremental')
   })
 })
