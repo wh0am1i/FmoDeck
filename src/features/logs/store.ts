@@ -41,6 +41,11 @@ function startOfLocalToday(nowMs: number = Date.now()): number {
   return Math.floor(d.getTime() / 1000)
 }
 
+/** 保证日志按时间倒序（服务器通常按 logId DESC，但偶有延迟入库的记录 logId 顺序与 timestamp 不一致）。 */
+function sortByTimeDesc(list: readonly QsoSummary[]): QsoSummary[] {
+  return [...list].sort((a, b) => b.timestamp - a.timestamp)
+}
+
 export const logsStore = create<LogsState>()((set, get) => ({
   ...INITIAL,
 
@@ -54,15 +59,15 @@ export const logsStore = create<LogsState>()((set, get) => ({
         const fresh = await svc.getListAll({
           stopAt: (r) => r.logId <= maxExistingLogId
         })
-        set({ all: [...fresh, ...existing], status: 'idle', page: 0 })
+        set({ all: sortByTimeDesc([...fresh, ...existing]), status: 'idle', page: 0 })
       } else if (syncMode === 'today') {
         const cutoff = startOfLocalToday()
         const all = await svc.getListAll({ stopAt: (r) => r.timestamp < cutoff })
-        set({ all, status: 'idle', page: 0 })
+        set({ all: sortByTimeDesc(all), status: 'idle', page: 0 })
       } else {
         // 'all' 或 incremental 首次加载
         const all = await svc.getListAll({})
-        set({ all, status: 'idle', page: 0 })
+        set({ all: sortByTimeDesc(all), status: 'idle', page: 0 })
       }
     } catch (err) {
       set({
