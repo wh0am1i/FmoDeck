@@ -16,7 +16,7 @@ afterEach(() => {
 describe('SettingsView', () => {
   it('空状态显示占位文本', () => {
     render(<SettingsView />)
-    expect(screen.getByText(/NO ADDRESSES/)).toBeInTheDocument()
+    expect(screen.getByText(/暂无地址/)).toBeInTheDocument()
   })
 
   it('添加地址后显示在列表中', async () => {

@@ -33,7 +33,7 @@ afterEach(() => {
 describe('OldFriendsView', () => {
   it('未连接时显示 OFFLINE', () => {
     render(<OldFriendsView />)
-    expect(screen.getByText(/OFFLINE/)).toBeInTheDocument()
+    expect(screen.getByText(/离线/)).toBeInTheDocument()
   })
 
   it('连上但无日志时显示空态', () => {

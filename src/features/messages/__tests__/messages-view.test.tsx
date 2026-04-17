@@ -17,7 +17,7 @@ afterEach(() => {
 describe('MessagesView · 未连接', () => {
   it('显示离线占位', () => {
     render(<MessagesView />)
-    expect(screen.getByText(/OFFLINE/)).toBeInTheDocument()
+    expect(screen.getByText(/离线/)).toBeInTheDocument()
   })
 })
 
@@ -42,7 +42,7 @@ describe('MessagesView · 已连接', () => {
 
   it('空消息时显示 NO MESSAGES', () => {
     render(<MessagesView />)
-    expect(screen.getByText(/NO MESSAGES/)).toBeInTheDocument()
+    expect(screen.getByText(/无消息/)).toBeInTheDocument()
   })
 
   it('有消息时显示列表 + 未读计数', () => {

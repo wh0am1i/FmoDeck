@@ -32,7 +32,7 @@ afterEach(() => {
 describe('Top20View', () => {
   it('未连接时显示 OFFLINE', () => {
     render(<Top20View />)
-    expect(screen.getByText(/OFFLINE/)).toBeInTheDocument()
+    expect(screen.getByText(/离线/)).toBeInTheDocument()
   })
 
   it('连上但无日志时显示空态', () => {

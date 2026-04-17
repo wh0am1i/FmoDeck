@@ -29,7 +29,7 @@ afterEach(() => {
 describe('LogsView · 未连接', () => {
   it('显示离线占位', () => {
     render(<LogsView />)
-    expect(screen.getByText(/OFFLINE/)).toBeInTheDocument()
+    expect(screen.getByText(/离线/)).toBeInTheDocument()
   })
 })
 
@@ -43,7 +43,7 @@ describe('LogsView · 已连接', () => {
 
   it('空记录时显示 NO RECORDS', () => {
     render(<LogsView />)
-    expect(screen.getByText(/NO RECORDS/)).toBeInTheDocument()
+    expect(screen.getByText(/无记录/)).toBeInTheDocument()
   })
 
   it('有记录时显示表格 + 数量', () => {

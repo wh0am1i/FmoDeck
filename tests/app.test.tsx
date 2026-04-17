@@ -6,7 +6,7 @@ import { App } from '@/App'
 describe('App 烟雾测试', () => {
   it('默认渲染 LOGS 视图', () => {
     render(<App />)
-    expect(screen.getByText('[ LOGS ]')).toBeInTheDocument()
+    expect(screen.getByText('[ 日志 ]')).toBeInTheDocument()
   })
 
   it('Header 显示应用标识和版本', () => {
@@ -30,7 +30,7 @@ describe('App 烟雾测试', () => {
     const user = userEvent.setup()
     render(<App />)
     await user.click(screen.getByRole('link', { name: '排行榜' }))
-    expect(screen.getByText('[ TOP 20 ]')).toBeInTheDocument()
+    expect(screen.getByText(/排行榜 TOP 20/)).toBeInTheDocument()
   })
 
   it('SpeakingBar 占位渲染', () => {
