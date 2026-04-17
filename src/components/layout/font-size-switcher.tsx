@@ -21,7 +21,8 @@ export function FontSizeSwitcher() {
     <div
       role="radiogroup"
       aria-label={t('settings.fontSizeLabel')}
-      className="flex items-center gap-0.5 rounded-sm border border-border p-0.5"
+      // 移动端不支持大字体（布局会挤爆），直接隐藏这个切换器
+      className="hidden items-center gap-0.5 rounded-sm border border-border p-0.5 sm:flex"
     >
       {OPTIONS.map(({ key, labelKey, charClass }) => {
         const active = current === key
