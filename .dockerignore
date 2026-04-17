@@ -1,0 +1,21 @@
+.git
+.github
+.vscode
+.idea
+node_modules
+dist
+coverage
+.DS_Store
+
+# 文档 / 构建产物
+docs/superpowers
+
+# 本地环境
+.env
+.env.*
+*.log
+
+# 自身
+Dockerfile
+docker-compose.yml
+.dockerignore

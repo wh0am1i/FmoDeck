@@ -66,6 +66,45 @@ pnpm format:check # Prettier 检查
 
 冷蓝 `#00D9FF` 为主调，琥珀 `#FFB000` 为警戒色，品红 `#FF3E5C` 为危险色。支持 light / dark / system 三档（右上角切换）。装饰强度通过 CSS 变量 `--hud-intensity` 控制。
 
+## 部署（Docker + 宿主机 nginx 反代）
+
+纯前端 SPA，产物为静态目录。推荐 Docker 构建 + 宿主 nginx 反代。
+
+```bash
+docker compose up -d --build   # 构建并启动（默认绑 127.0.0.1:8080）
+docker compose down            # 停止
+```
+
+**可调参数**均集中在 `Dockerfile` 顶部 `ARG`：
+
+- `BASE_PATH`（默认 `/`）—— 子路径部署时改成 `/fmodeck/`
+- `LISTEN_PORT`（默认 `80`）—— 容器内 nginx 监听端口
+
+宿主机端口改 `docker-compose.yml` 的 `ports` 映射。
+
+**宿主 nginx 反代样例**（`/etc/nginx/sites-available/fmodeck`）：
+
+```nginx
+server {
+    listen       443 ssl http2;
+    server_name  fmodeck.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/fmodeck.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/fmodeck.example.com/privkey.pem;
+
+    location / {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+> FMO 设备 WebSocket 由浏览器直连（非经宿主反代），故反代层无需额外 `Upgrade` 头。
+
 ## 许可证
 
 同原 FmoLogs，待补。

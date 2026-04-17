@@ -1,0 +1,19 @@
+# 一键构建 + 启动：docker compose up -d --build
+# 停止：docker compose down
+# 更新：git pull && docker compose up -d --build
+
+services:
+  fmodeck:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # 若需子路径部署，在 Dockerfile 顶部改 BASE_PATH，或此处 args 覆盖
+      # args:
+      #   BASE_PATH: /fmodeck/
+      #   LISTEN_PORT: "80"
+    image: fmodeck:latest
+    container_name: fmodeck
+    restart: unless-stopped
+    # 只绑本地回环 → 宿主 nginx 反代；改成 "8080:80" 则对外可达
+    ports:
+      - '127.0.0.1:8080:80'
