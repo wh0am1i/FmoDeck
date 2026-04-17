@@ -37,6 +37,7 @@ function formatTimeAgo(unixSeconds: number, nowMs: number): string {
 export function SpeakingBar() {
   const current = speakingStore((s) => s.current)
   const logs = logsStore((s) => s.all)
+  const local = logsStore((s) => s.local)
   const myCallsign = settingsStore((s) => s.currentCallsign)
 
   const isSelf = current !== null && isSameOperator(current.callsign, myCallsign)
@@ -52,13 +53,18 @@ export function SpeakingBar() {
     return () => clearInterval(id)
   }, [current])
 
-  // 与我通联统计（按当前讲话者 toCallsign 过滤）
+  // 与我通联统计（合并服务器 + 本地 ADIF 导入）
   const stats = (() => {
     if (!current) return null
-    const matches = logs.filter((l) => l.toCallsign === current.callsign)
-    if (matches.length === 0) return { count: 0, lastTime: null as number | null }
-    const lastTime = Math.max(...matches.map((m) => m.timestamp))
-    return { count: matches.length, lastTime }
+    const target = current.callsign
+    const serverMatches = logs.filter((l) => l.toCallsign === target)
+    const localMatches = local.filter((l) => l.toCallsign === target)
+    const count = serverMatches.length + localMatches.length
+    if (count === 0) return { count: 0, lastTime: null as number | null }
+    let lastTime = 0
+    for (const m of serverMatches) if (m.timestamp > lastTime) lastTime = m.timestamp
+    for (const m of localMatches) if (m.timestamp > lastTime) lastTime = m.timestamp
+    return { count, lastTime }
   })()
 
   if (!current) {

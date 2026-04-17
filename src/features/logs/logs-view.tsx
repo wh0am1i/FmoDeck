@@ -3,7 +3,8 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { QsoService } from '@/lib/qso-service/client'
 import { connectionStore } from '@/stores/connection'
-import { logsStore, selectFiltered } from './store'
+import { logsStore, selectFiltered, type DisplayRow } from './store'
+import { ImportAdifDialog } from './components/import-adif-dialog'
 import { LogDetailDialog } from './components/log-detail-dialog'
 import { LogsFilter } from './components/logs-filter'
 import { LogsPagination } from './components/logs-pagination'
@@ -14,16 +15,18 @@ import { Download, RefreshCw } from 'lucide-react'
 export function LogsView() {
   const status = logsStore((s) => s.status)
   const filteredCount = logsStore((s) => selectFiltered(s).length)
-  const totalCount = logsStore((s) => s.all.length)
+  const serverCount = logsStore((s) => s.all.length)
+  const localCount = logsStore((s) => s.local.length)
+  const totalCount = serverCount + localCount
   const syncMode = logsStore((s) => s.syncMode)
   const error = logsStore((s) => s.error)
   const connectionStatus = connectionStore((s) => s.status)
   const client = connectionStore((s) => s.client)
 
-  const [detailLogId, setDetailLogId] = useState<number | null>(null)
+  const [detailRow, setDetailRow] = useState<DisplayRow | null>(null)
   const [didAutoLoad, setDidAutoLoad] = useState(false)
 
-  const canLoad = connectionStatus === 'connected' && client !== null
+  const canLoadServer = connectionStatus === 'connected' && client !== null
 
   const refresh = async () => {
     if (!client) return
@@ -37,19 +40,23 @@ export function LogsView() {
 
   // 首次连接后自动拉一次
   useEffect(() => {
-    if (canLoad && !didAutoLoad && status === 'idle' && totalCount === 0) {
+    if (canLoadServer && !didAutoLoad && status === 'idle' && serverCount === 0) {
       setDidAutoLoad(true)
       void refresh()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canLoad, didAutoLoad, status, totalCount])
+  }, [canLoadServer, didAutoLoad, status, serverCount])
 
-  if (!canLoad) {
+  const showingOffline = !canLoadServer && localCount === 0
+  if (showingOffline) {
     return (
-      <section className="hud-frame p-6">
-        <h2 className="hud-title text-primary mb-2">[ LOGS ]</h2>
+      <section className="hud-frame flex flex-col gap-4 p-6">
+        <div className="flex items-center justify-between">
+          <h2 className="hud-title text-primary">[ LOGS ]</h2>
+          <ImportAdifDialog />
+        </div>
         <p className="hud-mono text-sm text-muted-foreground">
-          [ OFFLINE · 请先在 Settings 配置并激活 FMO 地址 ]
+          [ OFFLINE · 请先在 Settings 配置 FMO 地址，或导入 ADIF 文件离线查看 ]
         </p>
       </section>
     )
@@ -59,13 +66,15 @@ export function LogsView() {
     <section className="hud-frame flex flex-col gap-4 p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="hud-title text-primary">[ LOGS ]</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="hud-mono text-xs text-muted-foreground">
             {syncMode === 'today' && '今天 · '}
             {filteredCount === totalCount
               ? `${totalCount} 条`
               : `${filteredCount} / ${totalCount} 条`}
+            {localCount > 0 && <span className="text-accent"> · 含 {localCount} 本地</span>}
           </span>
+          <ImportAdifDialog />
           <Button
             variant="outline"
             size="sm"
@@ -83,7 +92,8 @@ export function LogsView() {
             variant="outline"
             size="sm"
             onClick={() => void refresh()}
-            disabled={status === 'loading'}
+            disabled={status === 'loading' || !canLoadServer}
+            title={!canLoadServer ? '需先连上 FMO 才能刷新' : '从服务器重新拉日志'}
           >
             <RefreshCw className={status === 'loading' ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
             刷新
@@ -97,13 +107,13 @@ export function LogsView() {
         <div className="hud-mono text-sm text-destructive">加载失败: {error.message}</div>
       )}
 
-      <LogsTable onRowClick={setDetailLogId} />
+      <LogsTable onRowClick={setDetailRow} />
 
       <div className="flex justify-end">
         <LogsPagination />
       </div>
 
-      <LogDetailDialog logId={detailLogId} onClose={() => setDetailLogId(null)} />
+      <LogDetailDialog row={detailRow} onClose={() => setDetailRow(null)} />
     </section>
   )
 }

@@ -2,10 +2,9 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { logsStore, selectSyncedAll } from '@/features/logs/store'
+import { logsStore, selectMergedRows, type DisplayRow } from '@/features/logs/store'
 import { connectionStore } from '@/stores/connection'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
-import type { QsoSummary } from '@/types/qso'
 
 interface FriendRow {
   callsign: string
@@ -17,7 +16,7 @@ interface FriendRow {
 
 const PAGE_SIZE = 20
 
-function aggregate(logs: readonly QsoSummary[]): FriendRow[] {
+function aggregate(logs: readonly DisplayRow[]): FriendRow[] {
   const map = new Map<string, FriendRow>()
   for (const l of logs) {
     const prev = map.get(l.toCallsign)
@@ -49,6 +48,7 @@ function formatDate(unixSeconds: number): string {
 
 export function OldFriendsView() {
   const all = logsStore((s) => s.all)
+  const local = logsStore((s) => s.local)
   const syncMode = logsStore((s) => s.syncMode)
   const connectionStatus = connectionStore((s) => s.status)
   const navigate = useNavigate()
@@ -60,11 +60,11 @@ export function OldFriendsView() {
     void navigate('/logs')
   }
 
-  const synced = useMemo(
-    () => selectSyncedAll({ ...logsStore.getState(), all, syncMode }),
-    [all, syncMode]
+  const merged = useMemo(
+    () => selectMergedRows({ ...logsStore.getState(), all, local, syncMode }),
+    [all, local, syncMode]
   )
-  const friends = useMemo(() => aggregate(synced), [synced])
+  const friends = useMemo(() => aggregate(merged), [merged])
   const filtered = useMemo(() => {
     const q = filter.trim().toUpperCase()
     if (!q) return friends
@@ -75,18 +75,18 @@ export function OldFriendsView() {
   const currentPage = Math.min(page, totalPages - 1)
   const slice = filtered.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE)
 
-  if (connectionStatus !== 'connected') {
+  if (connectionStatus !== 'connected' && local.length === 0) {
     return (
       <section className="hud-frame p-6">
         <h2 className="hud-title text-primary mb-2">[ OLD FRIENDS ]</h2>
         <p className="hud-mono text-sm text-muted-foreground">
-          [ OFFLINE · 请先在 Settings 配置并激活 FMO 地址 ]
+          [ OFFLINE · 请先在 Settings 配置并激活 FMO 地址，或在 LOGS 里导入 ADIF ]
         </p>
       </section>
     )
   }
 
-  if (all.length === 0) {
+  if (all.length + local.length === 0) {
     return (
       <section className="hud-frame p-6">
         <h2 className="hud-title text-primary mb-2">[ OLD FRIENDS ]</h2>

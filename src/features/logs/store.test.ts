@@ -163,14 +163,17 @@ describe('selectors', () => {
   })
 
   it('selectPageSlice · 按 page + pageSize 切片', () => {
+    // timestamp 递增 → 合并后按 timestamp 倒序 → logId 24 最先
     logsStore.setState({
-      all: Array.from({ length: 25 }, (_, i) => makeSummary({ logId: i })),
+      all: Array.from({ length: 25 }, (_, i) => makeSummary({ logId: i, timestamp: 1000 + i })),
       pageSize: 10,
       page: 1
     })
     const slice = selectPageSlice(logsStore.getState())
     expect(slice).toHaveLength(10)
-    expect(slice[0]?.logId).toBe(10)
+    const first = slice[0]
+    expect(first?.source).toBe('server')
+    if (first?.source === 'server') expect(first.logId).toBe(14)
   })
 
   it('selectTotalPages · 非空时向上取整', () => {
@@ -246,6 +249,8 @@ describe('syncMode', () => {
     })
     const res = selectFiltered(logsStore.getState())
     expect(res).toHaveLength(1)
-    expect(res[0]?.logId).toBe(2)
+    const first = res[0]
+    expect(first?.source).toBe('server')
+    if (first?.source === 'server') expect(first.logId).toBe(2)
   })
 })

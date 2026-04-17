@@ -1,6 +1,5 @@
 import { Fragment, useMemo } from 'react'
-import { useShallow } from 'zustand/react/shallow'
-import { logsStore, selectPageSlice } from '../store'
+import { logsStore, rowKey, selectPageSlice, type DisplayRow } from '../store'
 import { cn } from '@/lib/utils'
 
 function pad(n: number): string {
@@ -50,19 +49,38 @@ function formatTimeAgo(unixSeconds: number, nowMs: number): string {
 }
 
 interface Props {
-  onRowClick: (logId: number) => void
+  onRowClick: (row: DisplayRow) => void
 }
 
 export function LogsTable({ onRowClick }: Props) {
-  const slice = logsStore(useShallow(selectPageSlice))
-  // 聚合全量（不是仅当前页）用来算"同一呼号累计次数 + 今日呼号集合"
+  // 订阅原子状态，本地 useMemo 做派生计算（避免 selector 返回数组每次新引用触发无限重渲）
   const all = logsStore((s) => s.all)
+  const local = logsStore((s) => s.local)
+  const filter = logsStore((s) => s.filter)
+  const page = logsStore((s) => s.page)
+  const pageSize = logsStore((s) => s.pageSize)
+  const syncMode = logsStore((s) => s.syncMode)
+
+  const slice: DisplayRow[] = useMemo(
+    () =>
+      selectPageSlice({
+        ...logsStore.getState(),
+        all,
+        local,
+        filter,
+        page,
+        pageSize,
+        syncMode
+      }),
+    [all, local, filter, page, pageSize, syncMode]
+  )
 
   const countByCall = useMemo(() => {
     const m = new Map<string, number>()
     for (const r of all) m.set(r.toCallsign, (m.get(r.toCallsign) ?? 0) + 1)
+    for (const r of local) m.set(r.toCallsign, (m.get(r.toCallsign) ?? 0) + 1)
     return m
-  }, [all])
+  }, [all, local])
 
   const nowMs = Date.now()
   const todayStart = startOfLocalToday(nowMs)
@@ -96,7 +114,7 @@ export function LogsTable({ onRowClick }: Props) {
             // 今日 → 更早的第一个过渡行前插入分隔
             const showOlderDivider = prevWasToday && !isToday
             return (
-              <Fragment key={r.logId}>
+              <Fragment key={rowKey(r)}>
                 {showOlderDivider && (
                   <tr aria-hidden="true">
                     <td
@@ -108,7 +126,7 @@ export function LogsTable({ onRowClick }: Props) {
                   </tr>
                 )}
                 <tr
-                  onClick={() => onRowClick(r.logId)}
+                  onClick={() => onRowClick(r)}
                   className={cn(
                     'cursor-pointer border-b border-border/40 hover:bg-primary/5',
                     isToday && 'bg-primary/5'
@@ -132,6 +150,14 @@ export function LogsTable({ onRowClick }: Props) {
                       {isToday && (
                         <span className="rounded-sm border border-primary bg-primary/10 px-1 py-0 text-[10px] font-bold uppercase leading-4 text-primary">
                           TODAY
+                        </span>
+                      )}
+                      {r.source === 'local' && (
+                        <span
+                          className="rounded-sm border border-accent bg-accent/10 px-1 py-0 text-[10px] font-bold uppercase leading-4 text-accent"
+                          title="ADIF 导入的本地记录"
+                        >
+                          LOCAL
                         </span>
                       )}
                     </span>

@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router'
-import { logsStore, selectSyncedAll } from '@/features/logs/store'
+import { logsStore, selectMergedRows, type DisplayRow } from '@/features/logs/store'
 import { connectionStore } from '@/stores/connection'
-import type { QsoSummary } from '@/types/qso'
 
 interface Top20Item {
   callsign: string
@@ -10,7 +9,7 @@ interface Top20Item {
   lastTime: number
 }
 
-function aggregateTop20(logs: QsoSummary[]): Top20Item[] {
+function aggregateTop20(logs: DisplayRow[]): Top20Item[] {
   const map = new Map<string, { count: number; lastTime: number }>()
   for (const l of logs) {
     const prev = map.get(l.toCallsign)
@@ -34,16 +33,16 @@ function formatTs(unixSeconds: number): string {
 }
 
 export function Top20View() {
-  // 读两个基础状态，在组件内聚合（syncMode 变化触发重算）
   const all = logsStore((s) => s.all)
+  const local = logsStore((s) => s.local)
   const syncMode = logsStore((s) => s.syncMode)
-  const synced = useMemo(
-    () => selectSyncedAll({ ...logsStore.getState(), all, syncMode }),
-    [all, syncMode]
+  const merged = useMemo(
+    () => selectMergedRows({ ...logsStore.getState(), all, local, syncMode }),
+    [all, local, syncMode]
   )
-  const top20 = useMemo(() => aggregateTop20(synced), [synced])
-  const total = synced.length
-  const rawTotal = all.length
+  const top20 = useMemo(() => aggregateTop20(merged), [merged])
+  const total = merged.length
+  const rawTotal = all.length + local.length
   const connectionStatus = connectionStore((s) => s.status)
   const navigate = useNavigate()
 
@@ -52,12 +51,13 @@ export function Top20View() {
     void navigate('/logs')
   }
 
-  if (connectionStatus !== 'connected') {
+  // 离线但有本地记录时允许查看
+  if (connectionStatus !== 'connected' && local.length === 0) {
     return (
       <section className="hud-frame p-6">
         <h2 className="hud-title text-primary mb-2">[ TOP 20 ]</h2>
         <p className="hud-mono text-sm text-muted-foreground">
-          [ OFFLINE · 请先在 Settings 配置并激活 FMO 地址 ]
+          [ OFFLINE · 请先在 Settings 配置并激活 FMO 地址，或在 LOGS 里导入 ADIF ]
         </p>
       </section>
     )
