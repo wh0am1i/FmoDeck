@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { messagesStore, resetMessagesForTest, selectUnreadCount } from './store'
+import { messagesStore, resetMessagesForTest, selectHasMore, selectUnreadCount } from './store'
 import type { MessageService } from '@/lib/message-service/client'
 import type { MessagePage, MessageSummary } from '@/types/message'
 
@@ -82,5 +82,80 @@ describe('selectUnreadCount', () => {
       ]
     })
     expect(selectUnreadCount(messagesStore.getState())).toBe(2)
+  })
+})
+
+describe('messages store · 分页', () => {
+  function pageWithNext(list: MessageSummary[], nextAnchorId: number): MessagePage {
+    return { list, anchorId: 0, nextAnchorId, page: 0, pageSize: 20, count: list.length }
+  }
+
+  it('load 填充 nextAnchorId', async () => {
+    const svc = mockSvc(pageWithNext([makeSummary({ messageId: 'a' })], 42))
+    await messagesStore.getState().load(svc)
+    expect(messagesStore.getState().nextAnchorId).toBe(42)
+  })
+
+  it('selectHasMore · nextAnchorId>0 时 true', () => {
+    messagesStore.setState({ nextAnchorId: 42 })
+    expect(selectHasMore(messagesStore.getState())).toBe(true)
+  })
+
+  it('selectHasMore · nextAnchorId=0 时 false', () => {
+    messagesStore.setState({ nextAnchorId: 0 })
+    expect(selectHasMore(messagesStore.getState())).toBe(false)
+  })
+
+  it('selectHasMore · nextAnchorId=null 时 false（未加载）', () => {
+    messagesStore.setState({ nextAnchorId: null })
+    expect(selectHasMore(messagesStore.getState())).toBe(false)
+  })
+
+  it('loadMore · 未加载过则不发请求', async () => {
+    const getList = vi.fn()
+    const svc = { getList } as unknown as MessageService
+    messagesStore.setState({ nextAnchorId: null })
+    await messagesStore.getState().loadMore(svc)
+    expect(getList).not.toHaveBeenCalled()
+  })
+
+  it('loadMore · 已到末尾（0）不发请求', async () => {
+    const getList = vi.fn()
+    const svc = { getList } as unknown as MessageService
+    messagesStore.setState({ nextAnchorId: 0 })
+    await messagesStore.getState().loadMore(svc)
+    expect(getList).not.toHaveBeenCalled()
+  })
+
+  it('loadMore · 用 nextAnchorId 请求下一页并 append', async () => {
+    messagesStore.setState({
+      list: [makeSummary({ messageId: 'a' })],
+      nextAnchorId: 42
+    })
+    const getList = vi.fn().mockResolvedValue(pageWithNext([makeSummary({ messageId: 'b' })], 100))
+    const svc = { getList } as unknown as MessageService
+    await messagesStore.getState().loadMore(svc)
+    expect(getList).toHaveBeenCalledWith({ anchorId: 42 })
+    expect(messagesStore.getState().list.map((m) => m.messageId)).toEqual(['a', 'b'])
+    expect(messagesStore.getState().nextAnchorId).toBe(100)
+  })
+
+  it('loadMore · 重叠消息去重', async () => {
+    messagesStore.setState({
+      list: [makeSummary({ messageId: 'a' }), makeSummary({ messageId: 'b' })],
+      nextAnchorId: 42
+    })
+    const getList = vi.fn().mockResolvedValue(
+      pageWithNext(
+        [
+          makeSummary({ messageId: 'b' }), // 重叠
+          makeSummary({ messageId: 'c' })
+        ],
+        0
+      )
+    )
+    const svc = { getList } as unknown as MessageService
+    await messagesStore.getState().loadMore(svc)
+    expect(messagesStore.getState().list.map((m) => m.messageId)).toEqual(['a', 'b', 'c'])
   })
 })

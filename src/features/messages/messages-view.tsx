@@ -3,16 +3,17 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { MessageService } from '@/lib/message-service/client'
 import { connectionStore } from '@/stores/connection'
-import { messagesStore, selectUnreadCount } from './store'
+import { messagesStore, selectHasMore, selectUnreadCount } from './store'
 import { ComposeDialog } from './components/compose-dialog'
 import { MessageDetailDialog } from './components/message-detail-dialog'
 import { MessagesList } from './components/messages-list'
-import { RefreshCw } from 'lucide-react'
+import { ChevronDown, RefreshCw } from 'lucide-react'
 
 export function MessagesView() {
   const status = messagesStore((s) => s.status)
   const count = messagesStore((s) => s.list.length)
   const unread = messagesStore(selectUnreadCount)
+  const hasMore = messagesStore(selectHasMore)
   const error = messagesStore((s) => s.error)
   const connectionStatus = connectionStore((s) => s.status)
   const client = connectionStore((s) => s.client)
@@ -26,6 +27,15 @@ export function MessagesView() {
     if (!client) return
     try {
       await messagesStore.getState().load(new MessageService(client))
+    } catch {
+      /* store 已记录 error */
+    }
+  }
+
+  const loadMore = async () => {
+    if (!client) return
+    try {
+      await messagesStore.getState().loadMore(new MessageService(client))
     } catch {
       /* store 已记录 error */
     }
@@ -85,6 +95,22 @@ export function MessagesView() {
       )}
 
       <MessagesList onRowClick={setDetailId} />
+
+      {hasMore && (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={status === 'loadingMore' || status === 'loading'}
+            onClick={() => void loadMore()}
+          >
+            <ChevronDown
+              className={status === 'loadingMore' ? 'h-4 w-4 animate-bounce' : 'h-4 w-4'}
+            />
+            {status === 'loadingMore' ? '加载中...' : '加载更多'}
+          </Button>
+        </div>
+      )}
 
       <MessageDetailDialog messageId={detailId} onClose={() => setDetailId(null)} />
     </section>
