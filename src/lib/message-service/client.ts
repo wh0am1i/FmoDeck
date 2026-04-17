@@ -1,5 +1,4 @@
 import type { FmoApiClient } from '@/lib/fmo-api/client'
-import { parseCallsignSsid } from '@/lib/utils/callsign'
 import type { MessageDetail, MessagePage, MessageSummary } from '@/types/message'
 
 type Unsub = () => void
@@ -39,14 +38,12 @@ export class MessageService {
     if (resp.code !== 0) throw new Error(`setRead failed: code=${resp.code}`)
   }
 
-  async send(to: string, content: string): Promise<void> {
-    // FMO 服务端期望 { callsign, ssid, message }，不是 { to, content }。
-    // 传入的 `to` 可能形如 "BA0AX" 或 "BA0AX-5"，在这里拆开。
-    const { call, ssid } = parseCallsignSsid(to)
+  async send(callsign: string, ssid: number, message: string): Promise<void> {
+    // FMO 服务端期望 { callsign, ssid, message }（对齐 FmoLogs 实现）。
     const resp = await this.api.send({
       type: 'message',
       subType: 'send',
-      data: { callsign: call, ssid, message: content }
+      data: { callsign, ssid, message }
     })
     if (resp.code !== 0) throw new Error(`send failed: code=${resp.code}`)
   }

@@ -252,6 +252,7 @@
     "title": "[ 撰写消息 ]",
     "description": "发送消息到另一个 FMO 呼号",
     "toLabel": "收件人呼号",
+    "ssidLabel": "SSID",
     "contentLabel": "内容",
     "contentPlaceholder": "写点什么...",
     "send": "发送",

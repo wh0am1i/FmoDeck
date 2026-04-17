@@ -252,6 +252,7 @@
     "title": "[ COMPOSE MESSAGE ]",
     "description": "Send a message to another FMO callsign",
     "toLabel": "Recipient callsign",
+    "ssidLabel": "SSID",
     "contentLabel": "Content",
     "contentPlaceholder": "Say something...",
     "send": "Send",
