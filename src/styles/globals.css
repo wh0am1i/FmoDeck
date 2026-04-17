@@ -109,11 +109,26 @@
     font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
   }
+  html {
+    font-size: 16px;
+  }
   body {
     min-height: 100vh;
+    /* 关键：防止移动端某个子元素超宽导致整个页面横向滚动 */
+    overflow-x: hidden;
   }
-  /* 大字体模式：除了放大字号，整体字重也加粗（可读性更好）。
-     .hud-title 已经是 600/700 不受影响；普通文本从默认 400 提到 600。 */
+  /* 大字体模式：桌面 17px，移动端再保守到 16.5px（1rem = 16.5px）。
+     比 18px 小一点，视觉上仍有"变大"的明显感知，但不至于让移动端
+     5 项 Header 控件 + 7 项 Nav 的紧凑布局崩掉。 */
+  html.font-large {
+    font-size: 17px;
+  }
+  @media (max-width: 640px) {
+    html.font-large {
+      font-size: 16.5px;
+    }
+  }
+  /* 大字体模式下字重一并加粗（.hud-title 已经是 600/700 不受影响）。 */
   html.font-large body {
     font-weight: 600;
   }
