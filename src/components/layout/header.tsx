@@ -1,6 +1,7 @@
 import { useTheme } from '@/app/providers/theme-context'
 import { Button } from '@/components/ui/button'
 import { ConnectionIndicator } from './connection-indicator'
+import { StationSwitcher } from '@/features/station/components/station-switcher'
 import { Monitor, Moon, Sun } from 'lucide-react'
 
 export function Header() {
@@ -21,7 +22,8 @@ export function Header() {
           <span className="hud-title text-primary">[ FMODECK ]</span>
           <span className="hud-mono text-xs text-muted-foreground">v0.1.0</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
+          <StationSwitcher />
           <ConnectionIndicator />
           <Button
             variant="ghost"
