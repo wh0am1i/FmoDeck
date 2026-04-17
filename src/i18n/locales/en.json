@@ -306,10 +306,6 @@
     "enterCallsign": "Enter a callsign first",
     "label": "Passcode"
   },
-  "grid": {
-    "openMap": "Open in OpenStreetMap",
-    "map": "Map"
-  },
   "audio": {
     "triggerLabel": "Listen",
     "popoverTitle": "[ AUDIO ]",

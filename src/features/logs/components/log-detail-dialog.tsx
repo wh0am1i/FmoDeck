@@ -157,7 +157,7 @@ function LocalDetailView({ record }: { record: LocalQso }) {
           <>
             <dt className="text-muted-foreground">Grid</dt>
             <dd>
-              <GridLocation grid={record.grid} variant="block" />
+              <GridLocation grid={record.grid} />
             </dd>
           </>
         )}

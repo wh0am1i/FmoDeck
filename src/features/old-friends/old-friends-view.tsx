@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { GridLocation } from '@/components/shared/grid-location'
 import { logsStore, selectMergedRows, type DisplayRow } from '@/features/logs/store'
 import { connectionStore } from '@/stores/connection'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
@@ -162,7 +163,9 @@ export function OldFriendsView() {
                     {currentPage * PAGE_SIZE + i + 1}
                   </td>
                   <td className="px-3 py-2 text-primary">{f.callsign}</td>
-                  <td className="px-3 py-2 hidden sm:table-cell text-muted-foreground">{f.grid}</td>
+                  <td className="px-3 py-2 hidden sm:table-cell text-muted-foreground">
+                    <GridLocation grid={f.grid} />
+                  </td>
                   <td className="px-3 py-2 hidden md:table-cell text-muted-foreground">
                     {formatDate(f.firstTime)}
                   </td>

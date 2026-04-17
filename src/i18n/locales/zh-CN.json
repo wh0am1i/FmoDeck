@@ -306,10 +306,6 @@
     "enterCallsign": "请先输入呼号",
     "label": "Passcode"
   },
-  "grid": {
-    "openMap": "在 OpenStreetMap 里查看",
-    "map": "地图"
-  },
   "audio": {
     "triggerLabel": "收听",
     "popoverTitle": "[ 音频 ]",
