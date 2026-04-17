@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -65,8 +65,8 @@
    ========================================================== */
 
 @theme inline {
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
@@ -160,20 +160,27 @@
       linear-gradient(hsl(var(--primary)), hsl(var(--primary))),
       linear-gradient(hsl(var(--primary)), hsl(var(--primary)));
     background-size:
-      8px 1.5px, 1.5px 8px,
-      8px 1.5px, 1.5px 8px,
-      8px 1.5px, 1.5px 8px,
-      8px 1.5px, 1.5px 8px;
+      8px 1.5px,
+      1.5px 8px,
+      8px 1.5px,
+      1.5px 8px,
+      8px 1.5px,
+      1.5px 8px,
+      8px 1.5px,
+      1.5px 8px;
     background-position:
-      top -1px left -1px, top -1px left -1px,
-      top -1px right -1px, top -1px right -1px,
-      bottom -1px left -1px, bottom -1px left -1px,
-      bottom -1px right -1px, bottom -1px right -1px;
+      top -1px left -1px,
+      top -1px left -1px,
+      top -1px right -1px,
+      top -1px right -1px,
+      bottom -1px left -1px,
+      bottom -1px left -1px,
+      bottom -1px right -1px,
+      bottom -1px right -1px;
     background-repeat: no-repeat;
   }
   .hud-glow {
-    box-shadow:
-      0 0 calc(8px * var(--hud-intensity))
+    box-shadow: 0 0 calc(8px * var(--hud-intensity))
       hsl(var(--primary) / calc(0.4 * var(--hud-intensity)));
   }
   .hud-mono {

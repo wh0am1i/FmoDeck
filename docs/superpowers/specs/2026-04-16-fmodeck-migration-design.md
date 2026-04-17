@@ -25,26 +25,26 @@
 
 ## 决策汇总
 
-| 维度 | 决定 |
-|---|---|
-| 技术栈 | Vite 7 + React 19 + TypeScript 5.x（strict + noUncheckedIndexedAccess + exactOptionalPropertyTypes） |
-| 路由 | React Router v7 |
-| 状态管理 | Zustand（全局 + feature 切片） |
-| 样式 | Tailwind CSS v4 |
-| 组件库 | shadcn/ui + Radix（组件代码 own 在项目内） |
-| 数据层 | sql.js（浏览器端 SQLite）+ IndexedDB 持久化 — **保持现状** |
-| 加密 | crypto-js（APRS HMAC-SHA1）— **保留**，不改 Web Crypto |
-| 包管理器 | pnpm |
-| Node 版本 | ≥ 20.19 |
-| 浏览器目标 | 现代 evergreen（Chrome/Edge/Firefox/Safari 近两年） |
-| 国际化 | 中文 only，不引入 i18n 库 |
-| 测试 | Vitest（仅覆盖 `lib/*` 纯逻辑层） |
-| 部署 | 静态网页（`dist/` 直接托管） |
-| PWA | 不做 Service Worker（IndexedDB 已提供持久化） |
-| 功能范围 | 与现有 FmoLogs 1:1 对齐 + 新增"SpeakingBar 实时讲话增强信息卡" |
-| UI 风格 | 战术 HUD（Tactical HUD），中度强度 |
-| 分解策略 | 统一设计 + 4 个实施阶段（Phase 1–4），Phase 4 再细分子阶段 |
-| 新仓库名 | `FmoDeck`（独立新仓，旧仓 `FmoLogs` 迁移期仅接受紧急修复） |
+| 维度       | 决定                                                                                                 |
+| ---------- | ---------------------------------------------------------------------------------------------------- |
+| 技术栈     | Vite 7 + React 19 + TypeScript 5.x（strict + noUncheckedIndexedAccess + exactOptionalPropertyTypes） |
+| 路由       | React Router v7                                                                                      |
+| 状态管理   | Zustand（全局 + feature 切片）                                                                       |
+| 样式       | Tailwind CSS v4                                                                                      |
+| 组件库     | shadcn/ui + Radix（组件代码 own 在项目内）                                                           |
+| 数据层     | sql.js（浏览器端 SQLite）+ IndexedDB 持久化 — **保持现状**                                           |
+| 加密       | crypto-js（APRS HMAC-SHA1）— **保留**，不改 Web Crypto                                               |
+| 包管理器   | pnpm                                                                                                 |
+| Node 版本  | ≥ 20.19                                                                                              |
+| 浏览器目标 | 现代 evergreen（Chrome/Edge/Firefox/Safari 近两年）                                                  |
+| 国际化     | 中文 only，不引入 i18n 库                                                                            |
+| 测试       | Vitest（仅覆盖 `lib/*` 纯逻辑层）                                                                    |
+| 部署       | 静态网页（`dist/` 直接托管）                                                                         |
+| PWA        | 不做 Service Worker（IndexedDB 已提供持久化）                                                        |
+| 功能范围   | 与现有 FmoLogs 1:1 对齐 + 新增"SpeakingBar 实时讲话增强信息卡"                                       |
+| UI 风格    | 战术 HUD（Tactical HUD），中度强度                                                                   |
+| 分解策略   | 统一设计 + 4 个实施阶段（Phase 1–4），Phase 4 再细分子阶段                                           |
+| 新仓库名   | `FmoDeck`（独立新仓，旧仓 `FmoLogs` 迁移期仅接受紧急修复）                                           |
 
 ---
 
@@ -113,12 +113,12 @@ FmoDeck (Vite + React 19 + TS strict)
 
 ### 2.1 状态分层
 
-| 层级 | 技术 | 示例 | 生命周期 |
-|---|---|---|---|
-| UI 局部状态 | `useState` / `useReducer` | 模态框开关、输入框内容、分页当前页 | 组件挂载期 |
-| Feature store | Zustand（feature 内） | `logs.store.ts` 管日志查询结果与过滤条件 | app 生命周期 |
-| 全局 store | Zustand（`stores/`） | 连接状态、当前电台、讲话状态 | app 生命周期 |
-| 持久状态 | IndexedDB + sql.js | 地址列表、APRS 服务器、QSO 数据库 | 跨会话 |
+| 层级          | 技术                      | 示例                                     | 生命周期     |
+| ------------- | ------------------------- | ---------------------------------------- | ------------ |
+| UI 局部状态   | `useState` / `useReducer` | 模态框开关、输入框内容、分页当前页       | 组件挂载期   |
+| Feature store | Zustand（feature 内）     | `logs.store.ts` 管日志查询结果与过滤条件 | app 生命周期 |
+| 全局 store    | Zustand（`stores/`）      | 连接状态、当前电台、讲话状态             | app 生命周期 |
+| 持久状态      | IndexedDB + sql.js        | 地址列表、APRS 服务器、QSO 数据库        | 跨会话       |
 
 ### 2.2 Zustand store 模板
 
@@ -142,26 +142,27 @@ interface AprsState {
 export const useAprsStore = create<AprsState>((set, get) => ({
   wsConnected: false,
   // ...
-  connect: async (opts) => { /* ... */ },
+  connect: async (opts) => {
+    /* ... */
+  }
 }))
 
 // selectors（派生状态，替代 Vue 的 computed）
-export const useCanSend = () => useAprsStore(s =>
-  !s.sending && isValidCallsign(s.mycall) && isValidSecret(s.secret)
-)
+export const useCanSend = () =>
+  useAprsStore((s) => !s.sending && isValidCallsign(s.mycall) && isValidSecret(s.secret))
 ```
 
 **强制规范**：所有组件只能用 selector 订阅（`useStore(s => s.field)`），禁止 `useStore()` 订阅整 store —— 避免过度渲染。
 
 ### 2.3 Vue → React 映射
 
-| Vue | React |
-|---|---|
-| 模块级 `const x = ref(null)` + `useXxx()` hook 返回 | Zustand store（state + actions 同对象） |
-| 组件内 `ref()` | `useState` |
-| `computed(() => ...)` | Zustand selector hook / 组件内 `useMemo` |
-| `watch(x, fn)` | `useEffect(fn, [x])` |
-| `provide/inject` | Context Provider（仅用于 Theme/Toast/Confirm 这类跨层 UI 关注点） |
+| Vue                                                 | React                                                             |
+| --------------------------------------------------- | ----------------------------------------------------------------- |
+| 模块级 `const x = ref(null)` + `useXxx()` hook 返回 | Zustand store（state + actions 同对象）                           |
+| 组件内 `ref()`                                      | `useState`                                                        |
+| `computed(() => ...)`                               | Zustand selector hook / 组件内 `useMemo`                          |
+| `watch(x, fn)`                                      | `useEffect(fn, [x])`                                              |
+| `provide/inject`                                    | Context Provider（仅用于 Theme/Toast/Confirm 这类跨层 UI 关注点） |
 
 ### 2.4 WebSocket 客户端与 store 解耦
 
@@ -177,7 +178,7 @@ export class FmoApiClient {
 export const useConnectionStore = create<ConnectionState>((set) => {
   const client = new FmoApiClient(/* baseUrl */)
   client.onSpeakingChange((status) => useSpeakingStore.setState({ status }))
-  return { client, /* ... */ }
+  return { client /* ... */ }
 })
 ```
 
@@ -198,7 +199,9 @@ pendingRequests.set(reqId, { resolve, reject, timeoutId })
 
 // 收到响应
 const pending = pendingRequests.get(msg.reqId)
-if (pending) { /* resolve/reject */ }
+if (pending) {
+  /* resolve/reject */
+}
 ```
 
 **兜底方案**：设备不回显 reqId 则回退为"同 key 请求串行队列"。
@@ -214,6 +217,7 @@ Phase 2 开发 `FmoApiClient` 时**首日做实机验证**决定走哪条路。
 **目标**：空壳但可跑，确立所有基础设施。
 
 **产出**：
+
 - Vite 7 + React 19 + TypeScript 5.x（strict 模式 + 严格选项）
 - Tailwind CSS v4 配置（`@theme` inline + dark mode via `class` strategy）
 - shadcn/ui 初始化 + 必备组件（Button / Dialog / Input / Select / Toast / Dropdown / Popover / Tooltip）
@@ -237,22 +241,22 @@ Phase 2 开发 `FmoApiClient` 时**首日做实机验证**决定走哪条路。
 
 **目标**：框架无关的 TS 库，关键模块单元测试覆盖。
 
-| 模块 | 内容 | 测试 |
-|---|---|---|
-| `types/fmo-protocol.ts` | 所有 `type/subType` 消息的 discriminated union TS 类型 | — |
-| `types/qso.ts` / `station.ts` / `message.ts` | 业务实体类型 | — |
-| `lib/utils/url.ts` | `normalizeHost`、地址校验 | ✅ |
-| `lib/utils/callsign.ts` | 呼号+SSID 解析、校验（`^B[A-Z][0-9][A-Z]{2,3}$`） | ✅ |
-| `lib/aprs/signing.ts` | HMAC-SHA1 签名、时间槽计算 | ✅（固定 I/O 比对） |
-| `lib/aprs/counter.ts` | localStorage 计数器（带时间槽重置） | ✅（mock localStorage） |
-| `lib/aprs/packet.ts` | APRS 数据包构造 | ✅ |
-| `lib/adif/parser.ts` | ADIF 解析（UTF-8 字节感知） | ✅（含中文样本） |
-| `lib/adif/formatter.ts` | ADIF 格式化 | ✅（回环测试） |
-| `lib/storage/indexeddb.ts` | IndexedDB 抽象 | ✅（fake-indexeddb） |
-| `lib/db/sql-loader.ts` | sql.js wasm 加载 | 冒烟测试 |
-| `lib/db/qso-queries.ts` | QSO SQL 查询封装（含新功能 `getCallsignStats`） | ✅（内存 sql.js） |
-| `lib/fmo-api/client.ts` | FmoApiClient（含 reqId 优化或串行队列回退） | 冒烟测试（mock WebSocket） |
-| `lib/message-service/client.ts` | MessageService | 冒烟测试 |
+| 模块                                         | 内容                                                   | 测试                       |
+| -------------------------------------------- | ------------------------------------------------------ | -------------------------- |
+| `types/fmo-protocol.ts`                      | 所有 `type/subType` 消息的 discriminated union TS 类型 | —                          |
+| `types/qso.ts` / `station.ts` / `message.ts` | 业务实体类型                                           | —                          |
+| `lib/utils/url.ts`                           | `normalizeHost`、地址校验                              | ✅                         |
+| `lib/utils/callsign.ts`                      | 呼号+SSID 解析、校验（`^B[A-Z][0-9][A-Z]{2,3}$`）      | ✅                         |
+| `lib/aprs/signing.ts`                        | HMAC-SHA1 签名、时间槽计算                             | ✅（固定 I/O 比对）        |
+| `lib/aprs/counter.ts`                        | localStorage 计数器（带时间槽重置）                    | ✅（mock localStorage）    |
+| `lib/aprs/packet.ts`                         | APRS 数据包构造                                        | ✅                         |
+| `lib/adif/parser.ts`                         | ADIF 解析（UTF-8 字节感知）                            | ✅（含中文样本）           |
+| `lib/adif/formatter.ts`                      | ADIF 格式化                                            | ✅（回环测试）             |
+| `lib/storage/indexeddb.ts`                   | IndexedDB 抽象                                         | ✅（fake-indexeddb）       |
+| `lib/db/sql-loader.ts`                       | sql.js wasm 加载                                       | 冒烟测试                   |
+| `lib/db/qso-queries.ts`                      | QSO SQL 查询封装（含新功能 `getCallsignStats`）        | ✅（内存 sql.js）          |
+| `lib/fmo-api/client.ts`                      | FmoApiClient（含 reqId 优化或串行队列回退）            | 冒烟测试（mock WebSocket） |
+| `lib/message-service/client.ts`              | MessageService                                         | 冒烟测试                   |
 
 **APRS 测试 baseline**：用现 Vue 项目的已知输入/输出对作为 fixture 校验，防签名算法回归。
 
@@ -268,17 +272,17 @@ Phase 2 开发 `FmoApiClient` 时**首日做实机验证**决定走哪条路。
 
 **产出**：
 
-| Store | 职责 |
-|---|---|
-| `stores/connection.ts` | FMO 连接（持有 `FmoApiClient` 单例）、当前地址、协议 |
-| `stores/speaking.ts` | 讲话状态 + 历史 + **讲话者统计 LRU 缓存（最近 20 位）** |
-| `stores/settings.ts` | 全局设置（呼号、协议、多选模式等） |
-| `features/logs/store.ts` | 日志查询 / 过滤 / 分页 |
-| `features/top20/store.ts` | Top20 统计缓存 |
-| `features/old-friends/store.ts` | 老朋友列表 |
-| `features/messages/store.ts` | 消息列表 / 分页 / 未读 |
-| `features/aprs/store.ts` | APRS 状态（全量迁移 `useAprsControl` 逻辑） |
-| `features/station/store.ts` | 当前电台 / 切换 |
+| Store                           | 职责                                                    |
+| ------------------------------- | ------------------------------------------------------- |
+| `stores/connection.ts`          | FMO 连接（持有 `FmoApiClient` 单例）、当前地址、协议    |
+| `stores/speaking.ts`            | 讲话状态 + 历史 + **讲话者统计 LRU 缓存（最近 20 位）** |
+| `stores/settings.ts`            | 全局设置（呼号、协议、多选模式等）                      |
+| `features/logs/store.ts`        | 日志查询 / 过滤 / 分页                                  |
+| `features/top20/store.ts`       | Top20 统计缓存                                          |
+| `features/old-friends/store.ts` | 老朋友列表                                              |
+| `features/messages/store.ts`    | 消息列表 / 分页 / 未读                                  |
+| `features/aprs/store.ts`        | APRS 状态（全量迁移 `useAprsControl` 逻辑）             |
+| `features/station/store.ts`     | 当前电台 / 切换                                         |
 
 **hooks**：`useFmoSync()`, `useAutoReconnect()`, `useConfirm()`, `useToast()`
 
@@ -290,16 +294,16 @@ Phase 2 开发 `FmoApiClient` 时**首日做实机验证**决定走哪条路。
 
 **目标**：HUD 主题下的 UI 重构，逐个模块落地。每个子阶段独立 PR、独立 review、独立合并。
 
-| 子阶段 | 模块 | 依赖 | 预估规模 |
-|---|---|---|---|
-| 4a | **Settings + Connection** | stores/settings, stores/connection | 中（连接配置是所有功能前置） |
-| 4b | **Logs 视图** | features/logs | 大（搜索、过滤、分页、详情） |
-| 4c | **SpeakingBar（含新功能）+ Station 切换** | stores/speaking, features/station | **中**（原"小"因新功能升级为中） |
-| 4d | **Top20** | features/top20 | 中 |
-| 4e | **Old Friends** | features/old-friends | 中 |
-| 4f | **Messages** | features/messages | 中 |
-| 4g | **APRS 远控** | features/aprs | 大（表单 + 历史 + 服务器管理） |
-| 4h | **DB 导入导出 + ADIF 导入导出** | lib/adif, lib/db | 中 |
+| 子阶段 | 模块                                      | 依赖                               | 预估规模                         |
+| ------ | ----------------------------------------- | ---------------------------------- | -------------------------------- |
+| 4a     | **Settings + Connection**                 | stores/settings, stores/connection | 中（连接配置是所有功能前置）     |
+| 4b     | **Logs 视图**                             | features/logs                      | 大（搜索、过滤、分页、详情）     |
+| 4c     | **SpeakingBar（含新功能）+ Station 切换** | stores/speaking, features/station  | **中**（原"小"因新功能升级为中） |
+| 4d     | **Top20**                                 | features/top20                     | 中                               |
+| 4e     | **Old Friends**                           | features/old-friends               | 中                               |
+| 4f     | **Messages**                              | features/messages                  | 中                               |
+| 4g     | **APRS 远控**                             | features/aprs                      | 大（表单 + 历史 + 服务器管理）   |
+| 4h     | **DB 导入导出 + ADIF 导入导出**           | lib/adif, lib/db                   | 中                               |
 
 **每个 4x 子阶段的实施计划在 Phase 3 完成后单独 brainstorm 并产出**（本文档不锁 UI 细节）。
 
@@ -316,6 +320,7 @@ Phase 1 ────────────────────────
 ```
 
 **优先级指引**：
+
 - Phase 2 的类型定义可以与 Phase 1 少量重叠
 - Phase 4 的 4b/4d/4e/4f/4g/4h 互相独立，可并行或按兴趣排序；4c 含新功能建议靠前排
 
@@ -329,11 +334,11 @@ Phase 1 ────────────────────────
 
 ### 4.2 显示内容
 
-| 展示 | 格式 | 数据源 |
-|---|---|---|
-| 通联次数 | `QSO×12` 等宽数字 | `SELECT COUNT(*)` |
-| 最后通联 | 相对时间：`LAST 3d ago` / `LAST 2mo ago` / `FIRST MEET` | `SELECT MAX(timestamp)` |
-| 徽章 | 🆕 新联络人（0 次）/ ⭐ 熟人（5-19）/ 💎 老朋友（≥20）；1-4 次无徽章 | 派生 |
+| 展示     | 格式                                                                 | 数据源                  |
+| -------- | -------------------------------------------------------------------- | ----------------------- |
+| 通联次数 | `QSO×12` 等宽数字                                                    | `SELECT COUNT(*)`       |
+| 最后通联 | 相对时间：`LAST 3d ago` / `LAST 2mo ago` / `FIRST MEET`              | `SELECT MAX(timestamp)` |
+| 徽章     | 🆕 新联络人（0 次）/ ⭐ 熟人（5-19）/ 💎 老朋友（≥20）；1-4 次无徽章 | 派生                    |
 
 **阈值**：5 / 20（后续可在设置中调整）。当前 OldFriends 视图无阈值，不冲突。
 
@@ -384,16 +389,16 @@ SpeakingBar 组件通过 selector 订阅，渲染徽章
 
 ### 5.2 视觉元素
 
-| 元素 | 做法 |
-|---|---|
-| 形状 | 锐角矩形 / 梯形切角；**无圆角或极小圆角（≤2px）** |
-| 边框 | 细双线 1px + 0.5px 间隙；四角带 `┌┐└┘` 定位符 |
-| 字体 | 标题：大写 sans-serif（如 `Inter` 加 `letter-spacing`）；正文：等宽 mono（如 `JetBrains Mono`）；数字强制 `tabular-nums` |
-| 背景 | 深紫黑 + 0.03 透明度栅格底纹 + 可选噪点层 |
-| 色系 | 主：冷蓝 `#00D9FF` / 警戒：琥珀 `#FFB000` / 危险：品红 `#FF3E5C` / 中性文本：白灰 `#E0E7EF` |
-| 聚焦态 | 霓虹描边 + 弱辉光（`box-shadow: 0 0 8px`） |
-| 动效 | 顶部扫描线（可关）、数据进出 typewriter 逐字（可关）、按钮 hover 微 glitch |
-| 数据可视化 | 进度条用阶梯格（`█ █ █ ▒ ░`）而非连续条；状态点用 `● ◉ ○` |
+| 元素       | 做法                                                                                                                     |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------ |
+| 形状       | 锐角矩形 / 梯形切角；**无圆角或极小圆角（≤2px）**                                                                        |
+| 边框       | 细双线 1px + 0.5px 间隙；四角带 `┌┐└┘` 定位符                                                                            |
+| 字体       | 标题：大写 sans-serif（如 `Inter` 加 `letter-spacing`）；正文：等宽 mono（如 `JetBrains Mono`）；数字强制 `tabular-nums` |
+| 背景       | 深紫黑 + 0.03 透明度栅格底纹 + 可选噪点层                                                                                |
+| 色系       | 主：冷蓝 `#00D9FF` / 警戒：琥珀 `#FFB000` / 危险：品红 `#FF3E5C` / 中性文本：白灰 `#E0E7EF`                              |
+| 聚焦态     | 霓虹描边 + 弱辉光（`box-shadow: 0 0 8px`）                                                                               |
+| 动效       | 顶部扫描线（可关）、数据进出 typewriter 逐字（可关）、按钮 hover 微 glitch                                               |
+| 数据可视化 | 进度条用阶梯格（`█ █ █ ▒ ░`）而非连续条；状态点用 `● ◉ ○`                                                                |
 
 ### 5.3 强度策略
 
@@ -401,9 +406,9 @@ SpeakingBar 组件通过 selector 订阅，渲染徽章
 
 ```css
 :root {
-  --hud-intensity: 1;           /* 0-1 总强度开关 */
+  --hud-intensity: 1; /* 0-1 总强度开关 */
   --hud-scanline-opacity: 0.05; /* 扫描线透明度 */
-  --hud-glitch-duration: 0.3s;  /* glitch 动效时长 */
+  --hud-glitch-duration: 0.3s; /* glitch 动效时长 */
 }
 ```
 
@@ -412,6 +417,7 @@ SpeakingBar 组件通过 selector 订阅，渲染徽章
 ### 5.4 shadcn 兼容性
 
 **不 fork** shadcn 组件源码。通过：
+
 1. Tailwind theme token 重写（`colors`, `radius`, `boxShadow`, `fontFamily`）
 2. 全局 CSS 覆盖 `focus-visible`, `::selection`, `scrollbar`
 3. 组件 `className` prop 处追加 HUD 装饰类（`data-hud-frame`, `data-hud-glow`）
@@ -446,15 +452,15 @@ SpeakingBar 组件通过 selector 订阅，渲染徽章
 
 ### 6.2 已知风险 + 缓解
 
-| 风险 | 影响 | 缓解 |
-|---|---|---|
+| 风险                                 | 影响               | 缓解                                                                       |
+| ------------------------------------ | ------------------ | -------------------------------------------------------------------------- |
 | UI 重设计偏离 — HUD 各模块风格不统一 | Phase 4 工作量膨胀 | 本文档不锁 UI 细节；Phase 4 每子阶段先独立 brainstorm；主题 token 统一收口 |
-| Vue→React 响应式心智差异 — 过度渲染 | 性能、卡顿 | 全项目统一 selector pattern；禁用整 store 订阅 |
-| ADIF UTF-8 字节处理回归 | 中文字段损坏 | Phase 2 单测放中文样本做回环测试 |
-| APRS HMAC 签名算法错误 | 设备拒收控制指令 | Phase 2 单测用现 Vue 项目 I/O 对做 baseline 比对 |
-| 迁移期旧项目 vs 继续维护 | 分心 / 双份工作 | 迁移期 FmoLogs 仅接紧急修复；新功能只入 FmoDeck |
-| 讲话统计查询频繁触发卡顿 | SpeakingBar 卡顿 | LRU 缓存 + 300ms 防抖（§4.4） |
-| shadcn 默认风格与 HUD 冲突 | 视觉不纯 | 通过 Tailwind theme + 全局 CSS 覆盖实现，不 fork 组件源码 |
+| Vue→React 响应式心智差异 — 过度渲染  | 性能、卡顿         | 全项目统一 selector pattern；禁用整 store 订阅                             |
+| ADIF UTF-8 字节处理回归              | 中文字段损坏       | Phase 2 单测放中文样本做回环测试                                           |
+| APRS HMAC 签名算法错误               | 设备拒收控制指令   | Phase 2 单测用现 Vue 项目 I/O 对做 baseline 比对                           |
+| 迁移期旧项目 vs 继续维护             | 分心 / 双份工作    | 迁移期 FmoLogs 仅接紧急修复；新功能只入 FmoDeck                            |
+| 讲话统计查询频繁触发卡顿             | SpeakingBar 卡顿   | LRU 缓存 + 300ms 防抖（§4.4）                                              |
+| shadcn 默认风格与 HUD 冲突           | 视觉不纯           | 通过 Tailwind theme + 全局 CSS 覆盖实现，不 fork 组件源码                  |
 
 ### 6.3 明确不做的事（YAGNI）
 
@@ -471,14 +477,14 @@ SpeakingBar 组件通过 selector 订阅，渲染徽章
 
 ### 6.4 修掉的现有隐患
 
-| 现隐患 | 新方案 |
-|---|---|
-| `FmoApiClient.handleMessage` 同 key 请求覆盖 | reqId 匹配（兜底：串行队列） |
+| 现隐患                                              | 新方案                                               |
+| --------------------------------------------------- | ---------------------------------------------------- |
+| `FmoApiClient.handleMessage` 同 key 请求覆盖        | reqId 匹配（兜底：串行队列）                         |
 | `station.getListRange → getListResponse` 字符串特判 | 在 `fmo-protocol.ts` 用 discriminated union 显式映射 |
-| sql.js wasm 依赖 `cdn.lzyike.cn` CDN | 本地 Vite 静态资源捆绑 |
-| `getOldFriendsFromIndexedDB` 用 JS 内存聚合 | 改原生 SQL `GROUP BY` |
-| 0 测试 | lib/ 层关键纯逻辑全覆盖单测 |
-| 无类型 | TS strict，全项目类型安全 |
+| sql.js wasm 依赖 `cdn.lzyike.cn` CDN                | 本地 Vite 静态资源捆绑                               |
+| `getOldFriendsFromIndexedDB` 用 JS 内存聚合         | 改原生 SQL `GROUP BY`                                |
+| 0 测试                                              | lib/ 层关键纯逻辑全覆盖单测                          |
+| 无类型                                              | TS strict，全项目类型安全                            |
 
 ---
 

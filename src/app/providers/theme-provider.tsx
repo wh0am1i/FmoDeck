@@ -54,9 +54,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setThemeState(next)
   }
 
-  return (
-    <ThemeContext value={{ theme, resolvedTheme, setTheme }}>{children}</ThemeContext>
-  )
+  return <ThemeContext value={{ theme, resolvedTheme, setTheme }}>{children}</ThemeContext>
 }
 
 export function useTheme(): ThemeContextValue {

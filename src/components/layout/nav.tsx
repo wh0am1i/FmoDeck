@@ -6,7 +6,7 @@ interface NavItem {
   label: string
 }
 
-const items: ReadonlyArray<NavItem> = [
+const items: readonly NavItem[] = [
   { to: '/logs', label: 'LOGS' },
   { to: '/top20', label: 'TOP 20' },
   { to: '/old-friends', label: 'OLD FRIENDS' },
@@ -16,10 +16,7 @@ const items: ReadonlyArray<NavItem> = [
 
 export function Nav() {
   return (
-    <nav
-      aria-label="主导航"
-      className="hud-frame flex gap-0 bg-card/50"
-    >
+    <nav aria-label="主导航" className="hud-frame flex gap-0 bg-card/50">
       {items.map((item) => (
         <NavLink
           key={item.to}
