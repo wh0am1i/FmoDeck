@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { resetStationForTest, stationStore } from './store'
 import type { ServerStation, StationService } from '@/lib/station-service/client'
 
-function mockSvc(overrides: Partial<Record<keyof StationService, ReturnType<typeof vi.fn>>> = {}): StationService {
+function mockSvc(
+  overrides: Partial<Record<keyof StationService, ReturnType<typeof vi.fn>>> = {}
+): StationService {
   return {
     getCurrent: vi.fn().mockResolvedValue({ uid: 1, name: 'A' } as ServerStation),
     getListAll: vi.fn().mockResolvedValue([{ uid: 1, name: 'A' }]),

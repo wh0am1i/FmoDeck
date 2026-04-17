@@ -14,7 +14,18 @@ export type MessageSubType =
   | 'deleteItemResponse'
   | 'deleteAllResponse'
 
-export type StationSubType = 'getListRange' | 'getCurrent' | 'setCurrent' | 'next' | 'prev'
+export type StationSubType =
+  | 'getListRange'
+  | 'getCurrent'
+  | 'setCurrent'
+  | 'next'
+  | 'prev'
+  // Response 变体（服务器返 getListResponse 而非 getListRangeResponse）
+  | 'getListResponse'
+  | 'getCurrentResponse'
+  | 'setCurrentResponse'
+  | 'nextResponse'
+  | 'prevResponse'
 
 export type QsoSubType = 'getList' | 'getDetail' | 'getListResponse' | 'getDetailResponse'
 

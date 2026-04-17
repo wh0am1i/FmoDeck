@@ -115,7 +115,11 @@ describe('FmoApiClient · 请求（串行队列）', () => {
 
   it('station/getListRange 特殊映射到 getListResponse', async () => {
     const { client, ws } = await connected()
-    const p = client.send({ type: 'station', subType: 'getListRange', data: { start: 0, count: 5 } })
+    const p = client.send({
+      type: 'station',
+      subType: 'getListRange',
+      data: { start: 0, count: 5 }
+    })
     ws.emit({
       type: 'station',
       subType: 'getListResponse',

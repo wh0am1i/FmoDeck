@@ -57,7 +57,7 @@ export function OldFriendsView() {
 
   function gotoLogs(callsign: string) {
     logsStore.getState().setFilter(callsign)
-    navigate('/logs')
+    void navigate('/logs')
   }
 
   const synced = useMemo(

@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { StationService } from '@/lib/station-service/client'
 import { connectionStore } from '@/stores/connection'
@@ -54,16 +50,9 @@ export function StationSwitcher() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="hud-mono gap-2 text-xs"
-          aria-label="切换中继"
-        >
+        <Button variant="ghost" size="sm" className="hud-mono gap-2 text-xs" aria-label="切换中继">
           <Radio className={cn('h-3 w-3', busy && 'animate-pulse')} />
-          <span className="max-w-32 truncate text-primary">
-            {current?.name ?? '未选择'}
-          </span>
+          <span className="max-w-32 truncate text-primary">{current?.name ?? '未选择'}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80">
@@ -107,10 +96,7 @@ export function StationSwitcher() {
           )}
 
           {list.length > 0 && (
-            <ul
-              className="flex max-h-64 flex-col gap-0.5 overflow-y-auto"
-              aria-label="中继列表"
-            >
+            <ul className="flex max-h-64 flex-col gap-0.5 overflow-y-auto" aria-label="中继列表">
               {list.map((s) => {
                 const isActive = s.uid === current?.uid
                 return (
@@ -119,10 +105,7 @@ export function StationSwitcher() {
                       type="button"
                       disabled={busy || isActive}
                       onClick={() =>
-                        void swap(
-                          () => stationStore.getState().setCurrent(svc, s.uid),
-                          '切换'
-                        )
+                        void swap(() => stationStore.getState().setCurrent(svc, s.uid), '切换')
                       }
                       className={cn(
                         'flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-xs',
