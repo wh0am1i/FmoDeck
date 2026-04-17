@@ -1,15 +1,5 @@
-import { createContext, use, useEffect, useState, type ReactNode } from 'react'
-
-export type Theme = 'light' | 'dark' | 'system'
-export type ResolvedTheme = 'light' | 'dark'
-
-interface ThemeContextValue {
-  theme: Theme
-  resolvedTheme: ResolvedTheme
-  setTheme: (t: Theme) => void
-}
-
-const ThemeContext = createContext<ThemeContextValue | null>(null)
+import { useEffect, useState, type ReactNode } from 'react'
+import { ThemeContext, type ResolvedTheme, type Theme } from './theme-context'
 
 const STORAGE_KEY = 'fmodeck-theme'
 
@@ -55,12 +45,4 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }
 
   return <ThemeContext value={{ theme, resolvedTheme, setTheme }}>{children}</ThemeContext>
-}
-
-export function useTheme(): ThemeContextValue {
-  const ctx = use(ThemeContext)
-  if (!ctx) {
-    throw new Error('useTheme must be used within ThemeProvider')
-  }
-  return ctx
 }

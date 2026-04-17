@@ -1,4 +1,4 @@
-import { useTheme } from '@/app/providers/theme-provider'
+import { useTheme } from '@/app/providers/theme-context'
 import { Button } from '@/components/ui/button'
 import { Monitor, Moon, Sun } from 'lucide-react'
 
