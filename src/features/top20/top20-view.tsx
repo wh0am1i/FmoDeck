@@ -116,22 +116,23 @@ export function Top20View() {
                 className="flex flex-1 items-center gap-3 text-left outline-none"
                 aria-label={t('top20.viewQsoOf', { callsign: item.callsign })}
               >
-                <span className="w-6 text-right text-xs text-muted-foreground">
+                {/* 固定列宽保证跨行对齐：rank 2em · callsign 7em · date 自适应 · count 右对齐固定 */}
+                <span className="w-8 text-right text-xs text-muted-foreground tabular-nums">
                   {String(i + 1).padStart(2, '0')}
                 </span>
-                <span className="flex-1 text-sm text-primary">{item.callsign}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="w-24 truncate text-sm text-primary">{item.callsign}</span>
+                <span className="flex-1 whitespace-nowrap text-xs text-muted-foreground tabular-nums">
                   {t('top20.recentPrefix')}
                   {formatTs(item.lastTime)}
                 </span>
-                <span className="min-w-8 text-right text-sm text-primary">
+                <span className="w-16 text-right text-sm text-primary tabular-nums">
                   {t('top20.timesCount', { count: item.count })}
                 </span>
               </button>
               {item.grid && (
                 <GridLocation
                   grid={item.grid}
-                  className="basis-full text-xs sm:basis-auto sm:pl-9"
+                  className="basis-full text-xs sm:basis-auto sm:pl-[11px]"
                 />
               )}
             </li>
