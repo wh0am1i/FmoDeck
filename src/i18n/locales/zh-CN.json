@@ -320,7 +320,7 @@
     "formMycallHint": "你的呼号 + SSID，SSID 必须与 FMO 设置的尾缀不同",
     "formMycallPlaceholder": "如 BG5ESN-1",
     "formTocallLabel": "目标呼号",
-    "formTocallHint": "填 FMO 设备里设置的 callsign-ssid",
+    "formTocallHint": "填 FMO 设备里设置的呼号 + SSID",
     "formTocallPlaceholder": "如 BH5HSJ-10",
     "formPasscodeLabel": "APRS 密钥",
     "formPasscodeHint": "APRS-IS 登录密码，可点「计算」从呼号推导",

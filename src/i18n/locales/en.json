@@ -320,7 +320,7 @@
     "formMycallHint": "Your callsign + SSID; SSID must differ from the one configured on the FMO",
     "formMycallPlaceholder": "e.g. BG5ESN-1",
     "formTocallLabel": "Target callsign",
-    "formTocallHint": "Enter the callsign-ssid configured on the FMO device",
+    "formTocallHint": "Enter the callsign + SSID configured on the FMO device",
     "formTocallPlaceholder": "e.g. BH5HSJ-10",
     "formPasscodeLabel": "APRS key",
     "formPasscodeHint": "APRS-IS login password; click Compute to derive from callsign",
