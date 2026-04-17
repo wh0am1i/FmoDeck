@@ -69,9 +69,7 @@ export function LogsView() {
             onClick={() => void refresh()}
             disabled={status === 'loading'}
           >
-            <RefreshCw
-              className={status === 'loading' ? 'h-4 w-4 animate-spin' : 'h-4 w-4'}
-            />
+            <RefreshCw className={status === 'loading' ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
             刷新
           </Button>
         </div>

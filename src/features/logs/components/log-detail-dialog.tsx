@@ -64,9 +64,7 @@ export function LogDetailDialog({ logId, onClose }: Props) {
             服务器返回的完整 QSO 记录
           </DialogDescription>
         </DialogHeader>
-        {loading && (
-          <div className="hud-mono py-6 text-sm text-muted-foreground">加载中...</div>
-        )}
+        {loading && <div className="hud-mono py-6 text-sm text-muted-foreground">加载中...</div>}
         {detail && (
           <dl className="hud-mono grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 py-2 text-sm">
             <dt className="text-muted-foreground">Time</dt>
@@ -85,8 +83,7 @@ export function LogDetailDialog({ logId, onClose }: Props) {
 
             <dt className="text-muted-foreground">To</dt>
             <dd className="text-primary">
-              {detail.toCallsign}{' '}
-              <span className="text-muted-foreground">({detail.toGrid})</span>
+              {detail.toCallsign} <span className="text-muted-foreground">({detail.toGrid})</span>
             </dd>
 
             {detail.toComment && (

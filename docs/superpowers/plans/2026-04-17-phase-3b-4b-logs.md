@@ -5,17 +5,19 @@
 **Goal:** 落地 Logs 视图 —— 从 fmo.local 拉 QSO 日志（`qso/getList`）、展示、搜索过滤、分页、点行看详情（`qso/getDetail`）。同步交付 `features/logs/store.ts`（Phase 3b 子集）。
 
 **Scope 限定（已确认）：**
+
 - ✅ 本阶段：logs store + QsoService + Logs UI（表格 + 过滤 + 分页 + 详情）
 - ❌ 不做：ADIF 导入导出（Phase 4h）· 本地 IndexedDB 持久化（Phase 4h）· 其他 feature store
 
 **服务器协议探测结果：**
 
-| 请求                                    | 响应 `data` 形状                                                           |
-| --------------------------------------- | -------------------------------------------------------------------------- |
-| `{type:'qso', subType:'getList'}`       | `{list: [{logId, timestamp(秒), toCallsign, grid}, ...]}`（limit 被忽略）  |
+| 请求                                              | 响应 `data` 形状                                                                                                            |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `{type:'qso', subType:'getList'}`                 | `{list: [{logId, timestamp(秒), toCallsign, grid}, ...]}`（limit 被忽略）                                                   |
 | `{type:'qso', subType:'getDetail', data:{logId}}` | `{log: {logId, timestamp(秒), freqHz, fromCallsign, fromGrid, toCallsign, toGrid, toComment, mode, relayName, relayAdmin}}` |
 
 **关键差异**：
+
 - 摘要只有 4 字段（grid 而非 toGrid）
 - timestamp 是 **Unix 秒**，不是毫秒
 - 服务器不支持服务端分页 → 客户端分页
@@ -54,6 +56,7 @@
 ## Task 1: QsoSummary 类型 + QsoService 包装
 
 **Files:**
+
 - Modify: `src/types/qso.ts`
 - Create: `src/lib/qso-service/client.ts`
 - Create: `src/lib/qso-service/client.test.ts`
@@ -114,10 +117,12 @@ export class QsoService {
 ## Task 2: features/logs/store.ts
 
 **Files:**
+
 - Create: `src/features/logs/store.ts`
 - Create: `src/features/logs/store.test.ts`
 
 **Store 形状：**
+
 ```ts
 {
   all: QsoSummary[]        // 从服务器拉来的全量摘要
@@ -151,6 +156,7 @@ export class QsoService {
 **LogsFilter**：Input + Clear 按钮
 
 **LogsTable**：
+
 - 列：Time / To Callsign / Grid / （空操作列）
 - 点击 row → 触发 onRowClick(logId)
 - 响应式：超窄屏幕隐藏 Grid
@@ -170,7 +176,7 @@ export class QsoService {
 Time: 2026-04-11 12:35:02
 Freq: 1.457500 MHz (FMO)
 From: BH6SCA (OM40vp)
-To:   BI2RCY (PN11rr)  
+To:   BI2RCY (PN11rr)
 Comment: ID:BI2RCY
 Relay: 如意甘肃 / BG9JYT
 ```

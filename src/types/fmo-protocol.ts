@@ -16,9 +16,9 @@ export type MessageSubType =
 
 export type StationSubType = 'getListRange' | 'getCurrent' | 'setCurrent' | 'next' | 'prev'
 
-export type QsoSubType = 'getList' | 'getDetail'
+export type QsoSubType = 'getList' | 'getDetail' | 'getListResponse' | 'getDetailResponse'
 
-export type UserSubType = 'getInfo'
+export type UserSubType = 'getInfo' | 'getInfoResponse'
 
 export type FmoRequest =
   | { type: 'message'; subType: MessageSubType; reqId?: string; data?: unknown }
