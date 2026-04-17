@@ -148,7 +148,8 @@ export function LogsTable({ onRowClick }: Props) {
                   </td>
                   <td className="px-3 py-2 text-primary">
                     <span className="flex flex-wrap items-center gap-1.5">
-                      <span>{r.toCallsign}</span>
+                      {/* min-w 让所有呼号占同宽，后面的徽章按列对齐 */}
+                      <span className="inline-block min-w-[5.5em]">{r.toCallsign}</span>
                       {isToday && (
                         <span className="rounded-sm border border-primary bg-primary/10 px-1 py-0 text-[10px] font-bold uppercase leading-4 text-primary">
                           {t('logs.badgeToday')}
