@@ -144,13 +144,20 @@ export const logsStore = create<LogsState>()((set, get) => ({
 
 /**
  * 合并 server + local 的所有记录为 DisplayRow[]，按 timestamp 倒序。
+ *
+ * 去重：若某条 QSO 在 server 和 local 同时存在（(呼号, 时间戳) 相同），
+ * 认为是同一条 —— 保留 server 这条，丢弃 local 的那条。典型场景：
+ * 用户先导入了 ADIF，再连上 FMO 把全量日志拉下来，两边内容重叠。
+ *
  * syncMode='today' 在这里统一筛掉非当天。
  */
 export function selectMergedRows(s: LogsState): DisplayRow[] {
   const cutoff = s.syncMode === 'today' ? startOfLocalToday() : null
   const rows: DisplayRow[] = []
+  const serverKeys = new Set<string>()
   for (const r of s.all) {
     if (cutoff !== null && r.timestamp < cutoff) continue
+    serverKeys.add(`${r.toCallsign}\u0001${r.timestamp}`)
     rows.push({
       source: 'server',
       logId: r.logId,
@@ -161,6 +168,7 @@ export function selectMergedRows(s: LogsState): DisplayRow[] {
   }
   for (const r of s.local) {
     if (cutoff !== null && r.timestamp < cutoff) continue
+    if (serverKeys.has(`${r.toCallsign}\u0001${r.timestamp}`)) continue
     rows.push({
       source: 'local',
       localId: r.id,
