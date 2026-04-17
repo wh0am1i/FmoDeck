@@ -59,9 +59,9 @@ describe('Top20View', () => {
     expect(screen.getByText('BG1ABC')).toBeInTheDocument()
     expect(screen.getByText('BG2XYZ')).toBeInTheDocument()
     expect(screen.getByText('BG3PDQ')).toBeInTheDocument()
-    // 数量显示（i18n 模板 "{{count}} 次"）
-    expect(screen.getByText('6 次')).toBeInTheDocument()
-    expect(screen.getByText('3 次')).toBeInTheDocument()
+    // 数量显示（数字和"次"单元分离渲染，按呼号所在行定位）
+    expect(screen.getByRole('button', { name: /BG1ABC/ })).toHaveTextContent('6次')
+    expect(screen.getByRole('button', { name: /BG2XYZ/ })).toHaveTextContent('3次')
   })
 
   it('并列时按 lastTime 倒序', () => {

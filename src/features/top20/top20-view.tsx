@@ -125,8 +125,13 @@ export function Top20View() {
                   {t('top20.recentPrefix')}
                   {formatTs(item.lastTime)}
                 </span>
-                <span className="w-16 text-right text-sm text-primary tabular-nums">
-                  {t('top20.timesCount', { count: item.count })}
+                {/* 把"次"独立出来，数字用 tabular-nums 等宽右对齐，
+                    保证不同位数在视觉上对齐到同一右边界 */}
+                <span className="flex w-16 items-baseline justify-end gap-1 text-sm text-primary">
+                  <span className="tabular-nums">{item.count}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {t('top20.timesUnit')}
+                  </span>
                 </span>
               </button>
               {item.grid && (

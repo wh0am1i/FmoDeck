@@ -226,7 +226,8 @@
     "excludedHistory": "已排除 {{count}} 条历史",
     "viewQsoOf": "查看 {{callsign}} 的通联记录",
     "recentPrefix": "最近 ",
-    "timesCount": "{{count}} 次"
+    "timesCount": "{{count}} 次",
+    "timesUnit": "次"
   },
   "oldFriends": {
     "title": "[ 老朋友 ]",

@@ -226,7 +226,8 @@
     "excludedHistory": "Excluded {{count}} historical",
     "viewQsoOf": "View QSOs with {{callsign}}",
     "recentPrefix": "Last ",
-    "timesCount": "{{count}} QSO"
+    "timesCount": "{{count}} QSO",
+    "timesUnit": "QSO"
   },
   "oldFriends": {
     "title": "[ OLD FRIENDS ]",
