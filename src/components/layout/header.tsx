@@ -1,5 +1,6 @@
 import { useTheme } from '@/app/providers/theme-context'
 import { Button } from '@/components/ui/button'
+import { ConnectionIndicator } from './connection-indicator'
 import { Monitor, Moon, Sun } from 'lucide-react'
 
 export function Header() {
@@ -20,14 +21,17 @@ export function Header() {
           <span className="hud-title text-primary">[ FMODECK ]</span>
           <span className="hud-mono text-xs text-muted-foreground">v0.1.0</span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={next}
-          aria-label={`切换主题（当前：${theme}）`}
-        >
-          <Icon className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-4">
+          <ConnectionIndicator />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={next}
+            aria-label={`切换主题（当前：${theme}）`}
+          >
+            <Icon className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </header>
   )

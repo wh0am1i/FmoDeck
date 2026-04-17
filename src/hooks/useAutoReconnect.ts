@@ -1,4 +1,3 @@
-import { useSyncExternalStore } from 'react'
 import { connectionStore, type ConnectionStatus } from '@/stores/connection'
 
 interface AutoReconnectSnapshot {
@@ -7,11 +6,7 @@ interface AutoReconnectSnapshot {
 }
 
 export function useAutoReconnect(): AutoReconnectSnapshot {
-  return useSyncExternalStore(
-    (cb) => connectionStore.subscribe(cb),
-    () => {
-      const s = connectionStore.getState()
-      return { status: s.status, lastError: s.lastError }
-    }
-  )
+  const status = connectionStore((s) => s.status)
+  const lastError = connectionStore((s) => s.lastError)
+  return { status, lastError }
 }
