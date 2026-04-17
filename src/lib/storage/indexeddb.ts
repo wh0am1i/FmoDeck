@@ -3,7 +3,7 @@ type UpgradeFn = (db: IDBDatabase, oldVersion: number, newVersion: number) => vo
 function asPromise<T>(req: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     req.onsuccess = () => resolve(req.result)
-    req.onerror = () => reject(req.error)
+    req.onerror = () => reject(req.error ?? new Error('IndexedDB request failed'))
   })
 }
 
@@ -14,7 +14,7 @@ export function openDatabase(
 ): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(name, version)
-    req.onerror = () => reject(req.error)
+    req.onerror = () => reject(req.error ?? new Error('IndexedDB request failed'))
     req.onsuccess = () => resolve(req.result)
     req.onupgradeneeded = (event) => {
       upgrade(req.result, event.oldVersion, event.newVersion ?? version)
@@ -25,7 +25,7 @@ export function openDatabase(
 export function deleteDatabase(name: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const req = indexedDB.deleteDatabase(name)
-    req.onerror = () => reject(req.error)
+    req.onerror = () => reject(req.error ?? new Error('IndexedDB request failed'))
     req.onsuccess = () => resolve()
     req.onblocked = () => reject(new Error(`Delete of ${name} blocked`))
   })
