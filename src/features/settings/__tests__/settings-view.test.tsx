@@ -73,4 +73,28 @@ describe('SettingsView', () => {
     await user.type(input, 'BA0AX')
     expect(screen.queryByText(/呼号格式不正确/)).not.toBeInTheDocument()
   })
+
+  it('添加地址 Dialog 选择"只同步当天"后持久化到 syncMode', async () => {
+    const user = userEvent.setup()
+    render(<SettingsView />)
+
+    await user.click(screen.getByRole('button', { name: /添加地址/ }))
+    await user.type(await screen.findByPlaceholderText('fmo.local'), 'fmo.local')
+    await user.click(screen.getByRole('radio', { name: /只同步当天/ }))
+    await user.click(screen.getByRole('button', { name: '添加' }))
+
+    const addrs = settingsStore.getState().fmoAddresses
+    expect(addrs).toHaveLength(1)
+    expect(addrs[0]?.syncMode).toBe('today')
+  })
+
+  it('列表徽章点击切换 syncMode', async () => {
+    settingsStore.setState({
+      fmoAddresses: [{ id: '1', host: 'fmo.local', syncMode: 'all' }]
+    })
+    const user = userEvent.setup()
+    render(<SettingsView />)
+    await user.click(screen.getByRole('button', { name: /同步模式：全量/ }))
+    expect(settingsStore.getState().fmoAddresses[0]?.syncMode).toBe('today')
+  })
 })

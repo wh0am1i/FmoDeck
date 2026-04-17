@@ -1,7 +1,12 @@
 import { Button } from '@/components/ui/button'
-import { settingsStore } from '@/stores/settings'
+import { settingsStore, type SyncMode } from '@/stores/settings'
 import { cn } from '@/lib/utils'
 import { Check, Trash2 } from 'lucide-react'
+
+const MODE_LABEL: Record<SyncMode, string> = {
+  all: '全量',
+  today: '仅当天'
+}
 
 export function FmoAddressList() {
   const addresses = settingsStore((s) => s.fmoAddresses)
@@ -19,6 +24,8 @@ export function FmoAddressList() {
     <ul className="flex flex-col gap-1" aria-label="FMO 地址列表">
       {addresses.map((a) => {
         const isActive = a.id === activeId
+        const mode: SyncMode = a.syncMode ?? 'all'
+        const nextMode: SyncMode = mode === 'all' ? 'today' : 'all'
         return (
           <li
             key={a.id}
@@ -39,6 +46,22 @@ export function FmoAddressList() {
               <div className="hud-mono text-sm text-foreground">{a.host}</div>
               {a.name && <div className="hud-mono text-xs text-muted-foreground">{a.name}</div>}
             </div>
+            <button
+              type="button"
+              onClick={() =>
+                settingsStore.getState().updateAddress(a.id, { syncMode: nextMode })
+              }
+              className={cn(
+                'hud-mono rounded-sm border px-2 py-0.5 text-xs',
+                mode === 'today'
+                  ? 'border-accent bg-accent/10 text-accent'
+                  : 'border-border text-muted-foreground hover:border-primary hover:text-primary'
+              )}
+              aria-label={`同步模式：${MODE_LABEL[mode]}（点击切换）`}
+              title="点击切换同步模式"
+            >
+              {MODE_LABEL[mode]}
+            </button>
             <Button
               variant="ghost"
               size="icon-sm"
