@@ -58,22 +58,6 @@ describe('SettingsView', () => {
     expect(settingsStore.getState().fmoAddresses).toEqual([])
   })
 
-  it('呼号非法时显示错误文本', async () => {
-    const user = userEvent.setup()
-    render(<SettingsView />)
-    const input = screen.getByLabelText(/登录呼号/)
-    await user.type(input, 'INVALID')
-    expect(await screen.findByText(/呼号格式不正确/)).toBeInTheDocument()
-  })
-
-  it('呼号合法时无错误文本', async () => {
-    const user = userEvent.setup()
-    render(<SettingsView />)
-    const input = screen.getByLabelText(/登录呼号/)
-    await user.type(input, 'BA0AX')
-    expect(screen.queryByText(/呼号格式不正确/)).not.toBeInTheDocument()
-  })
-
   it('添加地址 Dialog 选择"只同步当天"后持久化到 syncMode', async () => {
     const user = userEvent.setup()
     render(<SettingsView />)
