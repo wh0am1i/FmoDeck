@@ -11,6 +11,7 @@ const items: readonly NavItem[] = [
   { to: '/top20', label: 'TOP 20' },
   { to: '/old-friends', label: 'OLD FRIENDS' },
   { to: '/messages', label: 'MSG' },
+  { to: '/aprs', label: 'APRS' },
   { to: '/settings', label: 'SETTINGS' }
 ]
 
