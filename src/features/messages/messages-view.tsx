@@ -3,7 +3,9 @@ import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { MessageService } from '@/lib/message-service/client'
+import { notify } from '@/lib/notifications'
 import { connectionStore } from '@/stores/connection'
+import { settingsStore } from '@/stores/settings'
 import { messagesStore, selectHasMore, selectUnreadCount } from './store'
 import { ComposeDialog } from './components/compose-dialog'
 import { MessageDetailDialog } from './components/message-detail-dialog'
@@ -67,7 +69,11 @@ export function MessagesView() {
     const svc = new MessageService(client)
     const unsub = svc.onSummary((s) => {
       messagesStore.getState().prependSummary(s)
-      toast.info(t('messages.newFrom', { from: s.from }))
+      const title = t('messages.newFrom', { from: s.from })
+      toast.info(title)
+      if (settingsStore.getState().notificationsEnabled) {
+        notify(title, t('messages.notificationBody'))
+      }
     })
     return unsub
     // eslint-disable-next-line react-hooks/exhaustive-deps

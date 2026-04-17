@@ -10,6 +10,7 @@ import { settingsStore } from '@/stores/settings'
 import { FmoAddressDialog } from './components/fmo-address-dialog'
 import { FmoAddressList } from './components/fmo-address-list'
 import { HudIntensityField } from './components/hud-intensity-field'
+import { NotificationsField } from './components/notifications-field'
 
 export function SettingsView() {
   const { t } = useTranslation()
@@ -47,6 +48,11 @@ export function SettingsView() {
       <section className="hud-frame p-6 flex flex-col gap-4">
         <h2 className="hud-title text-primary">{t('settings.sectionHud')}</h2>
         <HudIntensityField />
+      </section>
+
+      <section className="hud-frame p-6 flex flex-col gap-4">
+        <h2 className="hud-title text-primary">{t('settings.sectionNotifications')}</h2>
+        <NotificationsField />
       </section>
     </div>
   )
