@@ -2,7 +2,16 @@
 
 业余无线电 FMO 平台的下一代日志与控制台 · 战术 HUD 主题 · React + TypeScript 重写版
 
-前身是 [FmoLogs](../FmoLogs)（Vue 3）。本仓库承载完整重写，分阶段推进。
+仓库地址：<https://github.com/wh0am1i/FmoDeck>
+
+## 致谢
+
+FmoDeck 是基于 [**FmoLogs**](https://github.com/dingle1122/FmoLogs)（作者
+[@dingle1122](https://github.com/dingle1122)）的二次开发作品。原项目用 Vue 3
+打底，完整搭建了与 FMO 设备交互的协议实现、日志同步、APRS 相关能力等核心
+业务逻辑。本仓库在其基础上做全面 React + TypeScript 重写、增加战术 HUD
+主题与若干打磨（见 CHANGELOG），但所有"能用起来"的根基都来自 FmoLogs。
+特此鸣谢 ✨
 
 ## 设计文档
 

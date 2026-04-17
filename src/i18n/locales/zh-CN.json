@@ -17,6 +17,10 @@
     "appName": "FMODECK",
     "version": "版本"
   },
+  "footer": {
+    "forkNotice": "基于 <1>FmoLogs</1> 二次开发 · React + TypeScript 重写",
+    "repoAria": "打开 GitHub 仓库"
+  },
   "theme": {
     "light": "浅色",
     "dark": "深色",

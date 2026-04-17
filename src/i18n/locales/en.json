@@ -17,6 +17,10 @@
     "appName": "FMODECK",
     "version": "version"
   },
+  "footer": {
+    "forkNotice": "Fork of <1>FmoLogs</1> · rewritten in React + TypeScript",
+    "repoAria": "Open GitHub repository"
+  },
   "theme": {
     "light": "Light",
     "dark": "Dark",
