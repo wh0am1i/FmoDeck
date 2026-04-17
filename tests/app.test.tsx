@@ -12,7 +12,7 @@ describe('App 烟雾测试', () => {
   it('Header 显示应用标识和版本', () => {
     render(<App />)
     expect(screen.getByText('[ FMODECK ]')).toBeInTheDocument()
-    expect(screen.getByText('v0.1.0')).toBeInTheDocument()
+    expect(screen.getByText('v0.1.1')).toBeInTheDocument()
   })
 
   it('Nav 包含各路由 tab（zh-CN 标签）', () => {

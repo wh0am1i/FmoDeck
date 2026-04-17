@@ -4,6 +4,45 @@
 
 仓库地址：<https://github.com/wh0am1i/FmoDeck>
 
+## 更新记录
+
+### v0.1.1 (2026-04-17)
+
+**新增**
+
+- APRS 远程控制恢复（普通 / 待机 / 软重启三按钮 + 参数表单 + 20 条历史）
+- 桌面通知：HTTPS 部署下可选开启，新消息 / 新朋友讲话时弹系统通知
+- 消息回复、批量「全部已读」、单条与「全部删除」
+- 撰写消息改为 呼号 + SSID 两个独立输入框（对齐 FmoLogs）
+- 日志筛选支持日期范围（今天 / 近 7 天 / 近 30 天），导出 ADIF 改为导出过滤后的结果
+- SpeakingBar 加「✦ 新朋友」徽章（仅通联过 1 次时显示）
+- 删除确认弹窗从浏览器原生 `window.confirm` 换成 HUD 风自定义 Dialog
+- 所有新增面板全量 i18n（中英文同步）
+
+**修复**
+
+- 二次导入 ADIF 不再重复（ID 改为纯内容派生 + 加载时去重）
+- 服务器日志与本地 ADIF 合并时按 (呼号, 时间戳) 去重，避免双份显示
+- 中继在设备上被物理按钮切换时，前端每 15s 轮询同步，tab 切回前台即刻补拉
+- 发送消息 payload 字段对齐 FMO 服务端（`{callsign, ssid, message}`）
+- 消息详情正文字段从 `content` 改为 `message`（之前渲染为空）
+- 日期筛选实际生效（LogsTable 补订阅 `dateFilter`）
+- 中继切换"点两次才生效"（去掉 RPC 后的 getCurrent 竞态回填）
+
+**体验打磨**
+
+- README 重写为 HTTP 部署专版，补「常见坑」小节
+- 移动端 Header / Nav / 日志表头按钮组不再错行
+- 导出 ADIF 可按过滤结果导出（不再是全量）
+- 内部全量 i18n 覆盖：表头、徽章、toast、aria-label、段标题等
+- Footer 加 GitHub 链接 + FmoLogs 二次开发致谢
+- MIT License 与上游对齐
+
+### v0.1.0
+
+首个可用版本 —— 基于 FmoLogs 的 React + TypeScript 完整重写，战术 HUD 主题，
+覆盖日志 / 排行榜 / 老朋友 / 消息 / 设置等主视图。
+
 ## 致谢
 
 FmoDeck 是基于 [**FmoLogs**](https://github.com/dingle1122/FmoLogs)（作者
