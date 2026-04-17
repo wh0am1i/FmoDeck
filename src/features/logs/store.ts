@@ -34,13 +34,24 @@ const INITIAL = {
   syncMode: 'all' as SyncMode
 }
 
-export const logsStore = create<LogsState>()((set) => ({
+/** 本地时区"今天 00:00"的 Unix 秒。 */
+function startOfLocalToday(nowMs: number = Date.now()): number {
+  const d = new Date(nowMs)
+  d.setHours(0, 0, 0, 0)
+  return Math.floor(d.getTime() / 1000)
+}
+
+export const logsStore = create<LogsState>()((set, get) => ({
   ...INITIAL,
 
   load: async (svc: QsoService) => {
     set({ status: 'loading', error: null })
+    const mode = get().syncMode
+    const cutoff = mode === 'today' ? startOfLocalToday() : null
     try {
-      const all = await svc.getList()
+      const all = await svc.getListAll(
+        cutoff !== null ? { stopAt: (r) => r.timestamp < cutoff } : {}
+      )
       set({ all, status: 'idle', page: 0 })
     } catch (err) {
       set({
@@ -56,13 +67,6 @@ export const logsStore = create<LogsState>()((set) => ({
 
   setSyncMode: (m: SyncMode) => set((s) => (s.syncMode === m ? s : { syncMode: m, page: 0 }))
 }))
-
-/** 本地时区"今天 00:00"的 Unix 秒。 */
-function startOfLocalToday(nowMs: number = Date.now()): number {
-  const d = new Date(nowMs)
-  d.setHours(0, 0, 0, 0)
-  return Math.floor(d.getTime() / 1000)
-}
 
 /**
  * 应用 syncMode 后的日志 "有效全量"。

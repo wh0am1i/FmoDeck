@@ -11,7 +11,10 @@ import type { QsoService } from '@/lib/qso-service/client'
 import type { QsoSummary } from '@/types/qso'
 
 function mockSvc(list: QsoSummary[]): QsoService {
-  return { getList: vi.fn().mockResolvedValue(list) } as unknown as QsoService
+  // mock getListAll 忽略 options，返回传入的列表
+  return {
+    getListAll: vi.fn().mockResolvedValue(list)
+  } as unknown as QsoService
 }
 
 function makeSummary(overrides: Partial<QsoSummary> = {}): QsoSummary {
@@ -38,11 +41,36 @@ describe('logs store · load', () => {
 
   it('load 失败时 status=error 并保存 error', async () => {
     const svc = {
-      getList: vi.fn().mockRejectedValue(new Error('boom'))
+      getListAll: vi.fn().mockRejectedValue(new Error('boom'))
     } as unknown as QsoService
     await logsStore.getState().load(svc)
     expect(logsStore.getState().status).toBe('error')
     expect(logsStore.getState().error?.message).toBe('boom')
+  })
+
+  it('syncMode=all 时不传 stopAt', async () => {
+    const getListAll = vi.fn().mockResolvedValue([])
+    const svc = { getListAll } as unknown as QsoService
+    logsStore.setState({ syncMode: 'all' })
+    await logsStore.getState().load(svc)
+    const opts = getListAll.mock.calls[0]?.[0] as { stopAt?: unknown } | undefined
+    expect(opts?.stopAt).toBeUndefined()
+  })
+
+  it('syncMode=today 时传入按 timestamp early-break 的 stopAt', async () => {
+    const getListAll = vi.fn().mockResolvedValue([])
+    const svc = { getListAll } as unknown as QsoService
+    logsStore.setState({ syncMode: 'today' })
+    await logsStore.getState().load(svc)
+    const opts = getListAll.mock.calls[0]?.[0] as
+      | { stopAt?: (r: QsoSummary) => boolean }
+      | undefined
+    expect(typeof opts?.stopAt).toBe('function')
+    // 昨天的记录触发停止
+    expect(opts!.stopAt!(makeSummary({ timestamp: 1000 }))).toBe(true)
+    // 今天的记录不停止（用远未来时间戳）
+    const future = Math.floor(Date.now() / 1000) + 1000
+    expect(opts!.stopAt!(makeSummary({ timestamp: future }))).toBe(false)
   })
 
   it('load 重置 page 到 0', async () => {
