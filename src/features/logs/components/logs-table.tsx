@@ -98,11 +98,11 @@ export function LogsTable({ onRowClick }: Props) {
       <table className="hud-mono w-full text-sm" aria-label={t('logs.title')}>
         <thead>
           <tr className="border-b border-border text-left text-xs text-muted-foreground">
-            <th className="px-3 py-2 min-w-24">TIME</th>
-            <th className="hidden md:table-cell px-3 py-2">AGO</th>
-            <th className="px-3 py-2">TO CALL</th>
-            <th className="hidden sm:table-cell px-3 py-2">GRID</th>
-            <th className="px-3 py-2 text-right">QSO</th>
+            <th className="px-3 py-2 min-w-24">{t('logs.colTime')}</th>
+            <th className="hidden md:table-cell px-3 py-2">{t('logs.colAgo')}</th>
+            <th className="px-3 py-2">{t('logs.colToCall')}</th>
+            <th className="hidden sm:table-cell px-3 py-2">{t('logs.colGrid')}</th>
+            <th className="px-3 py-2 text-right">{t('logs.colQso')}</th>
           </tr>
         </thead>
         <tbody>
@@ -149,7 +149,7 @@ export function LogsTable({ onRowClick }: Props) {
                       <span>{r.toCallsign}</span>
                       {isToday && (
                         <span className="rounded-sm border border-primary bg-primary/10 px-1 py-0 text-[10px] font-bold uppercase leading-4 text-primary">
-                          TODAY
+                          {t('logs.badgeToday')}
                         </span>
                       )}
                       {r.source === 'local' && (
@@ -157,7 +157,7 @@ export function LogsTable({ onRowClick }: Props) {
                           className="rounded-sm border border-accent bg-accent/10 px-1 py-0 text-[10px] font-bold uppercase leading-4 text-accent"
                           title={t('logDetail.localSource')}
                         >
-                          LOCAL
+                          {t('logs.badgeLocal')}
                         </span>
                       )}
                     </span>

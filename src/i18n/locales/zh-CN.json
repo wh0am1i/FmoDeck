@@ -151,7 +151,14 @@
     "loaded": "已加载 {{count}} 条日志",
     "emptyTable": "[ NO RECORDS · 等连接或清过滤条件 ]",
     "filterPlaceholder": "按呼号前缀过滤（如 BG）",
-    "filterAria": "过滤呼号"
+    "filterAria": "过滤呼号",
+    "colTime": "时间",
+    "colAgo": "距今",
+    "colToCall": "对方呼号",
+    "colGrid": "网格",
+    "colQso": "通联",
+    "badgeToday": "今日",
+    "badgeLocal": "本地"
   },
   "logDetail": {
     "localTitle": "[ LOG DETAIL · LOCAL ]",

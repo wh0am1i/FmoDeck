@@ -151,7 +151,14 @@
     "loaded": "Loaded {{count}} logs",
     "emptyTable": "[ NO RECORDS · awaiting connection or clear the filter ]",
     "filterPlaceholder": "Filter by callsign prefix (e.g. BG)",
-    "filterAria": "Filter callsign"
+    "filterAria": "Filter callsign",
+    "colTime": "TIME",
+    "colAgo": "AGO",
+    "colToCall": "TO CALL",
+    "colGrid": "GRID",
+    "colQso": "QSO",
+    "badgeToday": "TODAY",
+    "badgeLocal": "LOCAL"
   },
   "logDetail": {
     "localTitle": "[ LOG DETAIL · LOCAL ]",
