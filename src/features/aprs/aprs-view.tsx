@@ -6,7 +6,7 @@ import { AprsParamsForm } from './components/aprs-params-form'
 import { Pause, Play, Power } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const ACTIONS: Array<{ key: AprsAction; label: string; icon: typeof Play; variant: string }> = [
+const ACTIONS: { key: AprsAction; label: string; icon: typeof Play; variant: string }[] = [
   { key: 'NORMAL', label: '普通模式', icon: Play, variant: 'default' },
   { key: 'STANDBY', label: '待机模式', icon: Pause, variant: 'secondary' },
   { key: 'REBOOT', label: '软重启', icon: Power, variant: 'destructive' }

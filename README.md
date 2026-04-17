@@ -17,7 +17,8 @@
 - [Phase 4a · Settings + Connection UI](docs/superpowers/plans/2026-04-17-phase-4a-settings-ui.md) ✅
 - [Phase 3b-logs + 4b · Logs 视图](docs/superpowers/plans/2026-04-17-phase-3b-4b-logs.md) ✅
 - Phase 4f · Messages 视图（含 messages store）✅
-- Phase 3b 其余（top20/station/aprs/speaking stores）— 按 UI 需求分批规划
+- Phase 4g · APRS 远控（含 aprs store + gateway client）✅
+- Phase 3b 其余（top20/station/speaking stores）— 按 UI 需求分批规划
 
 ## 技术栈
 
