@@ -300,15 +300,16 @@
     "label": "Passcode"
   },
   "audio": {
-    "on": "Listen",
-    "off": "Listen",
+    "triggerLabel": "Listen",
+    "popoverTitle": "[ AUDIO ]",
     "titleEnable": "Start listening to FMO audio (first click also unlocks browser audio)",
     "titleOffline": "Available after connecting to FMO",
-    "titleMute": "Mute (keep connection)",
-    "titleUnmute": "Unmute",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "stop": "Stop",
     "volumeLabel": "Volume",
     "volumeAria": "Volume control",
-    "volumeDesc": "0% = mute · 100% = normal · 200% = amplified (may clip)",
+    "volumeDesc": "0 = mute · 100% = normal · 200% = amplified (may clip)",
     "errorPrefix": "Error: "
   },
   "aprsRemote": {
