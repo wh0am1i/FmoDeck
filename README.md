@@ -32,86 +32,30 @@
 
 ### v0.1.2 (2026-04-18)
 
-**新增**
-
-- **音频收听**：裸 Web Audio 实现直连 FMO 的 `/audio` 端点，8kHz PCM
-  下行，配 HPF / LPF / EQ×3 / 动态压缩处理链；SpeakingBar 右侧一键开关
-  - Popover 内 VU 电平条 + 音量滑杆 + 静音切换；自动断线重连
-- **自语过滤**：配置了「我的呼号」后，自己讲话时自动静音，避免听到
-  设备回授的自己声音
-- **大字体模式**：Header 主题旁新增 A/A 切换，桌面字号放大到 20px +
-  加粗；移动端为避免布局挤爆不启用
-- **中继搜索**：StationSwitcher 列表 ≥ 6 条时出现搜索框，按名称或
-  UID 模糊匹配；关闭弹窗自动清空
-- **网格 → 实际位置**：Maidenhead 网格解析 + OpenStreetMap Nominatim
-  反向地理编码，展示为「OM89ij · 北京市, 中国」可点击跳转 OSM；
-  localStorage 缓存 + 1 req/s 串行队列，二次访问瞬时命中
-- **位置展示覆盖**：日志表格 / 日志详情 / 排行榜 / 老朋友 / SpeakingBar
-  当前讲话者
-- **APRS 恢复**：远程控制因 gateway 域名白名单问题恢复使用
-- **Settings 恢复 [ 身份 ] 段**：用于自语过滤 + SpeakingBar「我自己」
-  标签
-
-**修复**
-
-- 点击网格链接时不再误触发父行 `onClick`（日志表格点一下连带弹出
-  详情的 bug）
-- 消息正文字段名对齐服务端（`content` → `message`，之前渲染为空白）
-- 消息撰写时呼号与 SSID 拆成两个输入框（对齐 FmoLogs）
-
-**体验打磨**
-
-- 音频控件两级交互：外置开关一键启/停；Popover 聚焦调节（音量、
-  静音、错误提示）
-- APRS 参数表单文案全量对齐 FmoLogs 风格：控制呼号 / 目标呼号 /
-  APRS 密钥 / 设备密钥；placeholder 更直观
-- 所有新增面板全量中英双语 i18n
+- **音频收听**：裸 Web Audio 直连 FMO `/audio`，8kHz PCM + HPF/LPF/EQ/压缩；
+  SpeakingBar 右侧开关 + VU + 音量 + 静音；自己讲话时自动过滤回授
+- **大字体模式**（仅桌面）、**中继搜索**（StationSwitcher ≥ 6 条时出现）
+- **网格 → 地名**：Maidenhead 反查 OSM Nominatim，可点击跳转，结果缓存
+- 修若干 bug：网格链接误触父行、消息字段名、呼号/SSID 拆分等
 
 ### v0.1.1 (2026-04-17)
 
-**新增**
-
-- APRS 远程控制恢复（普通 / 待机 / 软重启三按钮 + 参数表单 + 20 条历史）
-- 桌面通知：HTTPS 部署下可选开启，新消息 / 新朋友讲话时弹系统通知
-- 消息回复、批量「全部已读」、单条与「全部删除」
-- 撰写消息改为 呼号 + SSID 两个独立输入框（对齐 FmoLogs）
-- 日志筛选支持日期范围（今天 / 近 7 天 / 近 30 天），导出 ADIF 改为导出过滤后的结果
-- SpeakingBar 加「✦ 新朋友」徽章（仅通联过 1 次时显示）
-- 删除确认弹窗从浏览器原生 `window.confirm` 换成 HUD 风自定义 Dialog
-- 所有新增面板全量 i18n（中英文同步）
-
-**修复**
-
-- 二次导入 ADIF 不再重复（ID 改为纯内容派生 + 加载时去重）
-- 服务器日志与本地 ADIF 合并时按 (呼号, 时间戳) 去重，避免双份显示
-- 中继在设备上被物理按钮切换时，前端每 15s 轮询同步，tab 切回前台即刻补拉
-- 发送消息 payload 字段对齐 FMO 服务端（`{callsign, ssid, message}`）
-- 消息详情正文字段从 `content` 改为 `message`（之前渲染为空）
-- 日期筛选实际生效（LogsTable 补订阅 `dateFilter`）
-- 中继切换"点两次才生效"（去掉 RPC 后的 getCurrent 竞态回填）
-
-**体验打磨**
-
-- README 重写为 HTTP 部署专版，补「常见坑」小节
-- 移动端 Header / Nav / 日志表头按钮组不再错行
-- 导出 ADIF 可按过滤结果导出（不再是全量）
-- 内部全量 i18n 覆盖：表头、徽章、toast、aria-label、段标题等
-- Footer 加 GitHub 链接 + FmoLogs 二次开发致谢
-- MIT License 与上游对齐
+- APRS 远程控制（普通 / 待机 / 软重启 + 参数表单 + 20 条历史 + Passcode 计算器）
+- 桌面通知、消息回复与批量删除、日期范围筛选、按过滤结果导出 ADIF
+- SpeakingBar「✦ 新朋友」徽章、HUD 风删除确认 Dialog
+- ADIF 二次导入去重、中继切换竞态修复、全量 i18n
 
 ### v0.1.0
 
-首个可用版本 —— 基于 FmoLogs 的 React + TypeScript 完整重写，战术 HUD 主题，
-覆盖日志 / 排行榜 / 老朋友 / 消息 / 设置等主视图。
+首个可用版本 —— 基于 FmoLogs 的 React + TypeScript 完整重写，战术 HUD 主题。
 
 ## 致谢
 
 FmoDeck 是基于 [**FmoLogs**](https://github.com/dingle1122/FmoLogs)（作者
 [@dingle1122](https://github.com/dingle1122)）的二次开发作品。原项目
 完整搭建了与 FMO 设备交互的协议实现、日志同步、APRS 相关能力等核心业务逻辑。
-本仓库在其基础上做界面与交互层的重写、增加战术 HUD 主题与若干打磨
-（见 CHANGELOG），但所有"能用起来"的根基都来自 FmoLogs。
-特此鸣谢 ✨
+本仓库在其基础上做界面与交互层的重写、增加战术 HUD 主题与若干打磨，
+但所有"能用起来"的根基都来自 FmoLogs。特此鸣谢 ✨
 
 ## 功能一览
 
@@ -194,16 +138,12 @@ pnpm tauri:build   # 打包当前平台产物到 src-tauri/target/release/bundle
 （macOS arm64 / x86_64、Linux x64、Windows x64）构建，产物关联到
 GitHub Release 草稿。
 
-### 不签名的代价
+### 未签名说明
 
-- **macOS**：CI 会做 ad-hoc 本地签名 + `ditto` 打包保留签名元数据，
-  大多数情况下首次打开只需右键 → 打开绕过 Gatekeeper。若仍报「已损坏」
-  （quarantine 属性被强制留下），终端跑 `xattr -cr /Applications/FmoDeck.app`
-  清掉后再打开即可。想彻底消除警告需 Apple 开发者账号（$99/年）做真实签名 +
-  公证。
-- **Windows**：首次运行 SmartScreen 会警告，点「仍要运行」即可；
-  签名证书 $200+/年
-- **Linux**：无签名负担，`.deb` / `.AppImage` 双击即用
+- **macOS**：CI 做 ad-hoc 本地签名，首次打开右键 → 打开；若报「已损坏」
+  跑 `xattr -cr /Applications/FmoDeck.app` 清 quarantine 即可
+- **Windows**：SmartScreen 警告点「仍要运行」
+- **Linux**：无签名负担
 
 ## 部署（Docker · HTTP）
 
@@ -212,16 +152,8 @@ GitHub Release 草稿。
 > 与设备通信。因此当前唯一可行的部署是 HTTP —— 代价是地址栏会显示
 > "Not secure"，且桌面通知 / PWA 安装等依赖 secure context 的 API 用不了。
 
-### 目录与容器
-
-仓库根目录已备好：
-
-- `Dockerfile` —— 多阶段构建（Node 构建 → nginx:alpine 托管）
-- `docker-compose.yml` —— 一键启动容器
-- `docker/nginx.conf.template` —— 容器内 nginx 配置，已含 SPA fallback
-  - gzip + 静态资源长缓存
-
-### 一键起容器
+仓库根目录已备好 `Dockerfile`（多阶段：Node 构建 → nginx:alpine 托管）+
+`docker-compose.yml` + `docker/nginx.conf.template`（SPA fallback + gzip）。
 
 ```bash
 git clone https://github.com/wh0am1i/FmoDeck.git
@@ -229,77 +161,9 @@ cd FmoDeck
 docker compose up -d --build
 ```
 
-默认监听在 `127.0.0.1:8080`（只绑本地回环，走宿主机 nginx 反代对外）。
-想直接暴露到公网，把 `docker-compose.yml` 里的 `ports` 改成 `"8080:80"`
-（去掉 `127.0.0.1:` 前缀）。
-
-停止 / 更新：
-
-```bash
-docker compose down
-git pull && docker compose up -d --build
-```
-
-### 可调参数
-
-全在 `Dockerfile` 顶部 `ARG`：
-
-| 参数            | 默认   | 说明                         |
-| --------------- | ------ | ---------------------------- |
-| `BASE_PATH`     | `/`    | 子路径部署时改成 `/fmodeck/` |
-| `LISTEN_PORT`   | `80`   | 容器内 nginx 监听端口        |
-| `NODE_VERSION`  | `20`   | 构建阶段的 Node 版本         |
-| `NGINX_VERSION` | `1.27` | 运行阶段的 nginx 版本        |
-
-宿主机映射端口改 `docker-compose.yml` 的 `ports`。
-
-### 宿主机 nginx 反代样例
-
-纯 HTTP（最简单，适合内网 / 自用）：
-
-```nginx
-# /etc/nginx/sites-available/fmodeck
-server {
-    listen       80;
-    server_name  fmodeck.example.com;
-
-    location / {
-        proxy_pass         http://127.0.0.1:8080;
-        proxy_http_version 1.1;
-        proxy_set_header   Host              $host;
-        proxy_set_header   X-Real-IP         $remote_addr;
-        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
-    }
-}
-```
-
-启用：
-
-```bash
-sudo ln -s /etc/nginx/sites-available/fmodeck /etc/nginx/sites-enabled/
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-### 不用反代直接访问
-
-如果不想装 nginx，改 `docker-compose.yml`：
-
-```yaml
-ports:
-  - '8080:80' # 原来是 '127.0.0.1:8080:80'
-```
-
-然后浏览器直接开 `http://服务器IP:8080/`。
-
-### 常见坑
-
-- **混合内容拦截**：不要在 HTTPS 页面打开 FmoDeck —— `ws://fmo.local`
-  会被浏览器直接拒绝。保持 HTTP 即可。
-- **SPA 刷新 404**：容器内 nginx 已处理 `try_files ... /index.html`，
-  如果你自己改配置别漏。
-- **WebSocket 不经反代**：FMO 设备的 `/ws` 和 `/events` 由浏览器直连
-  `ws://fmo.local/...`，**不**走你的宿主 nginx，所以不需要配
-  `proxy_set_header Upgrade`。
+默认监听 `127.0.0.1:8080`，走宿主机反代对外。直接暴露公网把
+`docker-compose.yml` 的 `ports` 改成 `"8080:80"`。可调参数在 `Dockerfile`
+顶部 `ARG`（`BASE_PATH` / `LISTEN_PORT` / `NODE_VERSION` / `NGINX_VERSION`）。
 
 ## 许可证
 
