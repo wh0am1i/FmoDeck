@@ -33,7 +33,7 @@
   --radius: 2px;
 
   /* HUD 装饰强度 */
-  --hud-intensity: 1;
+  --hud-intensity: 0.15;
   --hud-scanline-opacity: 0.05;
   --hud-glitch-duration: 0.3s;
 }

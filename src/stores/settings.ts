@@ -54,7 +54,7 @@ const INITIAL: PersistedFields = {
   activeAddressId: null,
   currentCallsign: '',
   protocol: 'ws',
-  hudIntensity: 1,
+  hudIntensity: 0.15,
   hudScanlineOpacity: 0.05
 }
 

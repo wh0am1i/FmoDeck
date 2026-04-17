@@ -58,7 +58,7 @@ export function HudIntensityField() {
         size="sm"
         className="self-start"
         onClick={() => {
-          settingsStore.getState().setHudIntensity(1)
+          settingsStore.getState().setHudIntensity(0.15)
           settingsStore.getState().setHudScanlineOpacity(0.05)
         }}
       >
