@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { openExternal } from '@/lib/utils/external-link'
 import { formatLatLng, gridToLatLng, mapUrl } from '@/lib/utils/grid'
 import { readGeocodeCache, reverseGeocodeGrid } from '@/lib/utils/reverse-geocode'
 import { cn } from '@/lib/utils'
@@ -66,8 +67,14 @@ export function GridLocation({ grid, className }: Props) {
       target="_blank"
       rel="noreferrer noopener"
       // 阻止冒泡，避免父级 tr / button 的 onClick 同时触发（比如日志
-      // 表格行点击会打开详情弹窗 —— 不应因为点网格链接也弹出来）
-      onClick={(e) => e.stopPropagation()}
+      // 表格行点击会打开详情弹窗 —— 不应因为点网格链接也弹出来）。
+      // 同时 preventDefault + 主动 openExternal 让 Tauri 壳也能走
+      // 系统浏览器打开链接（Tauri webview 默认会吞掉 target=_blank）。
+      onClick={(e) => {
+        e.stopPropagation()
+        e.preventDefault()
+        void openExternal(mapUrl(ll))
+      }}
       className={cn(
         'hud-mono inline-flex flex-wrap items-baseline gap-x-1.5 text-primary hover:underline',
         className

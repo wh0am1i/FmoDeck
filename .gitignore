@@ -58,6 +58,11 @@ $RECYCLE.BIN/
 # ---- 本地文档草稿（不推 GitHub） ----
 docs/
 
+# ---- Tauri 桌面壳构建产物 ----
+src-tauri/target/
+src-tauri/gen/
+src-tauri/Cargo.lock.bak
+
 # ---- Docker 运行时残留（如果本地试过 compose 之外的卷挂载）----
 # 容器内产物不该出现在仓库，但留个兜底
 .docker-compose.override.yml

@@ -146,6 +146,36 @@ pnpm format:check # Prettier 检查
 支持 light / dark / system 三档（右上角切换）。装饰强度通过 CSS 变量
 `--hud-intensity` 控制（Settings → `[ 界面视觉 ]`）。
 
+## 桌面应用（Tauri · macOS / Windows / Linux）
+
+除了浏览器版，FmoDeck 也可打包为原生桌面应用 —— 用系统 WebView 渲染，
+产物 ~10 MB。桌面版有两个额外好处：
+
+- 没有地址栏「Not secure」提示
+- 不受 Chrome Private Network Access 限制，`ws://fmo.local` 随便连
+
+### 本地开发
+
+前置：[Rust toolchain](https://www.rust-lang.org/tools/install)（`rustc` ≥ 1.77）+ 平台 WebView 依赖（macOS 自带；Linux 需 `webkit2gtk`）。
+
+```bash
+pnpm install
+pnpm tauri:dev     # 起 dev 壳 + Vite HMR
+pnpm tauri:build   # 打包当前平台产物到 src-tauri/target/release/bundle/
+```
+
+### 多平台 CI
+
+`.github/workflows/tauri-release.yml` —— 推 `v*` tag 时自动在 4 个平台
+（macOS arm64 / x86_64、Linux x64、Windows x64）构建，产物关联到
+GitHub Release 草稿。
+
+### 不签名的代价
+
+- **macOS**：首次打开要「右键 → 打开」绕过 Gatekeeper；想消掉警告需 Apple 开发者账号（$99/年）
+- **Windows**：首次运行 SmartScreen 会警告，点「仍要运行」即可；签名证书 $200+/年
+- **Linux**：无签名负担，`.deb` / `.AppImage` 双击即用
+
 ## 部署（Docker · HTTP）
 
 > **为什么只有 HTTP？**  FMO 设备只开 `ws://`，没有 TLS 证书。如果前端
