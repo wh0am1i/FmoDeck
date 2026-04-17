@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { logsStore, selectMergedRows, type DisplayRow } from '@/features/logs/store'
 import { connectionStore } from '@/stores/connection'
 
@@ -33,6 +34,7 @@ function formatTs(unixSeconds: number): string {
 }
 
 export function Top20View() {
+  const { t } = useTranslation()
   const all = logsStore((s) => s.all)
   const local = logsStore((s) => s.local)
   const syncMode = logsStore((s) => s.syncMode)
@@ -55,9 +57,10 @@ export function Top20View() {
   if (connectionStatus !== 'connected' && local.length === 0) {
     return (
       <section className="hud-frame p-6">
-        <h2 className="hud-title text-primary mb-2">[ TOP 20 ]</h2>
+        <h2 className="hud-title text-primary mb-2">{t('top20.title')}</h2>
         <p className="hud-mono text-sm text-muted-foreground">
-          [ OFFLINE · 请先在 Settings 配置并激活 FMO 地址，或在 LOGS 里导入 ADIF ]
+          {t('common.offlinePrefix')}
+          {t('common.offlineHintAddrs')}，{t('common.offlineHintImport')} ]
         </p>
       </section>
     )
@@ -66,8 +69,8 @@ export function Top20View() {
   if (rawTotal === 0) {
     return (
       <section className="hud-frame p-6">
-        <h2 className="hud-title text-primary mb-2">[ TOP 20 ]</h2>
-        <p className="hud-mono text-sm text-muted-foreground">[ 暂无数据 · 先到 LOGS 拉取日志 ]</p>
+        <h2 className="hud-title text-primary mb-2">{t('top20.title')}</h2>
+        <p className="hud-mono text-sm text-muted-foreground">{t('top20.emptyData')}</p>
       </section>
     )
   }
@@ -75,18 +78,21 @@ export function Top20View() {
   return (
     <section className="hud-frame flex flex-col gap-4 p-6">
       <div className="flex items-center justify-between">
-        <h2 className="hud-title text-primary">[ TOP 20 ]</h2>
+        <h2 className="hud-title text-primary">{t('top20.title')}</h2>
         <span className="hud-mono text-xs text-muted-foreground">
-          {syncMode === 'today' ? '今天 · ' : ''}
-          基于 {total} 条日志聚合
+          {syncMode === 'today' ? t('logs.todayPrefix') : ''}
+          {t('top20.aggregatedOf', { count: total })}
           {syncMode === 'today' && total < rawTotal && (
-            <span className="text-muted-foreground/70"> · 已排除 {rawTotal - total} 条历史</span>
+            <span className="text-muted-foreground/70">
+              {' · '}
+              {t('top20.excludedHistory', { count: rawTotal - total })}
+            </span>
           )}
         </span>
       </div>
 
       {top20.length === 0 ? (
-        <div className="hud-mono text-sm text-muted-foreground py-4">[ 无匹配 ]</div>
+        <div className="hud-mono text-sm text-muted-foreground py-4">{t('common.noMatch')}</div>
       ) : (
         <ol className="flex flex-col gap-1">
           {top20.map((item, i) => (
@@ -95,18 +101,18 @@ export function Top20View() {
                 type="button"
                 onClick={() => gotoLogs(item.callsign)}
                 className="hud-mono flex w-full items-center gap-3 rounded-sm border border-border/60 px-3 py-2 text-left hover:bg-primary/5"
-                aria-label={`查看 ${item.callsign} 的通联记录`}
+                aria-label={t('top20.viewQsoOf', { callsign: item.callsign })}
               >
                 <span className="w-6 text-right text-xs text-muted-foreground">
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <span className="flex-1 text-sm text-primary">{item.callsign}</span>
                 <span className="text-xs text-muted-foreground">
-                  最近 {formatTs(item.lastTime)}
+                  {t('top20.recentPrefix')}
+                  {formatTs(item.lastTime)}
                 </span>
-                <span className="min-w-8 text-right text-sm">
-                  <span className="text-primary">{item.count}</span>
-                  <span className="text-muted-foreground"> 次</span>
+                <span className="min-w-8 text-right text-sm text-primary">
+                  {t('top20.timesCount', { count: item.count })}
                 </span>
               </button>
             </li>

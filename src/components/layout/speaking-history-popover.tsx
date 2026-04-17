@@ -1,18 +1,19 @@
 import { useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { logsStore } from '@/features/logs/store'
 import { speakingStore } from '@/features/speaking/store'
 import { cn } from '@/lib/utils'
 import { History } from 'lucide-react'
 
-function formatTimeAgo(unixSeconds: number, nowMs: number): string {
+function formatTimeAgo(unixSeconds: number, nowMs: number, agoSuffix: string): string {
   const deltaSec = Math.floor(nowMs / 1000) - unixSeconds
-  if (deltaSec < 60) return `${deltaSec}s 前`
+  if (deltaSec < 60) return `${deltaSec}s${agoSuffix}`
   const m = Math.floor(deltaSec / 60)
-  if (m < 60) return `${m}m 前`
+  if (m < 60) return `${m}m${agoSuffix}`
   const h = Math.floor(m / 60)
-  if (h < 48) return `${h}h 前`
-  return `${Math.floor(h / 24)}d 前`
+  if (h < 48) return `${h}h${agoSuffix}`
+  return `${Math.floor(h / 24)}d${agoSuffix}`
 }
 
 interface Props {
@@ -20,8 +21,10 @@ interface Props {
 }
 
 export function SpeakingHistoryPopover({ myCallsign }: Props) {
+  const { t } = useTranslation()
   const history = speakingStore((s) => s.history)
   const navigate = useNavigate()
+  const agoSuffix = t('speaking.agoSuffix')
 
   function gotoLogs(callsign: string) {
     logsStore.getState().setFilter(callsign)
@@ -38,11 +41,11 @@ export function SpeakingHistoryPopover({ myCallsign }: Props) {
         <button
           type="button"
           className="hud-mono flex items-center gap-1 rounded-sm border border-border/60 px-2 py-0.5 text-xs text-muted-foreground hover:border-primary hover:text-primary"
-          aria-label="讲话历史"
-          title="最近讲话历史"
+          aria-label={t('speaking.historyAria')}
+          title={t('speaking.historyTitle')}
         >
           <History className="h-3 w-3" />
-          历史
+          {t('speaking.history')}
           {history.length > 0 && (
             <span className="text-muted-foreground/70">({history.length})</span>
           )}
@@ -51,20 +54,22 @@ export function SpeakingHistoryPopover({ myCallsign }: Props) {
       <PopoverContent align="end" className="w-72 max-w-[90vw]">
         <div className="hud-mono flex flex-col gap-2">
           <div className="flex items-baseline justify-between">
-            <span className="hud-title text-xs text-primary">[ 讲话历史 ]</span>
+            <span className="hud-title text-xs text-primary">{t('speaking.historyHeader')}</span>
             <span className="text-xs text-muted-foreground">
-              {history.length === 0 ? '暂无' : `最近 ${history.length} 位`}
+              {history.length === 0
+                ? t('speaking.historyEmpty')
+                : t('speaking.historyCount', { count: history.length })}
             </span>
           </div>
 
           {history.length === 0 ? (
             <div className="py-4 text-center text-xs text-muted-foreground">
-              [ 连上中继后，服务器推送最近讲话历史 ]
+              {t('speaking.historyOffline')}
             </div>
           ) : (
             <ul
               className="flex max-h-72 flex-col gap-0.5 overflow-y-auto"
-              aria-label="讲话历史列表"
+              aria-label={t('speaking.historyListAria')}
             >
               {sorted.map((item, idx) => {
                 const isSelf =
@@ -78,17 +83,17 @@ export function SpeakingHistoryPopover({ myCallsign }: Props) {
                       className={cn(
                         'flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-xs hover:bg-primary/5'
                       )}
-                      title="查看与该呼号的通联记录"
+                      title={t('speaking.viewQsoWith')}
                     >
                       <span className="text-primary">{item.callsign}</span>
                       {isSelf && (
                         <span className="rounded-sm border border-primary bg-primary/10 px-1 text-[10px] leading-4 text-primary">
-                          我
+                          {t('speaking.selfShort')}
                         </span>
                       )}
                       <span className="flex-1" />
                       <span className="text-muted-foreground/70">
-                        {formatTimeAgo(item.utcTime, nowMs)}
+                        {formatTimeAgo(item.utcTime, nowMs, agoSuffix)}
                       </span>
                     </button>
                   </li>

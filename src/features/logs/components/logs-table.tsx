@@ -1,4 +1,5 @@
 import { Fragment, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { logsStore, rowKey, selectPageSlice, type DisplayRow } from '../store'
 import { cn } from '@/lib/utils'
 
@@ -22,7 +23,7 @@ function startOfYesterday(nowMs: number): number {
  * - 昨天：昨 HH:MM
  * - 更早：MM-DD HH:MM
  */
-function formatTimeSmart(unixSeconds: number, nowMs: number): string {
+function formatTimeSmart(unixSeconds: number, nowMs: number, yesterdayPrefix: string): string {
   const today = startOfLocalToday(nowMs)
   const yesterday = startOfYesterday(nowMs)
   const d = new Date(unixSeconds * 1000)
@@ -31,21 +32,21 @@ function formatTimeSmart(unixSeconds: number, nowMs: number): string {
     return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
   }
   if (unixSeconds >= yesterday) {
-    return `昨 ${pad(d.getHours())}:${pad(d.getMinutes())}`
+    return `${yesterdayPrefix}${pad(d.getHours())}:${pad(d.getMinutes())}`
   }
   return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-function formatTimeAgo(unixSeconds: number, nowMs: number): string {
+function formatTimeAgo(unixSeconds: number, nowMs: number, agoSuffix: string): string {
   const deltaSec = Math.floor(nowMs / 1000) - unixSeconds
-  if (deltaSec < 60) return `${deltaSec}s 前`
+  if (deltaSec < 60) return `${deltaSec}s${agoSuffix}`
   const m = Math.floor(deltaSec / 60)
-  if (m < 60) return `${m}m 前`
+  if (m < 60) return `${m}m${agoSuffix}`
   const h = Math.floor(m / 60)
-  if (h < 48) return `${h}h 前`
+  if (h < 48) return `${h}h${agoSuffix}`
   const days = Math.floor(h / 24)
-  if (days < 30) return `${days}d 前`
-  return `${Math.floor(days / 30)}mo 前`
+  if (days < 30) return `${days}d${agoSuffix}`
+  return `${Math.floor(days / 30)}mo${agoSuffix}`
 }
 
 interface Props {
@@ -53,6 +54,7 @@ interface Props {
 }
 
 export function LogsTable({ onRowClick }: Props) {
+  const { t } = useTranslation()
   // 订阅原子状态，本地 useMemo 做派生计算（避免 selector 返回数组每次新引用触发无限重渲）
   const all = logsStore((s) => s.all)
   const local = logsStore((s) => s.local)
@@ -84,18 +86,16 @@ export function LogsTable({ onRowClick }: Props) {
 
   const nowMs = Date.now()
   const todayStart = startOfLocalToday(nowMs)
+  const yesterdayPrefix = t('common.yesterdayPrefix')
+  const agoSuffix = t('speaking.agoSuffix')
 
   if (slice.length === 0) {
-    return (
-      <div className="hud-mono text-sm text-muted-foreground py-4">
-        [ NO RECORDS · 等连接或清过滤条件 ]
-      </div>
-    )
+    return <div className="hud-mono text-sm text-muted-foreground py-4">{t('logs.emptyTable')}</div>
   }
 
   return (
     <div className="overflow-x-auto">
-      <table className="hud-mono w-full text-sm" aria-label="QSO 日志列表">
+      <table className="hud-mono w-full text-sm" aria-label={t('logs.title')}>
         <thead>
           <tr className="border-b border-border text-left text-xs text-muted-foreground">
             <th className="px-3 py-2 min-w-24">TIME</th>
@@ -121,7 +121,7 @@ export function LogsTable({ onRowClick }: Props) {
                       colSpan={5}
                       className="hud-mono border-t border-dashed border-border px-3 py-1 text-[11px] uppercase tracking-wider text-muted-foreground/70"
                     >
-                      — 更早 —
+                      {t('common.earlier')}
                     </td>
                   </tr>
                 )}
@@ -131,7 +131,7 @@ export function LogsTable({ onRowClick }: Props) {
                     'cursor-pointer border-b border-border/40 hover:bg-primary/5',
                     isToday && 'bg-primary/5'
                   )}
-                  aria-label={isToday ? '今日通联' : undefined}
+                  aria-label={isToday ? t('common.today') : undefined}
                 >
                   <td
                     className={cn(
@@ -139,10 +139,10 @@ export function LogsTable({ onRowClick }: Props) {
                       isToday ? 'text-primary' : 'text-muted-foreground'
                     )}
                   >
-                    {formatTimeSmart(r.timestamp, nowMs)}
+                    {formatTimeSmart(r.timestamp, nowMs, yesterdayPrefix)}
                   </td>
                   <td className="hidden md:table-cell px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">
-                    {formatTimeAgo(r.timestamp, nowMs)}
+                    {formatTimeAgo(r.timestamp, nowMs, agoSuffix)}
                   </td>
                   <td className="px-3 py-2 text-primary">
                     <span className="flex flex-wrap items-center gap-1.5">
@@ -155,7 +155,7 @@ export function LogsTable({ onRowClick }: Props) {
                       {r.source === 'local' && (
                         <span
                           className="rounded-sm border border-accent bg-accent/10 px-1 py-0 text-[10px] font-bold uppercase leading-4 text-accent"
-                          title="ADIF 导入的本地记录"
+                          title={t('logDetail.localSource')}
                         >
                           LOCAL
                         </span>

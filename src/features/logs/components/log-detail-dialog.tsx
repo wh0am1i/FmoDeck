@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export function LogDetailDialog({ row, onClose }: Props) {
+  const { t } = useTranslation()
   const [serverDetail, setServerDetail] = useState<QsoDetail | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -40,7 +42,7 @@ export function LogDetailDialog({ row, onClose }: Props) {
     }
     const client = connectionStore.getState().client
     if (!client) {
-      toast.error('连接不可用')
+      toast.error(t('connection.unavailable'))
       onClose()
       return
     }
@@ -52,11 +54,13 @@ export function LogDetailDialog({ row, onClose }: Props) {
         setLoading(false)
       })
       .catch((err: unknown) => {
-        toast.error(`加载详情失败: ${err instanceof Error ? err.message : String(err)}`)
+        toast.error(
+          `${t('common.loadFailedPrefix')}${err instanceof Error ? err.message : String(err)}`
+        )
         setLoading(false)
         onClose()
       })
-  }, [row, onClose])
+  }, [row, onClose, t])
 
   return (
     <Dialog open={row !== null} onOpenChange={(o) => !o && onClose()}>
@@ -64,15 +68,19 @@ export function LogDetailDialog({ row, onClose }: Props) {
         <DialogHeader>
           <DialogTitle className="hud-title text-primary">
             {row?.source === 'local'
-              ? '[ LOG DETAIL · LOCAL ]'
-              : `[ LOG DETAIL${row ? ` #${row.logId}` : ''} ]`}
+              ? t('logDetail.localTitle')
+              : row
+                ? t('logDetail.serverTitle', { id: row.logId })
+                : t('logDetail.serverTitleNoId')}
           </DialogTitle>
           <DialogDescription className="hud-mono text-xs">
-            {row?.source === 'local' ? 'ADIF 导入的本地记录' : '服务器返回的完整 QSO 记录'}
+            {row?.source === 'local' ? t('logDetail.localSource') : t('logDetail.serverSource')}
           </DialogDescription>
         </DialogHeader>
 
-        {loading && <div className="hud-mono py-6 text-sm text-muted-foreground">加载中...</div>}
+        {loading && (
+          <div className="hud-mono py-6 text-sm text-muted-foreground">{t('common.loading')}</div>
+        )}
 
         {row?.source === 'server' && serverDetail && <ServerDetailView detail={serverDetail} />}
 
@@ -119,6 +127,7 @@ function ServerDetailView({ detail }: { detail: QsoDetail }) {
 }
 
 function LocalDetailView({ record }: { record: LocalQso }) {
+  const { t } = useTranslation()
   const entries = Object.entries(record.fields).filter(([, v]) => v !== undefined && v !== '')
   return (
     <div className="flex flex-col gap-2 py-2">
@@ -136,7 +145,9 @@ function LocalDetailView({ record }: { record: LocalQso }) {
       </dl>
       {entries.length > 3 && (
         <>
-          <div className="hud-mono text-xs text-muted-foreground mt-2">完整 ADIF 字段：</div>
+          <div className="hud-mono text-xs text-muted-foreground mt-2">
+            {t('logDetail.adifFields')}
+          </div>
           <dl className="hud-mono grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 max-h-64 overflow-y-auto text-xs">
             {entries.map(([k, v]) => (
               <div key={k} className="contents">

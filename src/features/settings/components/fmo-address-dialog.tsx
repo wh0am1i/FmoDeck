@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { nanoid } from 'nanoid'
+import { Trans, useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -16,17 +17,18 @@ import { cn } from '@/lib/utils'
 import { Plus } from 'lucide-react'
 
 function SyncModeRadio({ value, onChange }: { value: SyncMode; onChange: (m: SyncMode) => void }) {
-  const options: { key: SyncMode; label: string; hint: string }[] = [
-    { key: 'all', label: '全量同步', hint: '拉取服务器全部日志（默认 · 首次较慢）' },
-    { key: 'today', label: '只同步当天', hint: '只保留本地时区今天的日志' },
+  const { t } = useTranslation()
+  const options: { key: SyncMode; labelKey: string; hintKey: string }[] = [
+    { key: 'all', labelKey: 'settings.syncFullTitle', hintKey: 'settings.syncFullDesc' },
+    { key: 'today', labelKey: 'settings.syncTodayTitle', hintKey: 'settings.syncTodayDesc' },
     {
       key: 'incremental',
-      label: '增量同步',
-      hint: '只拉新增（基于已有最大 logId）· 刷新时最快'
+      labelKey: 'settings.syncIncrementalTitle',
+      hintKey: 'settings.syncIncrementalDesc'
     }
   ]
   return (
-    <div role="radiogroup" aria-label="同步模式" className="flex flex-col gap-2">
+    <div role="radiogroup" aria-label={t('settings.syncModeLabel')} className="flex flex-col gap-2">
       {options.map((o) => {
         const active = value === o.key
         return (
@@ -51,9 +53,9 @@ function SyncModeRadio({ value, onChange }: { value: SyncMode; onChange: (m: Syn
                 )}
                 aria-hidden="true"
               />
-              {o.label}
+              {t(o.labelKey)}
             </span>
-            <span className="pl-5 text-xs text-muted-foreground">{o.hint}</span>
+            <span className="pl-5 text-xs text-muted-foreground">{t(o.hintKey)}</span>
           </button>
         )
       })}
@@ -62,6 +64,7 @@ function SyncModeRadio({ value, onChange }: { value: SyncMode; onChange: (m: Syn
 }
 
 export function FmoAddressDialog() {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [host, setHost] = useState('')
   const [name, setName] = useState('')
@@ -87,19 +90,25 @@ export function FmoAddressDialog() {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Plus className="h-4 w-4" />
-          添加地址
+          {t('settings.addButton')}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="hud-title text-primary">[ ADD FMO ADDRESS ]</DialogTitle>
+          <DialogTitle className="hud-title text-primary">
+            {t('settings.addDialogTitle')}
+          </DialogTitle>
           <DialogDescription className="hud-mono text-xs">
-            添加一个新的 FMO 服务器地址。激活后自动尝试连接。
+            {t('settings.addDialogDesc')}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3 py-2">
           <label className="hud-mono text-xs text-muted-foreground" htmlFor="fmo-host">
-            Host（如 <code>fmo.local</code> 或 <code>192.168.1.10:8080</code>）
+            <Trans
+              i18nKey="settings.hostLabel"
+              values={{ example1: 'fmo.local', example2: '192.168.1.10:8080' }}
+              components={{ 1: <code />, 2: <code /> }}
+            />
           </label>
           <Input
             id="fmo-host"
@@ -109,23 +118,25 @@ export function FmoAddressDialog() {
             autoFocus
           />
           <label className="hud-mono text-xs text-muted-foreground mt-2" htmlFor="fmo-name">
-            名称（可选）
+            {t('settings.nameLabel')}
           </label>
           <Input
             id="fmo-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="家里的 FMO"
+            placeholder={t('settings.namePlaceholder')}
           />
-          <label className="hud-mono text-xs text-muted-foreground mt-2">同步模式</label>
+          <label className="hud-mono text-xs text-muted-foreground mt-2">
+            {t('settings.syncModeLabel')}
+          </label>
           <SyncModeRadio value={syncMode} onChange={setSyncMode} />
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>
-            取消
+            {t('common.cancel')}
           </Button>
           <Button onClick={submit} disabled={!hostValid}>
-            添加
+            {t('settings.addConfirm')}
           </Button>
         </DialogFooter>
       </DialogContent>

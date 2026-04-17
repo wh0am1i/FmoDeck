@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { connectionStore } from '@/stores/connection'
 import { settingsStore } from '@/stores/settings'
 import { useAutoReconnect } from '@/hooks/useAutoReconnect'
@@ -13,6 +14,7 @@ function extractHost(url: string | null): string {
 }
 
 export function ConnectionIndicator() {
+  const { t } = useTranslation()
   const { status, lastError } = useAutoReconnect()
   const url = connectionStore((s) => s.currentUrl)
   const activeId = settingsStore((s) => s.activeAddressId)
@@ -22,22 +24,22 @@ export function ConnectionIndicator() {
 
   if (status === 'connected') {
     dotClass = 'bg-green-500'
-    label = `ONLINE · ${extractHost(url)}`
+    label = `${t('connection.online')} · ${extractHost(url)}`
   } else if (status === 'connecting') {
     dotClass = 'bg-accent animate-pulse'
-    label = 'CONNECTING...'
+    label = t('connection.connecting')
   } else if (status === 'error') {
     dotClass = 'bg-destructive'
-    const msg = lastError?.message.split(':')[0] ?? 'UNKNOWN'
-    label = `ERROR · ${msg}`
+    const msg = lastError?.message.split(':')[0] ?? t('common.unknown').toUpperCase()
+    label = `${t('connection.error')} · ${msg}`
   } else {
-    label = activeId ? 'OFFLINE' : 'UNCONFIGURED'
+    label = activeId ? t('connection.offline') : t('connection.unconfigured')
   }
 
   return (
     <div
       className="hud-mono flex items-center gap-2 text-xs text-muted-foreground"
-      aria-label="连接状态"
+      aria-label={t('connection.status')}
     >
       <span className={cn('h-2 w-2 rounded-full', dotClass)} aria-hidden="true" />
       <span>{label}</span>

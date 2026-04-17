@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -17,6 +18,7 @@ import { isValidChineseCallsign } from '@/lib/utils/callsign'
 import { Send } from 'lucide-react'
 
 export function ComposeDialog() {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [to, setTo] = useState('')
   const [content, setContent] = useState('')
@@ -29,18 +31,20 @@ export function ComposeDialog() {
     if (!canSend) return
     const client = connectionStore.getState().client
     if (!client) {
-      toast.error('连接不可用')
+      toast.error(t('connection.unavailable'))
       return
     }
     setSending(true)
     try {
       await new MessageService(client).send(to.trim().toUpperCase(), content.trim())
-      toast.success('消息已发送')
+      toast.success(t('compose.sent'))
       setOpen(false)
       setTo('')
       setContent('')
     } catch (err) {
-      toast.error(`发送失败: ${err instanceof Error ? err.message : String(err)}`)
+      toast.error(
+        `${t('compose.sendFailedPrefix')}${err instanceof Error ? err.message : String(err)}`
+      )
     } finally {
       setSending(false)
     }
@@ -51,19 +55,19 @@ export function ComposeDialog() {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Send className="h-4 w-4" />
-          撰写
+          {t('compose.button')}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="hud-title text-primary">[ COMPOSE MESSAGE ]</DialogTitle>
+          <DialogTitle className="hud-title text-primary">{t('compose.title')}</DialogTitle>
           <DialogDescription className="hud-mono text-xs">
-            发送消息到另一个 FMO 呼号
+            {t('compose.description')}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3 py-2">
           <label className="hud-mono text-xs text-muted-foreground" htmlFor="compose-to">
-            收件人呼号
+            {t('compose.toLabel')}
           </label>
           <Input
             id="compose-to"
@@ -74,23 +78,23 @@ export function ComposeDialog() {
             aria-invalid={to.length > 0 && !toValid}
           />
           <label className="hud-mono text-xs text-muted-foreground mt-2" htmlFor="compose-content">
-            内容
+            {t('compose.contentLabel')}
           </label>
           <textarea
             id="compose-content"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="写点什么..."
+            placeholder={t('compose.contentPlaceholder')}
             rows={5}
             className="hud-mono w-full resize-none rounded-sm border border-border bg-input/50 px-3 py-2 text-sm outline-none focus-visible:border-ring"
           />
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>
-            取消
+            {t('common.cancel')}
           </Button>
           <Button onClick={() => void submit()} disabled={!canSend}>
-            {sending ? '发送中...' : '发送'}
+            {sending ? t('compose.sending') : t('compose.send')}
           </Button>
         </DialogFooter>
       </DialogContent>

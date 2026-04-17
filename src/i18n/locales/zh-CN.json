@@ -1,4 +1,9 @@
 {
+  "language": {
+    "label": "语言",
+    "zhCN": "简体中文",
+    "en": "English"
+  },
   "nav": {
     "logs": "LOGS",
     "top20": "TOP 20",
@@ -6,13 +11,6 @@
     "messages": "MSG",
     "aprs": "APRS",
     "settings": "SETTINGS"
-  },
-  "connection": {
-    "unconfigured": "UNCONFIGURED",
-    "connecting": "CONNECTING...",
-    "online": "ONLINE",
-    "offline": "OFFLINE",
-    "error": "ERROR"
   },
   "header": {
     "appName": "FMODECK",
@@ -22,6 +20,17 @@
     "light": "浅色",
     "dark": "深色",
     "system": "跟随系统"
+  },
+  "connection": {
+    "status": "连接状态",
+    "unconfigured": "UNCONFIGURED",
+    "connecting": "CONNECTING...",
+    "online": "ONLINE",
+    "offline": "OFFLINE",
+    "error": "ERROR",
+    "failedPrefix": "连接失败：",
+    "retry": "重试",
+    "unavailable": "连接不可用"
   },
   "common": {
     "refresh": "刷新",
@@ -37,29 +46,208 @@
     "clear": "清空",
     "import": "导入",
     "export": "导出",
-    "unknown": "未知"
+    "unknown": "未知",
+    "today": "今天",
+    "yesterdayPrefix": "昨 ",
+    "earlier": "— 更早 —",
+    "add": "添加",
+    "noMatch": "[ 无匹配 ]",
+    "loadFailedPrefix": "加载失败: ",
+    "offlinePrefix": "[ OFFLINE · ",
+    "offlineHintAddrs": "请先在 Settings 配置并激活 FMO 地址",
+    "offlineHintImport": "或在 LOGS 里导入 ADIF",
+    "offlineHintLogs": "请先在 Settings 配置 FMO 地址，或导入 ADIF 文件离线查看"
   },
-  "settings": {
-    "fmoAddresses": "FMO 地址",
-    "identity": "身份",
-    "protocol": "协议",
-    "hudVisual": "HUD 视觉",
-    "language": "语言",
-    "hudIntensity": "HUD 强度",
-    "hudScanline": "扫描线不透明度",
-    "hudReset": "重置为默认"
-  },
-  "welcome": {
-    "title": "欢迎使用 FmoDeck",
-    "hint": "先添加一个 FMO 地址（如 {{example}}）即可开始",
-    "cta": "去设置 →"
+  "station": {
+    "switch": "切换中继",
+    "previous": "上一个中继",
+    "next": "下一个中继",
+    "refreshList": "刷新列表",
+    "listAria": "中继列表",
+    "notSelected": "未选择",
+    "emptyList": "[ 暂无列表 · 点刷新按钮加载 ]",
+    "switchedTo": "已切换到 {{name}}",
+    "verbSwitch": "切换",
+    "verbPrev": "上一个",
+    "verbNext": "下一个",
+    "actionFailed": "{{verb}}失败: {{error}}"
   },
   "speaking": {
-    "quiet": "暂无人讲话",
+    "quiet": "[ QUIET · 暂无人讲话 ]",
     "self": "我自己",
+    "selfShort": "我",
     "notWorked": "还未通联",
     "worked": "已通联 {{count}} 次",
     "lastWorked": "上次 {{time}}",
-    "history": "历史"
+    "history": "历史",
+    "historyAria": "讲话历史",
+    "historyTitle": "最近讲话历史",
+    "historyHeader": "[ 讲话历史 ]",
+    "historyEmpty": "暂无",
+    "historyCount": "最近 {{count}} 位",
+    "historyOffline": "[ 连上中继后，服务器推送最近讲话历史 ]",
+    "historyListAria": "讲话历史列表",
+    "viewQsoWith": "查看与该呼号的通联记录",
+    "barAria": "讲话状态栏",
+    "workedPrefix": "已通联 ",
+    "workedSuffix": " 次",
+    "lastPrefix": " · 上次 ",
+    "agoSuffix": " 前"
+  },
+  "welcome": {
+    "title": "欢迎使用 FmoDeck",
+    "hint": " · 先添加一个 FMO 地址（如 <1>{{example}}</1>）即可开始",
+    "cta": "去设置 →"
+  },
+  "settings": {
+    "sectionAddresses": "[ FMO ADDRESSES ]",
+    "sectionIdentity": "[ IDENTITY ]",
+    "sectionProtocol": "[ PROTOCOL ]",
+    "sectionHud": "[ HUD VISUAL ]",
+    "protocolHint": "WebSocket 协议（wss 需证书；内网 fmo.local 用 ws 即可）",
+    "hudIntensity": "HUD 强度",
+    "hudIntensityDesc": "控制辉光 / 聚焦霓虹 · 0 = 纯净，2 = 强化",
+    "hudScanline": "扫描线不透明度",
+    "hudScanlineDesc": "全屏扫描线覆盖 · 0 = 关闭，0.2 = 明显",
+    "hudReset": "重置为默认",
+    "callsignLabel": "登录呼号（大写，支持 SSID 后缀）",
+    "callsignInvalid": "呼号格式不正确（示例 BA0AX 或 BY4SDL-3）",
+    "addressEmpty": "[ NO ADDRESSES · 点“添加地址”开始 ]",
+    "addressListAria": "FMO 地址列表",
+    "addressActivateAria": "激活 {{host}}",
+    "addressActiveAria": "已激活",
+    "addressDeleteAria": "删除 {{host}}",
+    "syncModeTitle": "点击切换同步模式",
+    "syncModeAria": "同步模式：{{mode}}（点击切换）",
+    "modeFull": "全量",
+    "modeToday": "仅当天",
+    "modeIncremental": "增量",
+    "addButton": "添加地址",
+    "addDialogTitle": "[ ADD FMO ADDRESS ]",
+    "addDialogDesc": "添加一个新的 FMO 服务器地址。激活后自动尝试连接。",
+    "hostLabel": "Host（如 <1>{{example1}}</1> 或 <2>{{example2}}</2>）",
+    "nameLabel": "名称（可选）",
+    "namePlaceholder": "家里的 FMO",
+    "syncModeLabel": "同步模式",
+    "addConfirm": "添加",
+    "syncFullTitle": "全量同步",
+    "syncFullDesc": "拉取服务器全部日志（默认 · 首次较慢）",
+    "syncTodayTitle": "只同步当天",
+    "syncTodayDesc": "只保留本地时区今天的日志",
+    "syncIncrementalTitle": "增量同步",
+    "syncIncrementalDesc": "只拉新增（基于已有最大 logId）· 刷新时最快"
+  },
+  "logs": {
+    "title": "[ LOGS ]",
+    "todayPrefix": "今天 · ",
+    "countRecords": "{{count}} 条",
+    "countFiltered": "{{filtered}} / {{total}} 条",
+    "withLocal": "含 {{count}} 本地",
+    "refreshHint": "从服务器重新拉日志",
+    "refreshDisabled": "需先连上 FMO 才能刷新",
+    "exportAdif": "导出 ADIF",
+    "exported": "已导出 {{count}} 条日志",
+    "loaded": "已加载 {{count}} 条日志",
+    "emptyTable": "[ NO RECORDS · 等连接或清过滤条件 ]",
+    "filterPlaceholder": "按呼号前缀过滤（如 BG）",
+    "filterAria": "过滤呼号"
+  },
+  "logDetail": {
+    "localTitle": "[ LOG DETAIL · LOCAL ]",
+    "serverTitle": "[ LOG DETAIL #{{id}} ]",
+    "serverTitleNoId": "[ LOG DETAIL ]",
+    "localSource": "ADIF 导入的本地记录",
+    "serverSource": "服务器返回的完整 QSO 记录",
+    "adifFields": "完整 ADIF 字段："
+  },
+  "adifImport": {
+    "button": "导入 ADIF",
+    "title": "[ IMPORT ADIF ]",
+    "description": "从 .adi 文件导入 QSO 记录到本地。持久化到浏览器 IndexedDB。",
+    "localCountLabel": "当前本地：",
+    "localCountSuffix": "条",
+    "clearLocal": "清空本地",
+    "confirmClear": "清空所有本地导入记录（{{count}} 条）？此操作不可恢复。",
+    "cleared": "本地记录已清空",
+    "importedOk": "已导入 {{imported}} 条",
+    "importedSkipped": "跳过 {{skipped}} 条",
+    "emptyFile": "没有可导入的记录（跳过 {{skipped}} 条，可能缺 CALL 或 QSO_DATE 字段）",
+    "failedPrefix": "导入失败：",
+    "help1": "从 .adi 文件解析 QSO，追加到本地缓存。",
+    "help2": "与服务器日志按 (呼号, 时间) 合并显示；不会覆盖服务器记录。",
+    "fieldHelp": "需要 <1>call</1>、<2>qso_date</2>、<3>time_on</3> 字段；其余字段会原样保留。"
+  },
+  "pagination": {
+    "previous": "上一页",
+    "next": "下一页"
+  },
+  "top20": {
+    "title": "[ TOP 20 ]",
+    "emptyData": "[ 暂无数据 · 先到 LOGS 拉取日志 ]",
+    "aggregatedOf": "基于 {{count}} 条日志聚合",
+    "excludedHistory": "已排除 {{count}} 条历史",
+    "viewQsoOf": "查看 {{callsign}} 的通联记录",
+    "recentPrefix": "最近 ",
+    "timesCount": "{{count}} 次"
+  },
+  "oldFriends": {
+    "title": "[ OLD FRIENDS ]",
+    "emptyData": "[ 暂无数据 · 先到 LOGS 拉取日志 ]",
+    "countAll": "{{count}} 位",
+    "countFiltered": "{{filtered}} / {{total}} 位",
+    "filterPlaceholder": "按呼号包含匹配",
+    "filterAria": "过滤呼号",
+    "clearFilter": "清除过滤",
+    "listAria": "老朋友列表"
+  },
+  "messages": {
+    "title": "[ MSG ]",
+    "countTotal": "{{count}} 条",
+    "countUnread": "{{unread}} 未读 / {{total}}",
+    "newFrom": "新消息来自 {{from}}",
+    "loadFailedPrefix": "加载失败: ",
+    "loading": "加载中...",
+    "loadMore": "加载更多",
+    "empty": "[ NO MESSAGES · 收件箱为空 ]",
+    "listAria": "消息列表",
+    "refresh": "刷新"
+  },
+  "compose": {
+    "button": "撰写",
+    "title": "[ COMPOSE MESSAGE ]",
+    "description": "发送消息到另一个 FMO 呼号",
+    "toLabel": "收件人呼号",
+    "contentLabel": "内容",
+    "contentPlaceholder": "写点什么...",
+    "send": "发送",
+    "sending": "发送中...",
+    "sent": "消息已发送",
+    "sendFailedPrefix": "发送失败: "
+  },
+  "messageDetail": {
+    "title": "[ MESSAGE ]",
+    "header": "来自 {{from}} · {{time}}",
+    "loading": "加载中...",
+    "loadFailedPrefix": "加载失败: "
+  },
+  "aprs": {
+    "modeNormal": "普通模式",
+    "modeStandby": "待机模式",
+    "restart": "重启 APRS 服务",
+    "confirmRestart": "确认要重启设备的 APRS 服务吗？",
+    "normalDone": "已切到普通模式",
+    "standbyDone": "已切到待机模式",
+    "restartDone": "APRS 服务已重启",
+    "sectionLocal": "[ LOCAL CONTROL ]"
+  },
+  "passcode": {
+    "title": "[ PASSCODE CALCULATOR ]",
+    "subtitle": "标准 APRS-IS 算法 · 根据呼号派生登录密码",
+    "callsignLabel": "呼号（SSID 后缀会被忽略）",
+    "compute": "计算",
+    "copied": "Passcode 已复制到剪贴板",
+    "copyFailed": "复制失败（浏览器权限受限）",
+    "enterCallsign": "请先输入呼号",
+    "label": "Passcode"
   }
 }

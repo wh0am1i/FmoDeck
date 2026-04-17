@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { StationService } from '@/lib/station-service/client'
@@ -9,6 +10,7 @@ import { stationStore } from '../store'
 import { ChevronLeft, ChevronRight, RefreshCw, Radio } from 'lucide-react'
 
 export function StationSwitcher() {
+  const { t } = useTranslation()
   const current = stationStore((s) => s.current)
   const list = stationStore((s) => s.list)
   const status = stationStore((s) => s.status)
@@ -41,18 +43,34 @@ export function StationSwitcher() {
   async function swap(fn: () => Promise<void>, verb: string) {
     try {
       await fn()
-      toast.success(`已切换到 ${stationStore.getState().current?.name ?? '未知'}`)
+      toast.success(
+        t('station.switchedTo', {
+          name: stationStore.getState().current?.name ?? t('common.unknown')
+        })
+      )
     } catch (err) {
-      toast.error(`${verb}失败: ${err instanceof Error ? err.message : String(err)}`)
+      toast.error(
+        t('station.actionFailed', {
+          verb,
+          error: err instanceof Error ? err.message : String(err)
+        })
+      )
     }
   }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="hud-mono gap-2 text-xs" aria-label="切换中继">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="hud-mono gap-2 text-xs"
+          aria-label={t('station.switch')}
+        >
           <Radio className={cn('h-3 w-3', busy && 'animate-pulse')} />
-          <span className="max-w-32 truncate text-primary">{current?.name ?? '未选择'}</span>
+          <span className="max-w-32 truncate text-primary">
+            {current?.name ?? t('station.notSelected')}
+          </span>
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80">
@@ -62,8 +80,10 @@ export function StationSwitcher() {
               variant="outline"
               size="icon-sm"
               disabled={busy}
-              onClick={() => void swap(() => stationStore.getState().prev(svc), '上一个')}
-              aria-label="上一个中继"
+              onClick={() =>
+                void swap(() => stationStore.getState().prev(svc), t('station.verbPrev'))
+              }
+              aria-label={t('station.previous')}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -71,8 +91,10 @@ export function StationSwitcher() {
               variant="outline"
               size="icon-sm"
               disabled={busy}
-              onClick={() => void swap(() => stationStore.getState().next(svc), '下一个')}
-              aria-label="下一个中继"
+              onClick={() =>
+                void swap(() => stationStore.getState().next(svc), t('station.verbNext'))
+              }
+              aria-label={t('station.next')}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -82,8 +104,8 @@ export function StationSwitcher() {
               size="icon-sm"
               disabled={busy}
               onClick={() => void stationStore.getState().loadList(svc)}
-              aria-label="刷新列表"
-              title="刷新列表"
+              aria-label={t('station.refreshList')}
+              title={t('station.refreshList')}
             >
               <RefreshCw className={cn('h-4 w-4', status === 'loading' && 'animate-spin')} />
             </Button>
@@ -91,12 +113,15 @@ export function StationSwitcher() {
 
           {list.length === 0 && status !== 'loading' && (
             <div className="py-4 text-center text-xs text-muted-foreground">
-              [ 暂无列表 · 点刷新按钮加载 ]
+              {t('station.emptyList')}
             </div>
           )}
 
           {list.length > 0 && (
-            <ul className="flex max-h-64 flex-col gap-0.5 overflow-y-auto" aria-label="中继列表">
+            <ul
+              className="flex max-h-64 flex-col gap-0.5 overflow-y-auto"
+              aria-label={t('station.listAria')}
+            >
               {list.map((s) => {
                 const isActive = s.uid === current?.uid
                 return (
@@ -105,7 +130,10 @@ export function StationSwitcher() {
                       type="button"
                       disabled={busy || isActive}
                       onClick={() =>
-                        void swap(() => stationStore.getState().setCurrent(svc, s), '切换')
+                        void swap(
+                          () => stationStore.getState().setCurrent(svc, s),
+                          t('station.verbSwitch')
+                        )
                       }
                       className={cn(
                         'flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-xs',

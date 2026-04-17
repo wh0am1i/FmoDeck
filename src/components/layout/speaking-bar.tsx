@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { logsStore } from '@/features/logs/store'
 import { speakingStore } from '@/features/speaking/store'
 import { parseCallsignSsid } from '@/lib/utils/callsign'
@@ -24,17 +25,18 @@ function formatElapsed(ms: number): string {
   return `${Math.floor(m / 60)}h${m % 60}m`
 }
 
-function formatTimeAgo(unixSeconds: number, nowMs: number): string {
+function formatTimeAgo(unixSeconds: number, nowMs: number, agoSuffix: string): string {
   const deltaSec = Math.floor(nowMs / 1000) - unixSeconds
-  if (deltaSec < 60) return `${deltaSec}s 前`
+  if (deltaSec < 60) return `${deltaSec}s${agoSuffix}`
   const m = Math.floor(deltaSec / 60)
-  if (m < 60) return `${m}m 前`
+  if (m < 60) return `${m}m${agoSuffix}`
   const h = Math.floor(m / 60)
-  if (h < 48) return `${h}h 前`
-  return `${Math.floor(h / 24)}d 前`
+  if (h < 48) return `${h}h${agoSuffix}`
+  return `${Math.floor(h / 24)}d${agoSuffix}`
 }
 
 export function SpeakingBar() {
+  const { t } = useTranslation()
   const current = speakingStore((s) => s.current)
   const logs = logsStore((s) => s.all)
   const local = logsStore((s) => s.local)
@@ -69,10 +71,13 @@ export function SpeakingBar() {
 
   if (!current) {
     return (
-      <div aria-label="讲话状态栏" className="border-b border-border bg-card/30 px-4 py-2">
+      <div
+        aria-label={t('speaking.barAria')}
+        className="border-b border-border bg-card/30 px-4 py-2"
+      >
         <div className="mx-auto flex max-w-7xl items-center gap-3">
           <span className="h-2 w-2 rounded-full bg-muted-foreground" aria-hidden="true" />
-          <span className="hud-mono text-xs text-muted-foreground">[ QUIET · 暂无人讲话 ]</span>
+          <span className="hud-mono text-xs text-muted-foreground">{t('speaking.quiet')}</span>
           <div className="flex-1" />
           <SpeakingHistoryPopover myCallsign={myCallsign} />
         </div>
@@ -84,7 +89,10 @@ export function SpeakingBar() {
   const elapsed = formatElapsed(Math.max(0, nowMs - current.startedAtMs))
 
   return (
-    <div aria-label="讲话状态栏" className="border-b border-primary/40 bg-primary/10 px-4 py-2">
+    <div
+      aria-label={t('speaking.barAria')}
+      className="border-b border-primary/40 bg-primary/10 px-4 py-2"
+    >
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-1">
         <span className="h-2 w-2 rounded-full bg-primary animate-pulse" aria-hidden="true" />
         <span className="hud-title text-primary">{current.callsign}</span>
@@ -107,25 +115,29 @@ export function SpeakingBar() {
               'hud-mono rounded-sm border border-primary bg-primary/10 px-1.5 py-0.5 text-xs text-primary'
             )}
           >
-            我自己
+            {t('speaking.self')}
           </span>
         ) : (
           <>
             <span className="hud-mono text-xs text-muted-foreground">·</span>
             {stats && stats.count > 0 ? (
               <span className="hud-mono text-xs">
-                <span className="text-muted-foreground">已通联 </span>
+                <span className="text-muted-foreground">{t('speaking.workedPrefix')}</span>
                 <span className="text-primary">{stats.count}</span>
-                <span className="text-muted-foreground"> 次</span>
+                <span className="text-muted-foreground">{t('speaking.workedSuffix')}</span>
                 {stats.lastTime !== null && (
                   <>
-                    <span className="text-muted-foreground"> · 上次 </span>
-                    <span className="text-primary">{formatTimeAgo(stats.lastTime, nowMs)}</span>
+                    <span className="text-muted-foreground">{t('speaking.lastPrefix')}</span>
+                    <span className="text-primary">
+                      {formatTimeAgo(stats.lastTime, nowMs, t('speaking.agoSuffix'))}
+                    </span>
                   </>
                 )}
               </span>
             ) : (
-              <span className="hud-mono text-xs text-muted-foreground">还未通联</span>
+              <span className="hud-mono text-xs text-muted-foreground">
+                {t('speaking.notWorked')}
+              </span>
             )}
           </>
         )}

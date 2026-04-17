@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { logsStore, selectMergedRows, type DisplayRow } from '@/features/logs/store'
@@ -47,6 +48,7 @@ function formatDate(unixSeconds: number): string {
 }
 
 export function OldFriendsView() {
+  const { t } = useTranslation()
   const all = logsStore((s) => s.all)
   const local = logsStore((s) => s.local)
   const syncMode = logsStore((s) => s.syncMode)
@@ -78,9 +80,10 @@ export function OldFriendsView() {
   if (connectionStatus !== 'connected' && local.length === 0) {
     return (
       <section className="hud-frame p-6">
-        <h2 className="hud-title text-primary mb-2">[ OLD FRIENDS ]</h2>
+        <h2 className="hud-title text-primary mb-2">{t('oldFriends.title')}</h2>
         <p className="hud-mono text-sm text-muted-foreground">
-          [ OFFLINE · 请先在 Settings 配置并激活 FMO 地址，或在 LOGS 里导入 ADIF ]
+          {t('common.offlinePrefix')}
+          {t('common.offlineHintAddrs')}，{t('common.offlineHintImport')} ]
         </p>
       </section>
     )
@@ -89,8 +92,8 @@ export function OldFriendsView() {
   if (all.length + local.length === 0) {
     return (
       <section className="hud-frame p-6">
-        <h2 className="hud-title text-primary mb-2">[ OLD FRIENDS ]</h2>
-        <p className="hud-mono text-sm text-muted-foreground">[ 暂无数据 · 先到 LOGS 拉取日志 ]</p>
+        <h2 className="hud-title text-primary mb-2">{t('oldFriends.title')}</h2>
+        <p className="hud-mono text-sm text-muted-foreground">{t('oldFriends.emptyData')}</p>
       </section>
     )
   }
@@ -98,12 +101,12 @@ export function OldFriendsView() {
   return (
     <section className="hud-frame flex flex-col gap-4 p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="hud-title text-primary">[ OLD FRIENDS ]</h2>
+        <h2 className="hud-title text-primary">{t('oldFriends.title')}</h2>
         <span className="hud-mono text-xs text-muted-foreground">
-          {syncMode === 'today' && '今天 · '}
+          {syncMode === 'today' && t('logs.todayPrefix')}
           {filtered.length === friends.length
-            ? `${friends.length} 位`
-            : `${filtered.length} / ${friends.length} 位`}
+            ? t('oldFriends.countAll', { count: friends.length })
+            : t('oldFriends.countFiltered', { filtered: filtered.length, total: friends.length })}
         </span>
       </div>
 
@@ -114,9 +117,9 @@ export function OldFriendsView() {
             setFilter(e.target.value)
             setPage(0)
           }}
-          placeholder="按呼号包含匹配"
+          placeholder={t('oldFriends.filterPlaceholder')}
           className="max-w-xs"
-          aria-label="过滤呼号"
+          aria-label={t('oldFriends.filterAria')}
         />
         {filter && (
           <Button
@@ -126,7 +129,7 @@ export function OldFriendsView() {
               setFilter('')
               setPage(0)
             }}
-            aria-label="清除过滤"
+            aria-label={t('oldFriends.clearFilter')}
           >
             <X className="h-4 w-4" />
           </Button>
@@ -134,10 +137,10 @@ export function OldFriendsView() {
       </div>
 
       {slice.length === 0 ? (
-        <div className="hud-mono text-sm text-muted-foreground py-4">[ 无匹配 ]</div>
+        <div className="hud-mono text-sm text-muted-foreground py-4">{t('common.noMatch')}</div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="hud-mono w-full text-sm" aria-label="老朋友列表">
+          <table className="hud-mono w-full text-sm" aria-label={t('oldFriends.listAria')}>
             <thead>
               <tr className="border-b border-border text-left text-xs text-muted-foreground">
                 <th className="px-3 py-2 w-8">#</th>
@@ -180,7 +183,7 @@ export function OldFriendsView() {
           size="icon-sm"
           disabled={currentPage <= 0}
           onClick={() => setPage(currentPage - 1)}
-          aria-label="上一页"
+          aria-label={t('pagination.previous')}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -192,7 +195,7 @@ export function OldFriendsView() {
           size="icon-sm"
           disabled={currentPage >= totalPages - 1}
           onClick={() => setPage(currentPage + 1)}
-          aria-label="下一页"
+          aria-label={t('pagination.next')}
         >
           <ChevronRight className="h-4 w-4" />
         </Button>

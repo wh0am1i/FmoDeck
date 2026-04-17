@@ -1,4 +1,5 @@
 import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { connectionStore } from '@/stores/connection'
 
@@ -10,6 +11,7 @@ import { connectionStore } from '@/stores/connection'
  * - 无 `currentUrl`（例如从未连过）时不显示重试按钮
  */
 export function ConnectionErrorBanner() {
+  const { t } = useTranslation()
   const status = connectionStore((s) => s.status)
   const lastError = connectionStore((s) => s.lastError)
   const currentUrl = connectionStore((s) => s.currentUrl)
@@ -21,17 +23,18 @@ export function ConnectionErrorBanner() {
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3">
         <AlertTriangle className="h-4 w-4 flex-shrink-0 text-destructive" aria-hidden="true" />
         <span className="hud-mono flex-1 text-sm text-destructive">
-          连接失败：{lastError?.message ?? '未知错误'}
+          {t('connection.failedPrefix')}
+          {lastError?.message ?? t('common.unknown')}
         </span>
         {currentUrl && (
           <Button
             variant="outline"
             size="sm"
             onClick={() => void connectionStore.getState().connect(currentUrl)}
-            aria-label="重试连接"
+            aria-label={t('connection.retry')}
           >
             <RefreshCw className="h-4 w-4" />
-            重试
+            {t('connection.retry')}
           </Button>
         )}
       </div>

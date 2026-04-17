@@ -1,9 +1,11 @@
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { logsStore } from '../store'
 import { X } from 'lucide-react'
 
 export function LogsFilter() {
+  const { t } = useTranslation()
   const filter = logsStore((s) => s.filter)
 
   return (
@@ -11,16 +13,16 @@ export function LogsFilter() {
       <Input
         value={filter}
         onChange={(e) => logsStore.getState().setFilter(e.target.value)}
-        placeholder="按呼号前缀过滤（如 BG）"
+        placeholder={t('logs.filterPlaceholder')}
         className="max-w-xs"
-        aria-label="过滤呼号"
+        aria-label={t('logs.filterAria')}
       />
       {filter && (
         <Button
           variant="ghost"
           size="icon-sm"
           onClick={() => logsStore.getState().setFilter('')}
-          aria-label="清除过滤"
+          aria-label={t('oldFriends.clearFilter')}
         >
           <X className="h-4 w-4" />
         </Button>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export function MessageDetailDialog({ messageId, onClose }: Props) {
+  const { t } = useTranslation()
   const [detail, setDetail] = useState<MessageDetail | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -32,7 +34,7 @@ export function MessageDetailDialog({ messageId, onClose }: Props) {
     }
     const client = connectionStore.getState().client
     if (!client) {
-      toast.error('连接不可用')
+      toast.error(t('connection.unavailable'))
       onClose()
       return
     }
@@ -48,22 +50,28 @@ export function MessageDetailDialog({ messageId, onClose }: Props) {
         messagesStore.getState().markRead(messageId)
       })
       .catch((err: unknown) => {
-        toast.error(`加载失败: ${err instanceof Error ? err.message : String(err)}`)
+        toast.error(
+          `${t('messageDetail.loadFailedPrefix')}${err instanceof Error ? err.message : String(err)}`
+        )
         setLoading(false)
         onClose()
       })
-  }, [messageId, onClose])
+  }, [messageId, onClose, t])
 
   return (
     <Dialog open={messageId !== null} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="hud-title text-primary">[ MESSAGE ]</DialogTitle>
+          <DialogTitle className="hud-title text-primary">{t('messageDetail.title')}</DialogTitle>
           <DialogDescription className="hud-mono text-xs">
-            {detail ? `来自 ${detail.from} · ${formatTs(detail.timestamp)}` : '加载中...'}
+            {detail
+              ? t('messageDetail.header', { from: detail.from, time: formatTs(detail.timestamp) })
+              : t('messageDetail.loading')}
           </DialogDescription>
         </DialogHeader>
-        {loading && <div className="hud-mono py-6 text-sm text-muted-foreground">加载中...</div>}
+        {loading && (
+          <div className="hud-mono py-6 text-sm text-muted-foreground">{t('common.loading')}</div>
+        )}
         {detail && (
           <div className="hud-mono whitespace-pre-wrap break-words py-2 text-sm">
             {detail.content}

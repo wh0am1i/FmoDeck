@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router'
+import { Trans, useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { settingsStore } from '@/stores/settings'
 import { Rocket } from 'lucide-react'
@@ -10,6 +11,7 @@ import { Rocket } from 'lucide-react'
  * 地址（不管是否激活）就永久隐藏 —— Header 的 UNCONFIGURED 指示足够。
  */
 export function WelcomeBanner() {
+  const { t } = useTranslation()
   const addresses = settingsStore((s) => s.fmoAddresses)
   const navigate = useNavigate()
 
@@ -20,19 +22,23 @@ export function WelcomeBanner() {
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3">
         <Rocket className="h-4 w-4 flex-shrink-0 text-primary" aria-hidden="true" />
         <span className="hud-mono text-sm text-foreground">
-          <span className="text-primary font-bold">欢迎使用 FmoDeck</span>
-          <span className="text-muted-foreground"> · 先添加一个 FMO 地址（如 </span>
-          <code className="text-primary">fmo.local</code>
-          <span className="text-muted-foreground">）即可开始</span>
+          <span className="text-primary font-bold">{t('welcome.title')}</span>
+          <span className="text-muted-foreground">
+            <Trans
+              i18nKey="welcome.hint"
+              values={{ example: 'fmo.local' }}
+              components={{ 1: <code className="text-primary" /> }}
+            />
+          </span>
         </span>
         <div className="flex-1" />
         <Button
           variant="outline"
           size="sm"
           onClick={() => void navigate('/settings')}
-          aria-label="去设置页配置 FMO 地址"
+          aria-label={t('welcome.cta')}
         >
-          去设置 →
+          {t('welcome.cta')}
         </Button>
       </div>
     </div>

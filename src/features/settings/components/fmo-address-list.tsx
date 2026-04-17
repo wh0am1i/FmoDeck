@@ -1,12 +1,13 @@
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { settingsStore, type SyncMode } from '@/stores/settings'
 import { cn } from '@/lib/utils'
 import { Check, Trash2 } from 'lucide-react'
 
-const MODE_LABEL: Record<SyncMode, string> = {
-  all: '全量',
-  today: '仅当天',
-  incremental: '增量'
+const MODE_KEY: Record<SyncMode, string> = {
+  all: 'settings.modeFull',
+  today: 'settings.modeToday',
+  incremental: 'settings.modeIncremental'
 }
 
 /** 徽章点击的循环顺序：all → today → incremental → all。 */
@@ -17,19 +18,20 @@ const NEXT_MODE: Record<SyncMode, SyncMode> = {
 }
 
 export function FmoAddressList() {
+  const { t } = useTranslation()
   const addresses = settingsStore((s) => s.fmoAddresses)
   const activeId = settingsStore((s) => s.activeAddressId)
 
   if (addresses.length === 0) {
     return (
       <div className="hud-mono text-sm text-muted-foreground py-4">
-        [ NO ADDRESSES · 点&ldquo;添加地址&rdquo;开始 ]
+        {t('settings.addressEmpty')}
       </div>
     )
   }
 
   return (
-    <ul className="flex flex-col gap-1" aria-label="FMO 地址列表">
+    <ul className="flex flex-col gap-1" aria-label={t('settings.addressListAria')}>
       {addresses.map((a) => {
         const isActive = a.id === activeId
         const mode: SyncMode = a.syncMode ?? 'all'
@@ -46,7 +48,11 @@ export function FmoAddressList() {
               type="button"
               onClick={() => settingsStore.getState().setActiveAddress(a.id)}
               className="flex h-5 w-5 items-center justify-center rounded-full border border-border"
-              aria-label={isActive ? '已激活' : `激活 ${a.host}`}
+              aria-label={
+                isActive
+                  ? t('settings.addressActiveAria')
+                  : t('settings.addressActivateAria', { host: a.host })
+              }
             >
               {isActive && <Check className="h-3 w-3 text-primary" />}
             </button>
@@ -64,16 +70,16 @@ export function FmoAddressList() {
                 mode === 'all' &&
                   'border-border text-muted-foreground hover:border-primary hover:text-primary'
               )}
-              aria-label={`同步模式：${MODE_LABEL[mode]}（点击切换）`}
-              title="点击切换同步模式"
+              aria-label={t('settings.syncModeAria', { mode: t(MODE_KEY[mode]) })}
+              title={t('settings.syncModeTitle')}
             >
-              {MODE_LABEL[mode]}
+              {t(MODE_KEY[mode])}
             </button>
             <Button
               variant="ghost"
               size="icon-sm"
               onClick={() => settingsStore.getState().removeAddress(a.id)}
-              aria-label={`删除 ${a.host}`}
+              aria-label={t('settings.addressDeleteAria', { host: a.host })}
             >
               <Trash2 className="h-4 w-4" />
             </Button>

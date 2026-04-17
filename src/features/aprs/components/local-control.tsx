@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { DeviceControlService } from '@/lib/device-control/client'
 import { connectionStore } from '@/stores/connection'
@@ -7,25 +8,28 @@ import { Pause, Play, RotateCw } from 'lucide-react'
 
 type LocalAction = 'normal' | 'standby' | 'restart'
 
-const ACTIONS: {
+interface ActionDef {
   key: LocalAction
-  label: string
+  labelKey: string
   icon: typeof Play
   variant: 'default' | 'secondary' | 'destructive'
-  confirm?: string
-}[] = [
-  { key: 'normal', label: '普通模式', icon: Play, variant: 'default' },
-  { key: 'standby', label: '待机模式', icon: Pause, variant: 'secondary' },
+  confirmKey?: string
+}
+
+const ACTIONS: readonly ActionDef[] = [
+  { key: 'normal', labelKey: 'aprs.modeNormal', icon: Play, variant: 'default' },
+  { key: 'standby', labelKey: 'aprs.modeStandby', icon: Pause, variant: 'secondary' },
   {
     key: 'restart',
-    label: '重启 APRS 服务',
+    labelKey: 'aprs.restart',
     icon: RotateCw,
     variant: 'destructive',
-    confirm: '确认要重启设备的 APRS 服务吗？'
+    confirmKey: 'aprs.confirmRestart'
   }
 ]
 
 export function LocalControl() {
+  const { t } = useTranslation()
   const client = connectionStore((s) => s.client)
   const connectionStatus = connectionStore((s) => s.status)
   const [busy, setBusy] = useState(false)
@@ -41,13 +45,13 @@ export function LocalControl() {
       const svc = new DeviceControlService(client)
       if (action === 'normal') {
         await svc.setScreenMode(0)
-        toast.success('已切到普通模式')
+        toast.success(t('aprs.normalDone'))
       } else if (action === 'standby') {
         await svc.setScreenMode(1)
-        toast.success('已切到待机模式')
+        toast.success(t('aprs.standbyDone'))
       } else {
         await svc.restartAprsService()
-        toast.success('APRS 服务已重启')
+        toast.success(t('aprs.restartDone'))
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err))
@@ -58,24 +62,25 @@ export function LocalControl() {
 
   return (
     <section className="hud-frame flex flex-col gap-4 p-6">
-      <h2 className="hud-title text-primary">[ LOCAL CONTROL ]</h2>
+      <h2 className="hud-title text-primary">{t('aprs.sectionLocal')}</h2>
       <div className="flex flex-wrap gap-3">
-        {ACTIONS.map(({ key, label, icon: Icon, variant, confirm }) => (
+        {ACTIONS.map(({ key, labelKey, icon: Icon, variant, confirmKey }) => (
           <Button
             key={key}
             variant={variant}
             disabled={disabled}
-            onClick={() => void handle(key, confirm)}
+            onClick={() => void handle(key, confirmKey ? t(confirmKey) : undefined)}
             className="min-w-32"
           >
             <Icon className="h-4 w-4" />
-            {label}
+            {t(labelKey)}
           </Button>
         ))}
       </div>
       {!connected && (
         <p className="hud-mono text-xs text-muted-foreground">
-          [ OFFLINE · 请先在 Settings 配置并激活 FMO 地址 ]
+          {t('common.offlinePrefix')}
+          {t('common.offlineHintAddrs')} ]
         </p>
       )}
     </section>

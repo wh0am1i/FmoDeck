@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Select,
   SelectContent,
@@ -10,30 +11,30 @@ import { CallsignField } from './components/callsign-field'
 import { FmoAddressDialog } from './components/fmo-address-dialog'
 import { FmoAddressList } from './components/fmo-address-list'
 import { HudIntensityField } from './components/hud-intensity-field'
-import { LanguageField } from './components/language-field'
 
 export function SettingsView() {
+  const { t } = useTranslation()
   const protocol = settingsStore((s) => s.protocol)
 
   return (
     <div className="flex flex-col gap-6">
       <section className="hud-frame p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="hud-title text-primary">[ FMO ADDRESSES ]</h2>
+          <h2 className="hud-title text-primary">{t('settings.sectionAddresses')}</h2>
           <FmoAddressDialog />
         </div>
         <FmoAddressList />
       </section>
 
       <section className="hud-frame p-6 flex flex-col gap-4">
-        <h2 className="hud-title text-primary">[ IDENTITY ]</h2>
+        <h2 className="hud-title text-primary">{t('settings.sectionIdentity')}</h2>
         <CallsignField />
       </section>
 
       <section className="hud-frame p-6 flex flex-col gap-2">
-        <h2 className="hud-title text-primary">[ PROTOCOL ]</h2>
+        <h2 className="hud-title text-primary">{t('settings.sectionProtocol')}</h2>
         <label className="hud-mono text-xs text-muted-foreground">
-          WebSocket 协议（wss 需证书；内网 fmo.local 用 ws 即可）
+          {t('settings.protocolHint')}
         </label>
         <Select
           value={protocol}
@@ -50,13 +51,8 @@ export function SettingsView() {
       </section>
 
       <section className="hud-frame p-6 flex flex-col gap-4">
-        <h2 className="hud-title text-primary">[ HUD VISUAL ]</h2>
+        <h2 className="hud-title text-primary">{t('settings.sectionHud')}</h2>
         <HudIntensityField />
-      </section>
-
-      <section className="hud-frame p-6 flex flex-col gap-4">
-        <h2 className="hud-title text-primary">[ LANGUAGE ]</h2>
-        <LanguageField />
       </section>
     </div>
   )

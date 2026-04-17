@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { messagesStore } from '../store'
 import { cn } from '@/lib/utils'
 
@@ -12,18 +13,15 @@ interface Props {
 }
 
 export function MessagesList({ onRowClick }: Props) {
+  const { t } = useTranslation()
   const list = messagesStore((s) => s.list)
 
   if (list.length === 0) {
-    return (
-      <div className="hud-mono text-sm text-muted-foreground py-4">
-        [ NO MESSAGES · 收件箱为空 ]
-      </div>
-    )
+    return <div className="hud-mono text-sm text-muted-foreground py-4">{t('messages.empty')}</div>
   }
 
   return (
-    <ul className="flex flex-col gap-1" aria-label="消息列表">
+    <ul className="flex flex-col gap-1" aria-label={t('messages.listAria')}>
       {list.map((m) => (
         <li key={m.messageId}>
           <button

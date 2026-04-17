@@ -39,7 +39,7 @@ describe('ConnectionErrorBanner', () => {
     })
     const user = userEvent.setup()
     render(<ConnectionErrorBanner />)
-    await user.click(screen.getByRole('button', { name: '重试连接' }))
+    await user.click(screen.getByRole('button', { name: '重试' }))
     expect(connect).toHaveBeenCalledWith('ws://fmo.local/ws')
   })
 
@@ -50,16 +50,16 @@ describe('ConnectionErrorBanner', () => {
       currentUrl: null
     })
     render(<ConnectionErrorBanner />)
-    expect(screen.queryByRole('button', { name: '重试连接' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '重试' })).not.toBeInTheDocument()
   })
 
-  it('lastError 为 null 时降级为"未知错误"', () => {
+  it('lastError 为 null 时降级为"未知"', () => {
     connectionStore.setState({
       status: 'error',
       lastError: null,
       currentUrl: 'ws://x/ws'
     })
     render(<ConnectionErrorBanner />)
-    expect(screen.getByText(/未知错误/)).toBeInTheDocument()
+    expect(screen.getByText(/未知/)).toBeInTheDocument()
   })
 })

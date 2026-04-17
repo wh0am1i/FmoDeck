@@ -1,4 +1,9 @@
 {
+  "language": {
+    "label": "Language",
+    "zhCN": "简体中文",
+    "en": "English"
+  },
   "nav": {
     "logs": "LOGS",
     "top20": "TOP 20",
@@ -6,13 +11,6 @@
     "messages": "MSG",
     "aprs": "APRS",
     "settings": "SETTINGS"
-  },
-  "connection": {
-    "unconfigured": "UNCONFIGURED",
-    "connecting": "CONNECTING...",
-    "online": "ONLINE",
-    "offline": "OFFLINE",
-    "error": "ERROR"
   },
   "header": {
     "appName": "FMODECK",
@@ -22,6 +20,17 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System"
+  },
+  "connection": {
+    "status": "Connection status",
+    "unconfigured": "UNCONFIGURED",
+    "connecting": "CONNECTING...",
+    "online": "ONLINE",
+    "offline": "OFFLINE",
+    "error": "ERROR",
+    "failedPrefix": "Connection failed: ",
+    "retry": "Retry",
+    "unavailable": "Connection unavailable"
   },
   "common": {
     "refresh": "Refresh",
@@ -37,29 +46,208 @@
     "clear": "Clear",
     "import": "Import",
     "export": "Export",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "today": "Today",
+    "yesterdayPrefix": "Y ",
+    "earlier": "— earlier —",
+    "add": "Add",
+    "noMatch": "[ NO MATCH ]",
+    "loadFailedPrefix": "Load failed: ",
+    "offlinePrefix": "[ OFFLINE · ",
+    "offlineHintAddrs": "Configure and activate an FMO address in Settings",
+    "offlineHintImport": "or import ADIF under LOGS",
+    "offlineHintLogs": "Configure an FMO address in Settings, or import an ADIF file for offline view"
   },
-  "settings": {
-    "fmoAddresses": "FMO Addresses",
-    "identity": "Identity",
-    "protocol": "Protocol",
-    "hudVisual": "HUD Visual",
-    "language": "Language",
-    "hudIntensity": "HUD Intensity",
-    "hudScanline": "Scanline Opacity",
-    "hudReset": "Reset to defaults"
-  },
-  "welcome": {
-    "title": "Welcome to FmoDeck",
-    "hint": "Add an FMO address (e.g. {{example}}) to get started",
-    "cta": "Go to Settings →"
+  "station": {
+    "switch": "Switch station",
+    "previous": "Previous station",
+    "next": "Next station",
+    "refreshList": "Refresh list",
+    "listAria": "Station list",
+    "notSelected": "Not selected",
+    "emptyList": "[ Empty list · click refresh to load ]",
+    "switchedTo": "Switched to {{name}}",
+    "verbSwitch": "Switch",
+    "verbPrev": "Previous",
+    "verbNext": "Next",
+    "actionFailed": "{{verb}} failed: {{error}}"
   },
   "speaking": {
-    "quiet": "Nobody speaking",
+    "quiet": "[ QUIET · nobody speaking ]",
     "self": "You",
+    "selfShort": "Me",
     "notWorked": "Not worked",
     "worked": "Worked {{count}} times",
     "lastWorked": "Last {{time}}",
-    "history": "History"
+    "history": "History",
+    "historyAria": "Speaking history",
+    "historyTitle": "Recent speakers",
+    "historyHeader": "[ SPEAKING HISTORY ]",
+    "historyEmpty": "None",
+    "historyCount": "Recent {{count}}",
+    "historyOffline": "[ Connect to a station to see recent speakers ]",
+    "historyListAria": "Speaking history list",
+    "viewQsoWith": "View QSOs with this callsign",
+    "barAria": "Speaking status bar",
+    "workedPrefix": "Worked ",
+    "workedSuffix": " times",
+    "lastPrefix": " · last ",
+    "agoSuffix": " ago"
+  },
+  "welcome": {
+    "title": "Welcome to FmoDeck",
+    "hint": " · add an FMO address (e.g. <1>{{example}}</1>) to get started",
+    "cta": "Go to Settings →"
+  },
+  "settings": {
+    "sectionAddresses": "[ FMO ADDRESSES ]",
+    "sectionIdentity": "[ IDENTITY ]",
+    "sectionProtocol": "[ PROTOCOL ]",
+    "sectionHud": "[ HUD VISUAL ]",
+    "protocolHint": "WebSocket protocol (wss needs a cert; ws is fine for LAN fmo.local)",
+    "hudIntensity": "HUD Intensity",
+    "hudIntensityDesc": "Controls glow / focus neon · 0 = clean, 2 = intense",
+    "hudScanline": "Scanline Opacity",
+    "hudScanlineDesc": "Full-screen scanline overlay · 0 = off, 0.2 = heavy",
+    "hudReset": "Reset to defaults",
+    "callsignLabel": "Login callsign (uppercase, SSID suffix supported)",
+    "callsignInvalid": "Invalid callsign format (e.g. BA0AX or BY4SDL-3)",
+    "addressEmpty": "[ NO ADDRESSES · click “Add address” to start ]",
+    "addressListAria": "FMO address list",
+    "addressActivateAria": "Activate {{host}}",
+    "addressActiveAria": "Active",
+    "addressDeleteAria": "Delete {{host}}",
+    "syncModeTitle": "Click to switch sync mode",
+    "syncModeAria": "Sync mode: {{mode}} (click to switch)",
+    "modeFull": "Full",
+    "modeToday": "Today only",
+    "modeIncremental": "Incremental",
+    "addButton": "Add address",
+    "addDialogTitle": "[ ADD FMO ADDRESS ]",
+    "addDialogDesc": "Add a new FMO server address. Auto-connects when activated.",
+    "hostLabel": "Host (e.g. <1>{{example1}}</1> or <2>{{example2}}</2>)",
+    "nameLabel": "Name (optional)",
+    "namePlaceholder": "My FMO at home",
+    "syncModeLabel": "Sync mode",
+    "addConfirm": "Add",
+    "syncFullTitle": "Full sync",
+    "syncFullDesc": "Pull all logs from the server (default · slow first time)",
+    "syncTodayTitle": "Today only",
+    "syncTodayDesc": "Keep only local-timezone “today” logs",
+    "syncIncrementalTitle": "Incremental",
+    "syncIncrementalDesc": "Only pull new rows (based on max logId) · fastest refresh"
+  },
+  "logs": {
+    "title": "[ LOGS ]",
+    "todayPrefix": "Today · ",
+    "countRecords": "{{count}} records",
+    "countFiltered": "{{filtered}} / {{total}} records",
+    "withLocal": "incl. {{count}} local",
+    "refreshHint": "Refresh logs from server",
+    "refreshDisabled": "Connect to FMO first",
+    "exportAdif": "Export ADIF",
+    "exported": "Exported {{count}} logs",
+    "loaded": "Loaded {{count}} logs",
+    "emptyTable": "[ NO RECORDS · awaiting connection or clear the filter ]",
+    "filterPlaceholder": "Filter by callsign prefix (e.g. BG)",
+    "filterAria": "Filter callsign"
+  },
+  "logDetail": {
+    "localTitle": "[ LOG DETAIL · LOCAL ]",
+    "serverTitle": "[ LOG DETAIL #{{id}} ]",
+    "serverTitleNoId": "[ LOG DETAIL ]",
+    "localSource": "Local record imported from ADIF",
+    "serverSource": "Full QSO record returned by server",
+    "adifFields": "Full ADIF fields:"
+  },
+  "adifImport": {
+    "button": "Import ADIF",
+    "title": "[ IMPORT ADIF ]",
+    "description": "Import QSO records from a .adi file into local storage. Persisted to browser IndexedDB.",
+    "localCountLabel": "Local records:",
+    "localCountSuffix": "",
+    "clearLocal": "Clear local",
+    "confirmClear": "Clear all local imported records ({{count}})? This cannot be undone.",
+    "cleared": "Local records cleared",
+    "importedOk": "Imported {{imported}}",
+    "importedSkipped": "skipped {{skipped}}",
+    "emptyFile": "No records to import (skipped {{skipped}}; maybe missing CALL or QSO_DATE)",
+    "failedPrefix": "Import failed: ",
+    "help1": "Parse QSOs from .adi files and append to local cache.",
+    "help2": "Merged with server logs by (callsign, time); server records are never overwritten.",
+    "fieldHelp": "Requires <1>call</1>, <2>qso_date</2>, <3>time_on</3> fields; other fields are preserved as-is."
+  },
+  "pagination": {
+    "previous": "Previous page",
+    "next": "Next page"
+  },
+  "top20": {
+    "title": "[ TOP 20 ]",
+    "emptyData": "[ No data · pull logs from LOGS first ]",
+    "aggregatedOf": "Aggregated from {{count}} logs",
+    "excludedHistory": "Excluded {{count}} historical",
+    "viewQsoOf": "View QSOs with {{callsign}}",
+    "recentPrefix": "Last ",
+    "timesCount": "{{count}} QSO"
+  },
+  "oldFriends": {
+    "title": "[ OLD FRIENDS ]",
+    "emptyData": "[ No data · pull logs from LOGS first ]",
+    "countAll": "{{count}}",
+    "countFiltered": "{{filtered}} / {{total}}",
+    "filterPlaceholder": "Filter by callsign substring",
+    "filterAria": "Filter callsign",
+    "clearFilter": "Clear filter",
+    "listAria": "Old friends list"
+  },
+  "messages": {
+    "title": "[ MSG ]",
+    "countTotal": "{{count}}",
+    "countUnread": "{{unread}} unread / {{total}}",
+    "newFrom": "New message from {{from}}",
+    "loadFailedPrefix": "Load failed: ",
+    "loading": "Loading...",
+    "loadMore": "Load more",
+    "empty": "[ NO MESSAGES · inbox is empty ]",
+    "listAria": "Messages list",
+    "refresh": "Refresh"
+  },
+  "compose": {
+    "button": "Compose",
+    "title": "[ COMPOSE MESSAGE ]",
+    "description": "Send a message to another FMO callsign",
+    "toLabel": "Recipient callsign",
+    "contentLabel": "Content",
+    "contentPlaceholder": "Say something...",
+    "send": "Send",
+    "sending": "Sending...",
+    "sent": "Message sent",
+    "sendFailedPrefix": "Send failed: "
+  },
+  "messageDetail": {
+    "title": "[ MESSAGE ]",
+    "header": "From {{from}} · {{time}}",
+    "loading": "Loading...",
+    "loadFailedPrefix": "Load failed: "
+  },
+  "aprs": {
+    "modeNormal": "Normal mode",
+    "modeStandby": "Standby mode",
+    "restart": "Restart APRS service",
+    "confirmRestart": "Restart the device's APRS service?",
+    "normalDone": "Switched to normal mode",
+    "standbyDone": "Switched to standby mode",
+    "restartDone": "APRS service restarted",
+    "sectionLocal": "[ LOCAL CONTROL ]"
+  },
+  "passcode": {
+    "title": "[ PASSCODE CALCULATOR ]",
+    "subtitle": "Standard APRS-IS algorithm · derives login passcode from callsign",
+    "callsignLabel": "Callsign (SSID suffix ignored)",
+    "compute": "Compute",
+    "copied": "Passcode copied to clipboard",
+    "copyFailed": "Copy failed (browser permission denied)",
+    "enterCallsign": "Enter a callsign first",
+    "label": "Passcode"
   }
 }

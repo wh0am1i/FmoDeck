@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { QsoService } from '@/lib/qso-service/client'
 import { connectionStore } from '@/stores/connection'
@@ -13,6 +14,7 @@ import { downloadAdif } from './export'
 import { Download, RefreshCw } from 'lucide-react'
 
 export function LogsView() {
+  const { t } = useTranslation()
   const status = logsStore((s) => s.status)
   const filteredCount = logsStore((s) => selectFiltered(s).length)
   const serverCount = logsStore((s) => s.all.length)
@@ -32,7 +34,7 @@ export function LogsView() {
     if (!client) return
     try {
       await logsStore.getState().load(new QsoService(client))
-      toast.success(`已加载 ${logsStore.getState().all.length} 条日志`)
+      toast.success(t('logs.loaded', { count: logsStore.getState().all.length }))
     } catch {
       /* store 已记录 error */
     }
@@ -52,11 +54,12 @@ export function LogsView() {
     return (
       <section className="hud-frame flex flex-col gap-4 p-6">
         <div className="flex items-center justify-between">
-          <h2 className="hud-title text-primary">[ LOGS ]</h2>
+          <h2 className="hud-title text-primary">{t('logs.title')}</h2>
           <ImportAdifDialog />
         </div>
         <p className="hud-mono text-sm text-muted-foreground">
-          [ OFFLINE · 请先在 Settings 配置 FMO 地址，或导入 ADIF 文件离线查看 ]
+          {t('common.offlinePrefix')}
+          {t('common.offlineHintLogs')} ]
         </p>
       </section>
     )
@@ -65,14 +68,16 @@ export function LogsView() {
   return (
     <section className="hud-frame flex flex-col gap-4 p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="hud-title text-primary">[ LOGS ]</h2>
+        <h2 className="hud-title text-primary">{t('logs.title')}</h2>
         <div className="flex flex-wrap items-center gap-2">
           <span className="hud-mono text-xs text-muted-foreground">
-            {syncMode === 'today' && '今天 · '}
+            {syncMode === 'today' && t('logs.todayPrefix')}
             {filteredCount === totalCount
-              ? `${totalCount} 条`
-              : `${filteredCount} / ${totalCount} 条`}
-            {localCount > 0 && <span className="text-accent"> · 含 {localCount} 本地</span>}
+              ? t('logs.countRecords', { count: totalCount })
+              : t('logs.countFiltered', { filtered: filteredCount, total: totalCount })}
+            {localCount > 0 && (
+              <span className="text-accent"> · {t('logs.withLocal', { count: localCount })}</span>
+            )}
           </span>
           <ImportAdifDialog />
           <Button
@@ -82,21 +87,21 @@ export function LogsView() {
             onClick={() => {
               const all = logsStore.getState().all
               downloadAdif(all, `fmodeck-logs-${Date.now()}.adi`)
-              toast.success(`已导出 ${all.length} 条日志`)
+              toast.success(t('logs.exported', { count: all.length }))
             }}
           >
             <Download className="h-4 w-4" />
-            导出 ADIF
+            {t('logs.exportAdif')}
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => void refresh()}
             disabled={status === 'loading' || !canLoadServer}
-            title={!canLoadServer ? '需先连上 FMO 才能刷新' : '从服务器重新拉日志'}
+            title={!canLoadServer ? t('logs.refreshDisabled') : t('logs.refreshHint')}
           >
             <RefreshCw className={status === 'loading' ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
-            刷新
+            {t('common.refresh')}
           </Button>
         </div>
       </div>
@@ -104,7 +109,10 @@ export function LogsView() {
       <LogsFilter />
 
       {status === 'error' && error && (
-        <div className="hud-mono text-sm text-destructive">加载失败: {error.message}</div>
+        <div className="hud-mono text-sm text-destructive">
+          {t('common.loadFailedPrefix')}
+          {error.message}
+        </div>
       )}
 
       <LogsTable onRowClick={setDetailRow} />

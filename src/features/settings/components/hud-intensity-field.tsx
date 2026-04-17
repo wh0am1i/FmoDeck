@@ -1,7 +1,9 @@
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { settingsStore } from '@/stores/settings'
 
 export function HudIntensityField() {
+  const { t } = useTranslation()
   const intensity = settingsStore((s) => s.hudIntensity)
   const scanline = settingsStore((s) => s.hudScanlineOpacity)
 
@@ -10,7 +12,7 @@ export function HudIntensityField() {
       <div className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between">
           <label htmlFor="hud-intensity" className="hud-mono text-xs text-muted-foreground">
-            HUD 强度
+            {t('settings.hudIntensity')}
           </label>
           <span className="hud-mono text-xs text-primary">{intensity.toFixed(2)}</span>
         </div>
@@ -25,14 +27,14 @@ export function HudIntensityField() {
           className="hud-range"
         />
         <span className="hud-mono text-xs text-muted-foreground/70">
-          控制辉光 / 聚焦霓虹 · 0 = 纯净，2 = 强化
+          {t('settings.hudIntensityDesc')}
         </span>
       </div>
 
       <div className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between">
           <label htmlFor="hud-scanline" className="hud-mono text-xs text-muted-foreground">
-            扫描线不透明度
+            {t('settings.hudScanline')}
           </label>
           <span className="hud-mono text-xs text-primary">{scanline.toFixed(3)}</span>
         </div>
@@ -47,7 +49,7 @@ export function HudIntensityField() {
           className="hud-range"
         />
         <span className="hud-mono text-xs text-muted-foreground/70">
-          全屏扫描线覆盖 · 0 = 关闭，0.2 = 明显
+          {t('settings.hudScanlineDesc')}
         </span>
       </div>
 
@@ -60,7 +62,7 @@ export function HudIntensityField() {
           settingsStore.getState().setHudScanlineOpacity(0.05)
         }}
       >
-        重置为默认
+        {t('settings.hudReset')}
       </Button>
     </div>
   )

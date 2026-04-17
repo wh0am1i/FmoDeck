@@ -1,5 +1,6 @@
 import { ConnectionIndicator } from './connection-indicator'
 import { StationSwitcher } from '@/features/station/components/station-switcher'
+import { LanguageSwitcher } from './language-switcher'
 import { ThemeSwitcher } from './theme-switcher'
 
 export function Header() {
@@ -13,6 +14,7 @@ export function Header() {
         <div className="flex items-center gap-2 md:gap-4">
           <StationSwitcher />
           <ConnectionIndicator />
+          <LanguageSwitcher />
           <ThemeSwitcher />
         </div>
       </div>

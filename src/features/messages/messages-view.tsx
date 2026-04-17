@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { MessageService } from '@/lib/message-service/client'
 import { connectionStore } from '@/stores/connection'
@@ -10,6 +11,7 @@ import { MessagesList } from './components/messages-list'
 import { ChevronDown, RefreshCw } from 'lucide-react'
 
 export function MessagesView() {
+  const { t } = useTranslation()
   const status = messagesStore((s) => s.status)
   const count = messagesStore((s) => s.list.length)
   const unread = messagesStore(selectUnreadCount)
@@ -52,7 +54,7 @@ export function MessagesView() {
     const svc = new MessageService(client)
     const unsub = svc.onSummary((s) => {
       messagesStore.getState().prependSummary(s)
-      toast.info(`新消息来自 ${s.from}`)
+      toast.info(t('messages.newFrom', { from: s.from }))
     })
     return unsub
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -61,9 +63,10 @@ export function MessagesView() {
   if (!canLoad) {
     return (
       <section className="hud-frame p-6">
-        <h2 className="hud-title text-primary mb-2">[ MSG ]</h2>
+        <h2 className="hud-title text-primary mb-2">{t('messages.title')}</h2>
         <p className="hud-mono text-sm text-muted-foreground">
-          [ OFFLINE · 请先在 Settings 配置并激活 FMO 地址 ]
+          {t('common.offlinePrefix')}
+          {t('common.offlineHintAddrs')} ]
         </p>
       </section>
     )
@@ -72,10 +75,12 @@ export function MessagesView() {
   return (
     <section className="hud-frame flex flex-col gap-4 p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="hud-title text-primary">[ MSG ]</h2>
+        <h2 className="hud-title text-primary">{t('messages.title')}</h2>
         <div className="flex items-center gap-2">
           <span className="hud-mono text-xs text-muted-foreground">
-            {unread > 0 ? `${unread} 未读 / ${count}` : `${count} 条`}
+            {unread > 0
+              ? t('messages.countUnread', { unread, total: count })
+              : t('messages.countTotal', { count })}
           </span>
           <ComposeDialog />
           <Button
@@ -85,13 +90,16 @@ export function MessagesView() {
             disabled={status === 'loading'}
           >
             <RefreshCw className={status === 'loading' ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
-            刷新
+            {t('common.refresh')}
           </Button>
         </div>
       </div>
 
       {status === 'error' && error && (
-        <div className="hud-mono text-sm text-destructive">加载失败: {error.message}</div>
+        <div className="hud-mono text-sm text-destructive">
+          {t('common.loadFailedPrefix')}
+          {error.message}
+        </div>
       )}
 
       <MessagesList onRowClick={setDetailId} />
@@ -107,7 +115,7 @@ export function MessagesView() {
             <ChevronDown
               className={status === 'loadingMore' ? 'h-4 w-4 animate-bounce' : 'h-4 w-4'}
             />
-            {status === 'loadingMore' ? '加载中...' : '加载更多'}
+            {status === 'loadingMore' ? t('common.loading') : t('common.loadMore')}
           </Button>
         </div>
       )}
