@@ -10,6 +10,7 @@ import { CallsignField } from './components/callsign-field'
 import { FmoAddressDialog } from './components/fmo-address-dialog'
 import { FmoAddressList } from './components/fmo-address-list'
 import { HudIntensityField } from './components/hud-intensity-field'
+import { LanguageField } from './components/language-field'
 
 export function SettingsView() {
   const protocol = settingsStore((s) => s.protocol)
@@ -51,6 +52,11 @@ export function SettingsView() {
       <section className="hud-frame p-6 flex flex-col gap-4">
         <h2 className="hud-title text-primary">[ HUD VISUAL ]</h2>
         <HudIntensityField />
+      </section>
+
+      <section className="hud-frame p-6 flex flex-col gap-4">
+        <h2 className="hud-title text-primary">[ LANGUAGE ]</h2>
+        <LanguageField />
       </section>
     </div>
   )

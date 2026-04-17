@@ -1,0 +1,65 @@
+{
+  "nav": {
+    "logs": "LOGS",
+    "top20": "TOP 20",
+    "oldFriends": "OLD FRIENDS",
+    "messages": "MSG",
+    "aprs": "APRS",
+    "settings": "SETTINGS"
+  },
+  "connection": {
+    "unconfigured": "UNCONFIGURED",
+    "connecting": "CONNECTING...",
+    "online": "ONLINE",
+    "offline": "OFFLINE",
+    "error": "ERROR"
+  },
+  "header": {
+    "appName": "FMODECK",
+    "version": "version"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "common": {
+    "refresh": "Refresh",
+    "loading": "Loading...",
+    "loadMore": "Load more",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "delete": "Delete",
+    "save": "Save",
+    "copy": "Copy",
+    "retry": "Retry",
+    "clear": "Clear",
+    "import": "Import",
+    "export": "Export",
+    "unknown": "Unknown"
+  },
+  "settings": {
+    "fmoAddresses": "FMO Addresses",
+    "identity": "Identity",
+    "protocol": "Protocol",
+    "hudVisual": "HUD Visual",
+    "language": "Language",
+    "hudIntensity": "HUD Intensity",
+    "hudScanline": "Scanline Opacity",
+    "hudReset": "Reset to defaults"
+  },
+  "welcome": {
+    "title": "Welcome to FmoDeck",
+    "hint": "Add an FMO address (e.g. {{example}}) to get started",
+    "cta": "Go to Settings →"
+  },
+  "speaking": {
+    "quiet": "Nobody speaking",
+    "self": "You",
+    "notWorked": "Not worked",
+    "worked": "Worked {{count}} times",
+    "lastWorked": "Last {{time}}",
+    "history": "History"
+  }
+}

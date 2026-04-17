@@ -1,0 +1,65 @@
+{
+  "nav": {
+    "logs": "LOGS",
+    "top20": "TOP 20",
+    "oldFriends": "OLD FRIENDS",
+    "messages": "MSG",
+    "aprs": "APRS",
+    "settings": "SETTINGS"
+  },
+  "connection": {
+    "unconfigured": "UNCONFIGURED",
+    "connecting": "CONNECTING...",
+    "online": "ONLINE",
+    "offline": "OFFLINE",
+    "error": "ERROR"
+  },
+  "header": {
+    "appName": "FMODECK",
+    "version": "版本"
+  },
+  "theme": {
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统"
+  },
+  "common": {
+    "refresh": "刷新",
+    "loading": "加载中...",
+    "loadMore": "加载更多",
+    "cancel": "取消",
+    "confirm": "确认",
+    "close": "关闭",
+    "delete": "删除",
+    "save": "保存",
+    "copy": "复制",
+    "retry": "重试",
+    "clear": "清空",
+    "import": "导入",
+    "export": "导出",
+    "unknown": "未知"
+  },
+  "settings": {
+    "fmoAddresses": "FMO 地址",
+    "identity": "身份",
+    "protocol": "协议",
+    "hudVisual": "HUD 视觉",
+    "language": "语言",
+    "hudIntensity": "HUD 强度",
+    "hudScanline": "扫描线不透明度",
+    "hudReset": "重置为默认"
+  },
+  "welcome": {
+    "title": "欢迎使用 FmoDeck",
+    "hint": "先添加一个 FMO 地址（如 {{example}}）即可开始",
+    "cta": "去设置 →"
+  },
+  "speaking": {
+    "quiet": "暂无人讲话",
+    "self": "我自己",
+    "notWorked": "还未通联",
+    "worked": "已通联 {{count}} 次",
+    "lastWorked": "上次 {{time}}",
+    "history": "历史"
+  }
+}

@@ -1,11 +1,12 @@
+import { useTranslation } from 'react-i18next'
 import { useTheme, type Theme } from '@/app/providers/theme-context'
 import { cn } from '@/lib/utils'
 import { Monitor, Moon, Sun } from 'lucide-react'
 
-const OPTIONS: { key: Theme; label: string; icon: typeof Sun }[] = [
-  { key: 'light', label: '浅色', icon: Sun },
-  { key: 'dark', label: '深色', icon: Moon },
-  { key: 'system', label: '跟随系统', icon: Monitor }
+const OPTIONS: { key: Theme; labelKey: string; icon: typeof Sun }[] = [
+  { key: 'light', labelKey: 'theme.light', icon: Sun },
+  { key: 'dark', labelKey: 'theme.dark', icon: Moon },
+  { key: 'system', labelKey: 'theme.system', icon: Monitor }
 ]
 
 /**
@@ -14,15 +15,17 @@ const OPTIONS: { key: Theme; label: string; icon: typeof Sun }[] = [
  */
 export function ThemeSwitcher() {
   const { theme, setTheme } = useTheme()
+  const { t } = useTranslation()
 
   return (
     <div
       role="radiogroup"
-      aria-label="主题"
+      aria-label={t('theme.light')}
       className="flex items-center gap-0.5 rounded-sm border border-border p-0.5"
     >
-      {OPTIONS.map(({ key, label, icon: Icon }) => {
+      {OPTIONS.map(({ key, labelKey, icon: Icon }) => {
         const active = theme === key
+        const label = t(labelKey)
         return (
           <button
             key={key}

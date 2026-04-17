@@ -1,21 +1,24 @@
 import { NavLink } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 interface NavItem {
   to: string
-  label: string
+  /** i18n key（nav.*）。 */
+  labelKey: string
 }
 
 const items: readonly NavItem[] = [
-  { to: '/logs', label: 'LOGS' },
-  { to: '/top20', label: 'TOP 20' },
-  { to: '/old-friends', label: 'OLD FRIENDS' },
-  { to: '/messages', label: 'MSG' },
-  { to: '/aprs', label: 'APRS' },
-  { to: '/settings', label: 'SETTINGS' }
+  { to: '/logs', labelKey: 'nav.logs' },
+  { to: '/top20', labelKey: 'nav.top20' },
+  { to: '/old-friends', labelKey: 'nav.oldFriends' },
+  { to: '/messages', labelKey: 'nav.messages' },
+  { to: '/aprs', labelKey: 'nav.aprs' },
+  { to: '/settings', labelKey: 'nav.settings' }
 ]
 
 export function Nav() {
+  const { t } = useTranslation()
   return (
     <nav aria-label="主导航" className="hud-frame flex gap-0 bg-card/50">
       {items.map((item) => (
@@ -32,7 +35,7 @@ export function Nav() {
             )
           }
         >
-          {item.label}
+          {t(item.labelKey)}
         </NavLink>
       ))}
     </nav>
