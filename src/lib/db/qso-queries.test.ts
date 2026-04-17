@@ -2,12 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { Database } from 'sql.js'
 import { loadSql } from './sql-loader'
 import { makeQso } from './fixtures'
-import {
-  createSchema,
-  getCallsignStats,
-  insertRecords,
-  queryByFromCallsign
-} from './qso-queries'
+import { createSchema, getCallsignStats, insertRecords, queryByFromCallsign } from './qso-queries'
 
 let db: Database
 

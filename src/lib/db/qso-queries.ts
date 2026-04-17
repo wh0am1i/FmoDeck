@@ -37,9 +37,7 @@ export function createSchema(db: Database): void {
 export function insertRecords(db: Database, records: readonly QsoRecord[]): void {
   if (records.length === 0) return
   const placeholders = QSO_COLS.map(() => '?').join(', ')
-  const stmt = db.prepare(
-    `INSERT INTO qso_logs (${QSO_COLS.join(', ')}) VALUES (${placeholders})`
-  )
+  const stmt = db.prepare(`INSERT INTO qso_logs (${QSO_COLS.join(', ')}) VALUES (${placeholders})`)
   try {
     db.run('BEGIN')
     for (const r of records) {

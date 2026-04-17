@@ -12,7 +12,8 @@
 
 - [Phase 1 · 地基](docs/superpowers/plans/2026-04-16-phase-1-foundation.md) ✅
 - [Phase 2a · 纯逻辑层](docs/superpowers/plans/2026-04-17-phase-2a-pure-logic.md) ✅
-- Phase 2b（I/O 层：IndexedDB + sql.js + WebSocket）— 待规划
+- [Phase 2b · I/O 层](docs/superpowers/plans/2026-04-17-phase-2b-io-layer.md) ✅
+- Phase 3（状态层 + hooks）— 待规划
 
 ## 技术栈
 

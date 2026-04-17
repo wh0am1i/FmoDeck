@@ -3,7 +3,7 @@ export interface AdifHeader {
   [tagName: string]: string | undefined
 }
 
-export type AdifRecord = Record<string, string>;
+export type AdifRecord = Record<string, string>
 
 export interface ParsedAdif {
   header?: AdifHeader
@@ -120,7 +120,7 @@ function toBytes(input: AdifInput): Uint8Array {
     const view = input as ArrayBufferView
     return new Uint8Array(view.buffer, view.byteOffset, view.byteLength)
   }
-  if (input && typeof (input).byteLength === 'number') {
+  if (input && typeof input.byteLength === 'number') {
     return new Uint8Array(input)
   }
   throw new Error('Invalid input: expected string | ArrayBuffer | Uint8Array')

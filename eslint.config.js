@@ -40,7 +40,8 @@ export default tseslint.config(
   {
     files: ['**/*.test.{ts,tsx}', 'tests/**/*.{ts,tsx}'],
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off'
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/unbound-method': 'off'
     }
   },
   prettier

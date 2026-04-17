@@ -64,5 +64,9 @@ console.log(`Probing ${HOST}...`)
 const result = await probeWithReqId()
 console.log('\n=== Probe Result ===')
 console.log(JSON.stringify(result, null, 2))
-console.log(result.supports ? '\n✅ 服务端支持 reqId 回传（走路线 A）' : '\n❌ 不支持 reqId（走路线 B · 串行队列）')
+console.log(
+  result.supports
+    ? '\n✅ 服务端支持 reqId 回传（走路线 A）'
+    : '\n❌ 不支持 reqId（走路线 B · 串行队列）'
+)
 process.exit(result.supports ? 0 : 1)

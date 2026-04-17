@@ -39,9 +39,7 @@ export async function putItem<T>(
 ): Promise<void> {
   const tx = db.transaction(store, 'readwrite')
   const req =
-    key === undefined
-      ? tx.objectStore(store).put(value)
-      : tx.objectStore(store).put(value, key)
+    key === undefined ? tx.objectStore(store).put(value) : tx.objectStore(store).put(value, key)
   await asPromise(req)
 }
 
@@ -70,11 +68,7 @@ export async function getAllByIndex<T>(
   return (await asPromise(idx.getAll(key))) as T[]
 }
 
-export async function deleteItem(
-  db: IDBDatabase,
-  store: string,
-  key: IDBValidKey
-): Promise<void> {
+export async function deleteItem(db: IDBDatabase, store: string, key: IDBValidKey): Promise<void> {
   const tx = db.transaction(store, 'readwrite')
   await asPromise(tx.objectStore(store).delete(key))
 }
