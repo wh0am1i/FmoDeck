@@ -6,6 +6,10 @@ on:
       - 'v*'
   workflow_dispatch:
 
+# 让 workflow token 能创建/更新 Release（新仓库默认是 read-only）
+permissions:
+  contents: write
+
 jobs:
   build-tauri:
     strategy:
