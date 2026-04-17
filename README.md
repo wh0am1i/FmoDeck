@@ -6,6 +6,30 @@
 
 ## 更新记录
 
+### v0.1.3 (2026-04-18)
+
+**新增**
+
+- **桌面应用**：基于 Tauri 2 打包为原生 macOS / Windows / Linux 应用，
+  用系统 WebView 渲染，产物 ~10 MB；
+  `pnpm tauri:dev` / `pnpm tauri:build` 一键出包
+- **跨平台 CI**：推 `v*` tag 时自动在 GitHub Actions 上构建 4 个平台
+  （macOS arm64 / x86_64、Linux x64、Windows x64），产物自动关联到
+  Release 草稿
+- 桌面版两个隐形福利：地址栏无 "Not secure" 提示；不受 Chrome
+  Private Network Access 限制，`ws://fmo.local` 随便连
+
+**改进**
+
+- 排行榜每行重构为上下两行布局：主行「序号 + 呼号 + 次数」、
+  第二行「位置 + 最近日期」，移动端也不再挤爆
+- 排行榜「次数」列数字 tabular-nums 右对齐，位数不同也对得上
+
+**其他**
+
+- GitHub Actions 升级到 Node 24 兼容版本（Node 20 即将弃用）
+- 外链统一走 `openExternal()` 工具函数，桌面 / 浏览器端都正确跳转
+
 ### v0.1.2 (2026-04-18)
 
 **新增**

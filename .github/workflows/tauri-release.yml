@@ -54,6 +54,11 @@ jobs:
       - name: Install frontend deps
         run: pnpm install --frozen-lockfile
 
+      - name: Extract changelog from README
+        id: changelog
+        shell: bash
+        run: ./scripts/extract-changelog.sh
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
@@ -61,7 +66,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: FmoDeck ${{ github.ref_name }}
-          releaseBody: 自动构建的桌面版本。Tag push 会自动关联到 GitHub Release 草稿。
+          releaseBody: ${{ steps.changelog.outputs.body }}
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}

@@ -7,7 +7,9 @@ import prettier from 'eslint-config-prettier'
 import globals from 'globals'
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules', 'coverage', 'src/components/ui', 'scripts/**'] },
+  {
+    ignores: ['dist', 'node_modules', 'coverage', 'src/components/ui', 'scripts/**', 'src-tauri/**']
+  },
   js.configs.recommended,
   {
     files: ['**/*.{ts,tsx}'],
