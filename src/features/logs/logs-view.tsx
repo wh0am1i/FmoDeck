@@ -15,6 +15,7 @@ export function LogsView() {
   const status = logsStore((s) => s.status)
   const filteredCount = logsStore((s) => selectFiltered(s).length)
   const totalCount = logsStore((s) => s.all.length)
+  const syncMode = logsStore((s) => s.syncMode)
   const error = logsStore((s) => s.error)
   const connectionStatus = connectionStore((s) => s.status)
   const client = connectionStore((s) => s.client)
@@ -60,6 +61,7 @@ export function LogsView() {
         <h2 className="hud-title text-primary">[ LOGS ]</h2>
         <div className="flex items-center gap-2">
           <span className="hud-mono text-xs text-muted-foreground">
+            {syncMode === 'today' && '今天 · '}
             {filteredCount === totalCount
               ? `${totalCount} 条`
               : `${filteredCount} / ${totalCount} 条`}

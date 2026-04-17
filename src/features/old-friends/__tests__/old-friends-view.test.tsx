@@ -83,4 +83,22 @@ describe('OldFriendsView', () => {
     render(<OldFriendsView />)
     expect(screen.getByText(/1 \/ 2/)).toBeInTheDocument()
   })
+
+  it('syncMode=today 时按今天筛选', () => {
+    connectionStore.setState({ status: 'connected' })
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const todayStartSec = Math.floor(todayStart.getTime() / 1000)
+
+    logsStore.setState({
+      syncMode: 'today',
+      all: [
+        makeSummary({ logId: 1, toCallsign: 'YESTERDAY', timestamp: todayStartSec - 3600 }),
+        makeSummary({ logId: 2, toCallsign: 'TODAYONLY', timestamp: todayStartSec + 100 })
+      ]
+    })
+    render(<OldFriendsView />)
+    expect(screen.getByText('TODAYONLY')).toBeInTheDocument()
+    expect(screen.queryByText('YESTERDAY')).not.toBeInTheDocument()
+  })
 })

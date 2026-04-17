@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { logsStore } from '@/features/logs/store'
+import { logsStore, selectSyncedAll } from '@/features/logs/store'
 import { connectionStore } from '@/stores/connection'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import type { QsoSummary } from '@/types/qso'
@@ -48,11 +48,16 @@ function formatDate(unixSeconds: number): string {
 
 export function OldFriendsView() {
   const all = logsStore((s) => s.all)
+  const syncMode = logsStore((s) => s.syncMode)
   const connectionStatus = connectionStore((s) => s.status)
   const [filter, setFilter] = useState('')
   const [page, setPage] = useState(0)
 
-  const friends = useMemo(() => aggregate(all), [all])
+  const synced = useMemo(
+    () => selectSyncedAll({ ...logsStore.getState(), all, syncMode }),
+    [all, syncMode]
+  )
+  const friends = useMemo(() => aggregate(synced), [synced])
   const filtered = useMemo(() => {
     const q = filter.trim().toUpperCase()
     if (!q) return friends
@@ -88,6 +93,7 @@ export function OldFriendsView() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="hud-title text-primary">[ OLD FRIENDS ]</h2>
         <span className="hud-mono text-xs text-muted-foreground">
+          {syncMode === 'today' && '今天 · '}
           {filtered.length === friends.length
             ? `${friends.length} 位`
             : `${filtered.length} / ${friends.length} 位`}

@@ -73,4 +73,28 @@ describe('Top20View', () => {
     expect(listItems[0]).toHaveTextContent('NEW')
     expect(listItems[1]).toHaveTextContent('OLD')
   })
+
+  it('syncMode=today 时只聚合今天的记录', () => {
+    connectionStore.setState({ status: 'connected' })
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const todayStartSec = Math.floor(todayStart.getTime() / 1000)
+
+    logsStore.setState({
+      syncMode: 'today',
+      all: [
+        // 昨天的 3 条
+        makeSummary({ logId: 1, toCallsign: 'YESTERDAY', timestamp: todayStartSec - 3600 }),
+        makeSummary({ logId: 2, toCallsign: 'YESTERDAY', timestamp: todayStartSec - 1800 }),
+        makeSummary({ logId: 3, toCallsign: 'YESTERDAY', timestamp: todayStartSec - 900 }),
+        // 今天的 1 条
+        makeSummary({ logId: 4, toCallsign: 'TODAYONLY', timestamp: todayStartSec + 100 })
+      ]
+    })
+    render(<Top20View />)
+    expect(screen.getByText('TODAYONLY')).toBeInTheDocument()
+    expect(screen.queryByText('YESTERDAY')).not.toBeInTheDocument()
+    expect(screen.getByText(/今天/)).toBeInTheDocument()
+    expect(screen.getByText(/排除 3 条/)).toBeInTheDocument()
+  })
 })
