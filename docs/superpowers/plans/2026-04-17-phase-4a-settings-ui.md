@@ -9,6 +9,7 @@
 **Tech Stack:** React 19 · Zustand（已装）· shadcn Dialog/Input/Select/Button · lucide-react 图标 · nanoid（已装，生成 address id）
 
 **用户场景（首次配置闭环）：**
+
 1. 打开应用 → Header 显示 "UNCONFIGURED"
 2. 点 Settings tab → 看到空列表 + "Add address" 按钮
 3. 填 host（如 `fmo.local`）+ name，点确定
@@ -38,6 +39,7 @@
 ```
 
 **文件职责边界：**
+
 - `components/layout/connection-indicator.tsx` — 纯展示组件，从 `useAutoReconnect` 读状态
 - `features/settings/*` — Settings 功能垂直切片
 - `settings-view.tsx` — 页面主组件，组合子组件
@@ -49,16 +51,19 @@
 ## Task 1: Header 连接状态指示
 
 **Files:**
+
 - Create: `src/components/layout/connection-indicator.tsx`
 - Modify: `src/components/layout/header.tsx`（在 ThemeButton 左边插入指示器）
 
 > 4 种状态 UI：
+>
 > - `disconnected` · 灰色圆点 · "UNCONFIGURED"（无激活地址）或 "OFFLINE"
 > - `connecting` · 琥珀色脉冲 · "CONNECTING..."
 > - `connected` · 绿色实心 · `ONLINE · fmo.local`（显示当前 host）
 > - `error` · 品红 · `ERROR · {message 首句}`
 >
 > 区分 `disconnected` 的两种原因：
+>
 > - `activeAddressId === null` → "UNCONFIGURED"
 > - 其他 → "OFFLINE"（进入过 connected 后断开）
 
@@ -160,15 +165,18 @@ git commit -m "feat(ui): Header 增加连接状态指示器（UNCONFIGURED/CONNE
 ## Task 2: FMO 地址管理（列表 + 新增 Dialog）
 
 **Files:**
+
 - Create: `src/features/settings/components/fmo-address-list.tsx`
 - Create: `src/features/settings/components/fmo-address-dialog.tsx`
 
 > 列表行：
+>
 > - 左：host（大） + 可选 name（小，灰）
 > - 中：radio（激活项打勾）
 > - 右：删除按钮（Trash2 图标）
 >
 > 新增 Dialog 字段：
+>
 > - Host（必填，文本）
 > - Name（可选）
 > - 提交 → `addAddress({ id: nanoid(8), host, name })`
@@ -239,14 +247,8 @@ export function FmoAddressDialog() {
             placeholder="fmo.local"
             autoFocus
           />
-          <label className="hud-mono text-xs text-muted-foreground mt-2">
-            名称（可选）
-          </label>
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="家里的 FMO"
-          />
+          <label className="hud-mono text-xs text-muted-foreground mt-2">名称（可选）</label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="家里的 FMO" />
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>
@@ -316,9 +318,7 @@ export function FmoAddressList() {
             </button>
             <div className="flex-1">
               <div className="hud-mono text-sm text-foreground">{a.host}</div>
-              {a.name && (
-                <div className="hud-mono text-xs text-muted-foreground">{a.name}</div>
-              )}
+              {a.name && <div className="hud-mono text-xs text-muted-foreground">{a.name}</div>}
             </div>
             <Button
               variant="ghost"
@@ -348,9 +348,11 @@ git commit -m "feat(settings): FMO 地址列表 + 新增 Dialog"
 ## Task 3: 呼号 + 协议 表单
 
 **Files:**
+
 - Create: `src/features/settings/components/callsign-field.tsx`
 
 > 呼号输入：
+>
 > - 受控输入框，`onChange` 实时更新 settings store
 > - 用 `isValidChineseCallsign`（Phase 2a）校验基号
 > - 非法时显示红色 helper text："呼号格式不正确（示例 BA0AX 或 BA0AX-5）"
@@ -417,6 +419,7 @@ git commit -m "feat(settings): 呼号输入（含 BY 正则校验）"
 ## Task 4: Settings View 组装 + 端到端
 
 **Files:**
+
 - Modify: `src/features/settings/settings-view.tsx`
 - Create: `src/features/settings/__tests__/settings-view.test.tsx`
 - Modify: `README.md`
@@ -469,9 +472,7 @@ export function SettingsView() {
         </label>
         <Select
           value={protocol}
-          onValueChange={(v) =>
-            settingsStore.getState().setProtocol(v === 'wss' ? 'wss' : 'ws')
-          }
+          onValueChange={(v) => settingsStore.getState().setProtocol(v === 'wss' ? 'wss' : 'ws')}
         >
           <SelectTrigger className="w-32">
             <SelectValue />

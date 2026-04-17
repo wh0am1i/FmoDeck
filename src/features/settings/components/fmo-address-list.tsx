@@ -10,7 +10,7 @@ export function FmoAddressList() {
   if (addresses.length === 0) {
     return (
       <div className="hud-mono text-sm text-muted-foreground py-4">
-        [ NO ADDRESSES · 点"添加地址"开始 ]
+        [ NO ADDRESSES · 点&ldquo;添加地址&rdquo;开始 ]
       </div>
     )
   }

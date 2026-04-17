@@ -14,6 +14,7 @@
 - [Phase 2a · 纯逻辑层](docs/superpowers/plans/2026-04-17-phase-2a-pure-logic.md) ✅
 - [Phase 2b · I/O 层](docs/superpowers/plans/2026-04-17-phase-2b-io-layer.md) ✅
 - [Phase 3a · 连接+设置 state 层](docs/superpowers/plans/2026-04-17-phase-3a-connection-settings.md) ✅
+- [Phase 4a · Settings + Connection UI](docs/superpowers/plans/2026-04-17-phase-4a-settings-ui.md) ✅
 - Phase 3b（其余 feature stores + 推送 hooks）— 待规划
 
 ## 技术栈

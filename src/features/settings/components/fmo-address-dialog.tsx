@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -42,6 +43,9 @@ export function FmoAddressDialog() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="hud-title text-primary">[ ADD FMO ADDRESS ]</DialogTitle>
+          <DialogDescription className="hud-mono text-xs">
+            添加一个新的 FMO 服务器地址。激活后自动尝试连接。
+          </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3 py-2">
           <label className="hud-mono text-xs text-muted-foreground" htmlFor="fmo-host">
