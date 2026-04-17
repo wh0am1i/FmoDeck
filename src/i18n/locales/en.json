@@ -18,7 +18,7 @@
     "version": "version"
   },
   "footer": {
-    "forkNotice": "Fork of <1>FmoLogs</1> · rewritten in React + TypeScript",
+    "forkNotice": "Fork of <1>FmoLogs</1>",
     "repoAria": "Open GitHub repository"
   },
   "theme": {

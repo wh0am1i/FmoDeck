@@ -18,7 +18,7 @@
     "version": "版本"
   },
   "footer": {
-    "forkNotice": "基于 <1>FmoLogs</1> 二次开发 · React + TypeScript 重写",
+    "forkNotice": "基于 <1>FmoLogs</1> 二次开发",
     "repoAria": "打开 GitHub 仓库"
   },
   "theme": {
