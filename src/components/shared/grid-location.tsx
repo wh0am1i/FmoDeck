@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { formatLatLng, gridToLatLng } from '@/lib/utils/grid'
-import {
-  readGeocodeCache,
-  reverseGeocodeGrid
-} from '@/lib/utils/reverse-geocode'
+import { formatLatLng, gridToLatLng, mapUrl } from '@/lib/utils/grid'
+import { readGeocodeCache, reverseGeocodeGrid } from '@/lib/utils/reverse-geocode'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -13,21 +10,21 @@ interface Props {
 }
 
 /**
- * 把 Maidenhead 网格渲染成人类可读地名（通过 OpenStreetMap Nominatim
- * 反查）。查询未完成时先显示经纬度占位；查询完成后替换为地名。
+ * 把 Maidenhead 网格渲染成 "网格码 · 地名" 的可点击链接。
+ * 点击打开 OpenStreetMap 对应位置。
  *
- * 缓存在 localStorage 里，同网格只会查一次；限速 1 req/秒（全局队列）。
+ * 地名由 Nominatim 反查并缓存到 localStorage；查询未完成时先显示
+ * 经纬度作为占位，查到后替换为地名。
  */
 export function GridLocation({ grid, className }: Props) {
   const { i18n } = useTranslation()
   const lang: 'en' | 'zh-CN' = i18n.language.startsWith('en') ? 'en' : 'zh-CN'
 
-  // 首次渲染优先读缓存；undefined = 未查过（待触发），null = 查过无结果
+  // undefined = 未查过；null = 查过无结果
   const [name, setName] = useState<string | null | undefined>(() => readGeocodeCache(grid))
 
   useEffect(() => {
     if (!grid) return
-    // 重新拉时基于最新缓存
     const cached = readGeocodeCache(grid)
     if (cached !== undefined) {
       setName(cached)
@@ -45,38 +42,38 @@ export function GridLocation({ grid, className }: Props) {
   if (!grid) return null
 
   const ll = gridToLatLng(grid)
-  // title 始终包含原网格码 + 经纬度，hover 看细节
-  const tooltipParts: string[] = [grid]
-  if (ll) tooltipParts.push(formatLatLng(ll))
-  const title = tooltipParts.join(' · ')
 
-  // 查到地名 → 显示地名
+  // 网格无法解析 → 原样展示，不做链接
+  if (!ll) {
+    return <span className={cn('hud-mono', className)}>{grid}</span>
+  }
+
+  // 副文本：优先地名；查询中用半透明经纬度；查过无结果用实色经纬度
+  let subtext: React.ReactNode
+  let subtextTitle = ''
   if (name) {
-    return (
-      <span className={cn('hud-mono', className)} title={title}>
-        {name}
-      </span>
-    )
+    subtext = <span className="text-muted-foreground">{name}</span>
+    subtextTitle = formatLatLng(ll)
+  } else if (name === null) {
+    subtext = <span className="text-muted-foreground">{formatLatLng(ll)}</span>
+  } else {
+    subtext = <span className="text-muted-foreground/60">{formatLatLng(ll)}</span>
   }
 
-  // 查过但无结果 → 回退经纬度
-  if (name === null && ll) {
-    return (
-      <span className={cn('hud-mono', className)} title={title}>
-        {formatLatLng(ll)}
-      </span>
-    )
-  }
-
-  // 查询中（或未触发）→ 先显示经纬度作为占位
-  if (ll) {
-    return (
-      <span className={cn('hud-mono opacity-75', className)} title={title}>
-        {formatLatLng(ll)}
-      </span>
-    )
-  }
-
-  // 网格无法解析 → 原样显示
-  return <span className={cn('hud-mono', className)}>{grid}</span>
+  return (
+    <a
+      href={mapUrl(ll)}
+      target="_blank"
+      rel="noreferrer noopener"
+      className={cn(
+        'hud-mono inline-flex flex-wrap items-baseline gap-x-1.5 text-primary hover:underline',
+        className
+      )}
+      title={subtextTitle || grid}
+    >
+      <span>{grid}</span>
+      <span className="text-muted-foreground/60">·</span>
+      {subtext}
+    </a>
+  )
 }
