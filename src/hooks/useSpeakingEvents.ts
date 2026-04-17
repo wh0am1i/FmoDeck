@@ -1,8 +1,12 @@
 import { useEffect } from 'react'
+import i18n from '@/i18n'
 import { FmoEventsClient } from '@/lib/fmo-events/client'
+import { notify } from '@/lib/notifications'
+import { parseCallsignSsid } from '@/lib/utils/callsign'
 import { normalizeHost } from '@/lib/utils/url'
 import { connectionStore } from '@/stores/connection'
 import { settingsStore } from '@/stores/settings'
+import { logsStore } from '@/features/logs/store'
 import { speakingStore, type SpeakingHistoryItem } from '@/features/speaking/store'
 
 interface CallsignEventData {
@@ -10,6 +14,29 @@ interface CallsignEventData {
   isSpeaking: boolean
   isHost: boolean
   grid: string
+}
+
+/**
+ * 新讲话者首次开口时，如果从未通联过且不是自己，触发一条桌面通知。
+ * 只在 settings.notificationsEnabled 为 true 时生效；notify() 内部还会
+ * 再判一次"页面失焦"才弹，避免在用户正看页面时打扰。
+ */
+function maybeNotifyNewFriend(callsign: string): void {
+  if (!settingsStore.getState().notificationsEnabled) return
+  // 跳过：讲话者就是当前用户
+  const myCall = settingsStore.getState().currentCallsign
+  try {
+    if (myCall && parseCallsignSsid(myCall).call === parseCallsignSsid(callsign).call) return
+  } catch {
+    /* 解析失败不阻塞判断 */
+  }
+  const { all, local } = logsStore.getState()
+  const workedBefore =
+    all.some((r) => r.toCallsign === callsign) || local.some((r) => r.toCallsign === callsign)
+  if (workedBefore) return
+  const title = i18n.t('speaking.newFriendTitle', { callsign })
+  const body = i18n.t('speaking.newFriendBody')
+  notify(title, body)
 }
 
 /**
@@ -35,6 +62,7 @@ export function useSpeakingEvents(): void {
         if (ev.subType === 'callsign') {
           const data = ev.data as CallsignEventData
           if (data.isSpeaking && data.callsign) {
+            maybeNotifyNewFriend(data.callsign)
             speakingStore.getState().startSpeaking({
               callsign: data.callsign,
               grid: data.grid,
