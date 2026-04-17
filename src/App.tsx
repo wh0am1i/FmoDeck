@@ -5,10 +5,12 @@ import { AppShell } from '@/components/layout/app-shell'
 import { Toaster } from '@/components/ui/sonner'
 import { useFmoSync } from '@/hooks/useFmoSync'
 import { useSpeakingEvents } from '@/hooks/useSpeakingEvents'
+import { useSyncPolicy } from '@/hooks/useSyncPolicy'
 
 export function App() {
   useFmoSync()
   useSpeakingEvents()
+  useSyncPolicy()
 
   return (
     <ThemeProvider>
