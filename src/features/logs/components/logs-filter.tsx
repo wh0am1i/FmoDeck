@@ -53,9 +53,7 @@ export function LogsFilter() {
               onClick={() => logsStore.getState().setDateFilter(key)}
               className={cn(
                 'rounded-sm px-2 py-1 text-xs transition-colors',
-                active
-                  ? 'bg-primary/15 text-primary'
-                  : 'text-muted-foreground hover:text-primary'
+                active ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-primary'
               )}
             >
               {t(labelKey)}

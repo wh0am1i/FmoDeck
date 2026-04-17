@@ -76,9 +76,7 @@ export function NotificationsField() {
           {t(statusKey)}
         </span>
       </div>
-      <span className="hud-mono text-xs text-muted-foreground/70">
-        {t('settings.notifyDesc')}
-      </span>
+      <span className="hud-mono text-xs text-muted-foreground/70">{t('settings.notifyDesc')}</span>
     </div>
   )
 }

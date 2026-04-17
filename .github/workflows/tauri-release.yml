@@ -59,9 +59,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_type == 'tag' && github.ref_name || format('v0.0.0-{0}', github.sha) }}
-          releaseName: 'FmoDeck ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}'
-          releaseBody: '自动构建的桌面版本。Tag push 会自动关联到 GitHub Release 草稿。'
+          tagName: ${{ github.ref_name }}
+          releaseName: FmoDeck ${{ github.ref_name }}
+          releaseBody: 自动构建的桌面版本。Tag push 会自动关联到 GitHub Release 草稿。
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}

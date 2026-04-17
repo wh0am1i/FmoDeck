@@ -19,12 +19,7 @@ const LOW_BUFFER_SEC = 0.3
 const TARGET_LEAD_SEC = 0.5
 const MAX_BUFFER_SEC = 1.0
 
-export type AudioEngineStatus =
-  | 'idle'
-  | 'connecting'
-  | 'playing'
-  | 'error'
-  | 'closed'
+export type AudioEngineStatus = 'idle' | 'connecting' | 'playing' | 'error' | 'closed'
 
 export interface AudioEngineEvents {
   onStatus?: (status: AudioEngineStatus, err?: Error) => void

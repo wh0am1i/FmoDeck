@@ -12,7 +12,7 @@
 
 - **音频收听**：裸 Web Audio 实现直连 FMO 的 `/audio` 端点，8kHz PCM
   下行，配 HPF / LPF / EQ×3 / 动态压缩处理链；SpeakingBar 右侧一键开关
-  + Popover 内 VU 电平条 + 音量滑杆 + 静音切换；自动断线重连
+  - Popover 内 VU 电平条 + 音量滑杆 + 静音切换；自动断线重连
 - **自语过滤**：配置了「我的呼号」后，自己讲话时自动静音，避免听到
   设备回授的自己声音
 - **大字体模式**：Header 主题旁新增 A/A 切换，桌面字号放大到 20px +
@@ -178,7 +178,7 @@ GitHub Release 草稿。
 
 ## 部署（Docker · HTTP）
 
-> **为什么只有 HTTP？**  FMO 设备只开 `ws://`，没有 TLS 证书。如果前端
+> **为什么只有 HTTP？** FMO 设备只开 `ws://`，没有 TLS 证书。如果前端
 > 走 HTTPS，浏览器的"混合内容"策略会把所有 `ws://` 连接拦截，页面就无法
 > 与设备通信。因此当前唯一可行的部署是 HTTP —— 代价是地址栏会显示
 > "Not secure"，且桌面通知 / PWA 安装等依赖 secure context 的 API 用不了。
@@ -190,7 +190,7 @@ GitHub Release 草稿。
 - `Dockerfile` —— 多阶段构建（Node 构建 → nginx:alpine 托管）
 - `docker-compose.yml` —— 一键启动容器
 - `docker/nginx.conf.template` —— 容器内 nginx 配置，已含 SPA fallback
-  + gzip + 静态资源长缓存
+  - gzip + 静态资源长缓存
 
 ### 一键起容器
 
@@ -215,12 +215,12 @@ git pull && docker compose up -d --build
 
 全在 `Dockerfile` 顶部 `ARG`：
 
-| 参数 | 默认 | 说明 |
-|---|---|---|
-| `BASE_PATH` | `/` | 子路径部署时改成 `/fmodeck/` |
-| `LISTEN_PORT` | `80` | 容器内 nginx 监听端口 |
-| `NODE_VERSION` | `20` | 构建阶段的 Node 版本 |
-| `NGINX_VERSION` | `1.27` | 运行阶段的 nginx 版本 |
+| 参数            | 默认   | 说明                         |
+| --------------- | ------ | ---------------------------- |
+| `BASE_PATH`     | `/`    | 子路径部署时改成 `/fmodeck/` |
+| `LISTEN_PORT`   | `80`   | 容器内 nginx 监听端口        |
+| `NODE_VERSION`  | `20`   | 构建阶段的 Node 版本         |
+| `NGINX_VERSION` | `1.27` | 运行阶段的 nginx 版本        |
 
 宿主机映射端口改 `docker-compose.yml` 的 `ports`。
 
@@ -257,7 +257,7 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ```yaml
 ports:
-  - '8080:80'   # 原来是 '127.0.0.1:8080:80'
+  - '8080:80' # 原来是 '127.0.0.1:8080:80'
 ```
 
 然后浏览器直接开 `http://服务器IP:8080/`。

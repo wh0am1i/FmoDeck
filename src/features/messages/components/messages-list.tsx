@@ -105,9 +105,7 @@ export function MessagesList({ onRowClick }: Props) {
         destructive
         loading={busy}
         title={t('messages.confirmDeleteTitle')}
-        description={
-          pending ? t('messages.confirmDelete', { from: pending.from }) : undefined
-        }
+        description={pending ? t('messages.confirmDelete', { from: pending.from }) : undefined}
         confirmLabel={t('common.delete')}
         loadingLabel={t('messages.deletingOne')}
         onConfirm={confirmDelete}

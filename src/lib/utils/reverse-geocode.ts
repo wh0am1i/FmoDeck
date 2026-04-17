@@ -61,7 +61,8 @@ function writeCache(grid: string, value: string | null): void {
 }
 
 function pickName(addr: NominatimAddress): string | null {
-  const locality = addr.city ?? addr.town ?? addr.village ?? addr.hamlet ?? addr.suburb ?? addr.county
+  const locality =
+    addr.city ?? addr.town ?? addr.village ?? addr.hamlet ?? addr.suburb ?? addr.county
   const parts: string[] = []
   if (locality) parts.push(locality)
   if (addr.state && addr.state !== locality) parts.push(addr.state)

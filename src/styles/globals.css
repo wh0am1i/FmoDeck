@@ -167,7 +167,8 @@
     /* 整框辉光 —— 强度为 0 时彻底消失 */
     box-shadow:
       0 0 calc(12px * var(--hud-intensity)) hsl(var(--primary) / calc(0.15 * var(--hud-intensity))),
-      inset 0 0 calc(8px * var(--hud-intensity)) hsl(var(--primary) / calc(0.05 * var(--hud-intensity)));
+      inset 0 0 calc(8px * var(--hud-intensity))
+        hsl(var(--primary) / calc(0.05 * var(--hud-intensity)));
     /* 四角 HUD 定位符 ┌┐└┘
        每角由两条线段（1.5px × 8px + 8px × 1.5px）组成，
        8 条渐变在 4 个角落的水平/垂直方向上绘制。*/

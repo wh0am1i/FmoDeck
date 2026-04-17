@@ -28,7 +28,12 @@ export class MessageService {
     // MessageDetail 自己也有个 `message` 字段（正文）。用"嵌套对象"来区分
     // wrapper vs 扁平：wrapper.message 是 object，detail.message 是 string。
     const data = resp.data as { message?: unknown } & Partial<MessageDetail>
-    if (data && typeof data === 'object' && typeof data.message === 'object' && data.message !== null) {
+    if (
+      data &&
+      typeof data === 'object' &&
+      typeof data.message === 'object' &&
+      data.message !== null
+    ) {
       return data.message as MessageDetail
     }
     return data as MessageDetail

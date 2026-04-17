@@ -34,10 +34,7 @@ function maybeNotifyNewFriend(callsign: string): void {
   for (const r of all) if (r.toCallsign === callsign) count++
   for (const r of local) if (r.toCallsign === callsign) count++
   if (count > 1) return
-  notify(
-    i18n.t('speaking.newFriendTitle', { callsign }),
-    i18n.t('speaking.newFriendBody')
-  )
+  notify(i18n.t('speaking.newFriendTitle', { callsign }), i18n.t('speaking.newFriendBody'))
 }
 
 /**
