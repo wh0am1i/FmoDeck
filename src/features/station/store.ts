@@ -11,7 +11,7 @@ export interface StationState {
 
   loadCurrent: (svc: StationService) => Promise<void>
   loadList: (svc: StationService) => Promise<void>
-  setCurrent: (svc: StationService, uid: number) => Promise<void>
+  setCurrent: (svc: StationService, station: ServerStation) => Promise<void>
   next: (svc: StationService) => Promise<void>
   prev: (svc: StationService) => Promise<void>
 }
@@ -49,12 +49,15 @@ export const stationStore = create<StationState>()((set) => ({
     }
   },
 
-  setCurrent: async (svc, uid) => {
+  // 注意：过去这里 setCurrent RPC 成功后再调 getCurrent 回填 current，
+  // 但 fmo 服务端是异步切换（RPC 返回时切换还没完成），导致第二次点击
+  // 才"真的"切过去的 bug。既然用户点列表时已经拿到了完整 ServerStation，
+  // 直接用它乐观更新 current，跳过那一次多余且有竞态的 getCurrent。
+  setCurrent: async (svc, station) => {
     set({ status: 'switching', error: null })
     try {
-      await svc.setCurrent(uid)
-      const current = await svc.getCurrent()
-      set({ current, status: 'idle' })
+      await svc.setCurrent(station.uid)
+      set({ current: station, status: 'idle' })
     } catch (err) {
       set({ status: 'error', error: handleError(err) })
     }

@@ -58,12 +58,7 @@ export function LocalControl() {
 
   return (
     <section className="hud-frame flex flex-col gap-4 p-6">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="hud-title text-primary">[ LOCAL CONTROL ]</h2>
-        <span className="hud-mono text-xs text-muted-foreground">
-          直连 fmo.local · 无需签名 / Passcode
-        </span>
-      </div>
+      <h2 className="hud-title text-primary">[ LOCAL CONTROL ]</h2>
       <div className="flex flex-wrap gap-3">
         {ACTIONS.map(({ key, label, icon: Icon, variant, confirm }) => (
           <Button

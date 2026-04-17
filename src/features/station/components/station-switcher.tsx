@@ -105,7 +105,7 @@ export function StationSwitcher() {
                       type="button"
                       disabled={busy || isActive}
                       onClick={() =>
-                        void swap(() => stationStore.getState().setCurrent(svc, s.uid), '切换')
+                        void swap(() => stationStore.getState().setCurrent(svc, s), '切换')
                       }
                       className={cn(
                         'flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-xs',

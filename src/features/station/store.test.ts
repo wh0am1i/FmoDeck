@@ -47,13 +47,14 @@ describe('station store', () => {
     expect(stationStore.getState().error?.message).toBe('boom')
   })
 
-  it('setCurrent 调 svc.setCurrent 然后刷新 current', async () => {
+  it('setCurrent 调 svc.setCurrent 并直接用传入的 station 更新（避免服务端异步竞态）', async () => {
     const setCurrent = vi.fn().mockResolvedValue(undefined)
-    const getCurrent = vi.fn().mockResolvedValue({ uid: 2, name: 'B' })
+    const getCurrent = vi.fn().mockResolvedValue({ uid: 99, name: 'STALE' })
     const svc = mockSvc({ setCurrent, getCurrent })
-    await stationStore.getState().setCurrent(svc, 2)
+    await stationStore.getState().setCurrent(svc, { uid: 2, name: 'B' })
     expect(setCurrent).toHaveBeenCalledWith(2)
     expect(stationStore.getState().current).toEqual({ uid: 2, name: 'B' })
+    expect(getCurrent).not.toHaveBeenCalled()
   })
 
   it('next 调 svc.next 然后刷新 current', async () => {
@@ -78,7 +79,7 @@ describe('station store', () => {
     const svc = mockSvc({
       setCurrent: vi.fn().mockRejectedValue(new Error('nope'))
     })
-    await stationStore.getState().setCurrent(svc, 5)
+    await stationStore.getState().setCurrent(svc, { uid: 5, name: 'E' })
     expect(stationStore.getState().status).toBe('error')
   })
 })
