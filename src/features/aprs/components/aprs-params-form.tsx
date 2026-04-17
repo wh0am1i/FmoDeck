@@ -12,6 +12,7 @@ function Field({
   hint,
   value,
   type = 'text',
+  placeholder,
   onChange
 }: {
   id: string
@@ -19,6 +20,7 @@ function Field({
   hint?: string
   value: string
   type?: 'text' | 'password'
+  placeholder?: string
   onChange: (v: string) => void
 }) {
   return (
@@ -26,7 +28,13 @@ function Field({
       <label htmlFor={id} className="hud-mono text-xs text-muted-foreground">
         {label}
       </label>
-      <Input id={id} type={type} value={value} onChange={(e) => onChange(e.target.value)} />
+      <Input
+        id={id}
+        type={type}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+      />
       {hint && <span className="hud-mono text-xs text-muted-foreground/60">{hint}</span>}
     </div>
   )
@@ -60,12 +68,15 @@ export function AprsParamsForm() {
         id="aprs-mycall"
         label={t('aprsRemote.formMycallLabel')}
         hint={t('aprsRemote.formMycallHint')}
+        placeholder={t('aprsRemote.formMycallPlaceholder')}
         value={mycall}
         onChange={(v) => setParams({ mycall: v.toUpperCase() })}
       />
       <Field
         id="aprs-tocall"
         label={t('aprsRemote.formTocallLabel')}
+        hint={t('aprsRemote.formTocallHint')}
+        placeholder={t('aprsRemote.formTocallPlaceholder')}
         value={tocall}
         onChange={(v) => setParams({ tocall: v.toUpperCase() })}
       />
@@ -96,6 +107,7 @@ export function AprsParamsForm() {
           id="aprs-passcode"
           type="password"
           value={passcode}
+          placeholder={t('aprsRemote.formPasscodePlaceholder')}
           onChange={(e) => setParams({ passcode: e.target.value })}
         />
         <span className="hud-mono text-xs text-muted-foreground/60">
@@ -107,6 +119,7 @@ export function AprsParamsForm() {
         id="aprs-secret"
         label={t('aprsRemote.formSecretLabel')}
         hint={t('aprsRemote.formSecretHint')}
+        placeholder={t('aprsRemote.formSecretPlaceholder')}
         type="password"
         value={secret}
         onChange={(v) => setParams({ secret: v })}
@@ -115,6 +128,7 @@ export function AprsParamsForm() {
         <Field
           id="aprs-gateway"
           label={t('aprsRemote.formGatewayLabel')}
+          placeholder={t('aprsRemote.formGatewayPlaceholder')}
           value={gatewayUrl}
           onChange={(v) => setParams({ gatewayUrl: v })}
         />
