@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { resetSettingsForTest, settingsStore } from './settings'
+import { resetSettingsForTest, selectActiveSyncMode, settingsStore } from './settings'
 
 afterEach(() => {
   resetSettingsForTest()
@@ -46,6 +46,41 @@ describe('settings store', () => {
   it('setProtocol 只接受 ws | wss', () => {
     settingsStore.getState().setProtocol('wss')
     expect(settingsStore.getState().protocol).toBe('wss')
+  })
+
+  it('updateAddress 合并 patch', () => {
+    const { addAddress, updateAddress } = settingsStore.getState()
+    addAddress({ id: 'a', host: 'fmo.local' })
+    updateAddress('a', { name: '家里', syncMode: 'today' })
+    const [addr] = settingsStore.getState().fmoAddresses
+    expect(addr).toEqual({ id: 'a', host: 'fmo.local', name: '家里', syncMode: 'today' })
+  })
+
+  it('updateAddress 对不存在的 id 静默忽略', () => {
+    settingsStore.getState().updateAddress('missing', { name: 'x' })
+    expect(settingsStore.getState().fmoAddresses).toEqual([])
+  })
+})
+
+describe('selectActiveSyncMode', () => {
+  it('无激活地址时返回 all', () => {
+    expect(selectActiveSyncMode(settingsStore.getState())).toBe('all')
+  })
+
+  it('激活地址未设 syncMode 时返回 all', () => {
+    settingsStore.setState({
+      fmoAddresses: [{ id: 'a', host: 'fmo.local' }],
+      activeAddressId: 'a'
+    })
+    expect(selectActiveSyncMode(settingsStore.getState())).toBe('all')
+  })
+
+  it('返回激活地址的 syncMode', () => {
+    settingsStore.setState({
+      fmoAddresses: [{ id: 'a', host: 'fmo.local', syncMode: 'today' }],
+      activeAddressId: 'a'
+    })
+    expect(selectActiveSyncMode(settingsStore.getState())).toBe('today')
   })
 })
 
