@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
+  "license": "MIT",
   "description": "业余无线电 FMO 平台的下一代日志与控制台",
   "scripts": {
     "dev": "vite",
