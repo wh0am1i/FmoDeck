@@ -1,4 +1,5 @@
 import { ConnectionIndicator } from './connection-indicator'
+import { FontSizeSwitcher } from './font-size-switcher'
 import { StationSwitcher } from '@/features/station/components/station-switcher'
 import { LanguageSwitcher } from './language-switcher'
 import { ThemeSwitcher } from './theme-switcher'
@@ -15,6 +16,7 @@ export function Header() {
           <StationSwitcher />
           <ConnectionIndicator />
           <LanguageSwitcher />
+          <FontSizeSwitcher />
           <ThemeSwitcher />
         </div>
       </div>
