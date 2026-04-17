@@ -30,6 +30,8 @@ export interface SettingsState {
   hudScanlineOpacity: number
   /** 桌面通知总开关（除此之外还要浏览器授权）。 */
   notificationsEnabled: boolean
+  /** 字号缩放。normal = 16px / large = 18px（驱动根 font-size）。 */
+  fontSize: 'normal' | 'large'
 
   addAddress: (addr: FmoAddress) => void
   updateAddress: (id: string, patch: Partial<Omit<FmoAddress, 'id'>>) => void
@@ -40,6 +42,7 @@ export interface SettingsState {
   setHudIntensity: (v: number) => void
   setHudScanlineOpacity: (v: number) => void
   setNotificationsEnabled: (v: boolean) => void
+  setFontSize: (v: 'normal' | 'large') => void
 }
 
 type PersistedFields = Pick<
@@ -51,6 +54,7 @@ type PersistedFields = Pick<
   | 'hudIntensity'
   | 'hudScanlineOpacity'
   | 'notificationsEnabled'
+  | 'fontSize'
 >
 
 const INITIAL: PersistedFields = {
@@ -60,7 +64,8 @@ const INITIAL: PersistedFields = {
   protocol: 'ws',
   hudIntensity: 0.15,
   hudScanlineOpacity: 0.05,
-  notificationsEnabled: false
+  notificationsEnabled: false,
+  fontSize: 'normal'
 }
 
 function clamp(v: number, min: number, max: number): number {
@@ -101,7 +106,9 @@ export const settingsStore = create<SettingsState>()(
 
       setHudScanlineOpacity: (v) => set({ hudScanlineOpacity: clamp(v, 0, 0.2) }),
 
-      setNotificationsEnabled: (v) => set({ notificationsEnabled: v })
+      setNotificationsEnabled: (v) => set({ notificationsEnabled: v }),
+
+      setFontSize: (v) => set({ fontSize: v })
     }),
     {
       name: 'fmodeck-settings',
@@ -112,7 +119,8 @@ export const settingsStore = create<SettingsState>()(
         protocol: s.protocol,
         hudIntensity: s.hudIntensity,
         hudScanlineOpacity: s.hudScanlineOpacity,
-        notificationsEnabled: s.notificationsEnabled
+        notificationsEnabled: s.notificationsEnabled,
+        fontSize: s.fontSize
       })
     }
   )

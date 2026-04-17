@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AudioControl } from '@/features/audio/components/audio-control'
+import { GridLocation } from '@/components/shared/grid-location'
 import { logsStore } from '@/features/logs/store'
 import { speakingStore } from '@/features/speaking/store'
 import { parseCallsignSsid } from '@/lib/utils/callsign'
@@ -99,7 +100,9 @@ export function SpeakingBar() {
         <span className="h-2 w-2 rounded-full bg-primary animate-pulse" aria-hidden="true" />
         <span className="hud-title text-primary">{current.callsign}</span>
         {current.grid && (
-          <span className="hud-mono text-xs text-muted-foreground">{current.grid}</span>
+          <span className="hud-mono text-xs text-muted-foreground">
+            <GridLocation grid={current.grid} />
+          </span>
         )}
         {current.isHost && (
           <span

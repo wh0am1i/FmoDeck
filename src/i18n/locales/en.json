@@ -119,6 +119,10 @@
     "hudScanline": "Scanline Opacity",
     "hudScanlineDesc": "Full-screen scanline overlay · 0 = off, 0.2 = heavy",
     "hudReset": "Reset to defaults",
+    "fontSizeLabel": "Font size",
+    "fontSizeNormal": "Normal",
+    "fontSizeLarge": "Large",
+    "fontSizeDesc": "Drives the root font-size; large mode proportionally scales everything, works on mobile too",
     "callsignLabel": "Login callsign (uppercase, SSID suffix supported)",
     "callsignInvalid": "Invalid callsign format (e.g. BA0AX or BY4SDL-3)",
     "addressEmpty": "[ NO ADDRESSES · click “Add address” to start ]",
@@ -298,6 +302,10 @@
     "copyFailed": "Copy failed (browser permission denied)",
     "enterCallsign": "Enter a callsign first",
     "label": "Passcode"
+  },
+  "grid": {
+    "openMap": "Open in OpenStreetMap",
+    "map": "Map"
   },
   "audio": {
     "triggerLabel": "Listen",

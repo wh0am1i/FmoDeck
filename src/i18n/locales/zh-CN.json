@@ -119,6 +119,10 @@
     "hudScanline": "扫描线不透明度",
     "hudScanlineDesc": "全屏扫描线覆盖 · 0 = 关闭，0.2 = 明显",
     "hudReset": "重置为默认",
+    "fontSizeLabel": "字号",
+    "fontSizeNormal": "正常",
+    "fontSizeLarge": "大字体",
+    "fontSizeDesc": "驱动根字号；大字体下内容会按比例放大，移动端同样适用",
     "callsignLabel": "登录呼号（大写，支持 SSID 后缀）",
     "callsignInvalid": "呼号格式不正确（示例 BA0AX 或 BY4SDL-3）",
     "addressEmpty": "[ 暂无地址 · 点“添加地址”开始 ]",
@@ -298,6 +302,10 @@
     "copyFailed": "复制失败（浏览器权限受限）",
     "enterCallsign": "请先输入呼号",
     "label": "Passcode"
+  },
+  "grid": {
+    "openMap": "在 OpenStreetMap 里查看",
+    "map": "地图"
   },
   "audio": {
     "triggerLabel": "收听",

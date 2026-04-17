@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
+import { GridLocation } from '@/components/shared/grid-location'
 import { QsoService } from '@/lib/qso-service/client'
 import { connectionStore } from '@/stores/connection'
 import type { DisplayRow } from '../store'
@@ -103,12 +104,28 @@ function ServerDetailView({ detail }: { detail: QsoDetail }) {
 
       <dt className="text-muted-foreground">From</dt>
       <dd>
-        {detail.fromCallsign} <span className="text-muted-foreground">({detail.fromGrid})</span>
+        {detail.fromCallsign}
+        {detail.fromGrid && (
+          <>
+            {' '}
+            <span className="text-muted-foreground">(</span>
+            <GridLocation grid={detail.fromGrid} />
+            <span className="text-muted-foreground">)</span>
+          </>
+        )}
       </dd>
 
       <dt className="text-muted-foreground">To</dt>
       <dd className="text-primary">
-        {detail.toCallsign} <span className="text-muted-foreground">({detail.toGrid})</span>
+        {detail.toCallsign}
+        {detail.toGrid && (
+          <>
+            {' '}
+            <span className="text-muted-foreground">(</span>
+            <GridLocation grid={detail.toGrid} />
+            <span className="text-muted-foreground">)</span>
+          </>
+        )}
       </dd>
 
       {detail.toComment && (
@@ -139,7 +156,9 @@ function LocalDetailView({ record }: { record: LocalQso }) {
         {record.grid && (
           <>
             <dt className="text-muted-foreground">Grid</dt>
-            <dd>{record.grid}</dd>
+            <dd>
+              <GridLocation grid={record.grid} variant="block" />
+            </dd>
           </>
         )}
       </dl>
