@@ -17,6 +17,14 @@ const DEFAULT_RECONNECT: ReconnectOptions = {
   maxAttempts: 10
 }
 
+/**
+ * 服务器不规范返回的 response subType 别名映射。
+ * 例：`station/getListRange` 请求的响应 subType 是 `getListResponse`（不是 `getListRangeResponse`）。
+ */
+const RESPONSE_ALIASES: Record<string, Record<string, string>> = {
+  station: { getListRange: 'getListResponse' }
+}
+
 interface QueuedRequest {
   req: FmoRequest
   resolve: (value: FmoResponse) => void
@@ -141,9 +149,11 @@ export class FmoApiClient {
 
     // 先尝试匹配 in-flight 请求：
     //   响应的 subType 必须是请求的 `${subType}Response`（FmoLogs 同款约定）
+    //   特殊映射 RESPONSE_ALIASES 处理服务器不规范返回（如 station/getListRange → getListResponse）
     if (this.inFlight) {
       const reqSubType = this.inFlight.req.subType
-      const responseSubType = `${reqSubType}Response`
+      const responseSubType =
+        RESPONSE_ALIASES[this.inFlight.req.type]?.[reqSubType] ?? `${reqSubType}Response`
       if (
         msg.type === this.inFlight.req.type &&
         (msg.subType === responseSubType || msg.subType === reqSubType)

@@ -113,6 +113,20 @@ describe('FmoApiClient · 请求（串行队列）', () => {
     vi.useRealTimers()
   })
 
+  it('station/getListRange 特殊映射到 getListResponse', async () => {
+    const { client, ws } = await connected()
+    const p = client.send({ type: 'station', subType: 'getListRange', data: { start: 0, count: 5 } })
+    ws.emit({
+      type: 'station',
+      subType: 'getListResponse',
+      code: 0,
+      data: { list: [{ uid: 1, name: '甘肃' }], count: 1 }
+    })
+    const resp = await p
+    expect(resp.code).toBe(0)
+    expect((resp.data as { list: unknown[] }).list).toHaveLength(1)
+  })
+
   it('推送消息（非响应）分发给 onPush 监听者', async () => {
     const { client, ws } = await connected()
     const received: unknown[] = []
