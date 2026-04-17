@@ -108,38 +108,34 @@ export function Top20View() {
           {top20.map((item, i) => (
             <li
               key={item.callsign}
-              className="hud-mono flex flex-wrap items-center gap-x-3 gap-y-1 rounded-sm border border-border/60 px-3 py-2 hover:bg-primary/5"
+              className="hud-mono overflow-hidden rounded-sm border border-border/60 hover:bg-primary/5"
             >
+              {/* 行 1：序号 + 呼号 · · 次数 */}
               <button
                 type="button"
                 onClick={() => gotoLogs(item.callsign)}
-                className="flex flex-1 items-center gap-3 text-left outline-none"
+                className="flex w-full items-center gap-3 px-3 pt-2 text-left outline-none"
                 aria-label={t('top20.viewQsoOf', { callsign: item.callsign })}
               >
-                {/* 固定列宽保证跨行对齐：rank 2em · callsign 7em · date 自适应 · count 右对齐固定 */}
-                <span className="w-8 text-right text-xs text-muted-foreground tabular-nums">
+                <span className="w-8 flex-none text-right text-xs text-muted-foreground tabular-nums">
                   {String(i + 1).padStart(2, '0')}
                 </span>
-                <span className="w-24 truncate text-sm text-primary">{item.callsign}</span>
-                <span className="flex-1 whitespace-nowrap text-xs text-muted-foreground tabular-nums">
+                <span className="flex-1 truncate text-sm text-primary">{item.callsign}</span>
+                <span className="flex flex-none items-baseline gap-1 text-sm text-primary">
+                  <span className="tabular-nums">{item.count}</span>
+                  <span className="text-xs text-muted-foreground">{t('top20.timesUnit')}</span>
+                </span>
+              </button>
+              {/* 行 2：位置 · · 最近日期（缩进对齐到呼号列） */}
+              <div className="flex items-center gap-3 px-3 pb-2 pl-[2.75rem] text-xs text-muted-foreground">
+                <span className="flex-1 truncate">
+                  {item.grid && <GridLocation grid={item.grid} />}
+                </span>
+                <span className="flex-none whitespace-nowrap tabular-nums">
                   {t('top20.recentPrefix')}
                   {formatTs(item.lastTime)}
                 </span>
-                {/* 把"次"独立出来，数字用 tabular-nums 等宽右对齐，
-                    保证不同位数在视觉上对齐到同一右边界 */}
-                <span className="flex w-16 items-baseline justify-end gap-1 text-sm text-primary">
-                  <span className="tabular-nums">{item.count}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {t('top20.timesUnit')}
-                  </span>
-                </span>
-              </button>
-              {item.grid && (
-                <GridLocation
-                  grid={item.grid}
-                  className="basis-full text-xs sm:basis-auto sm:pl-[11px]"
-                />
-              )}
+              </div>
             </li>
           ))}
         </ol>
