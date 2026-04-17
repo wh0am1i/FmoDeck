@@ -99,15 +99,43 @@ export class AprsGatewayClient {
         }
       }
 
+      // 浏览器 WebSocket `onerror` 出于安全原因不暴露细节；
+      // 真正信息在 `onclose` 的 `code` / `reason`，统一在那里产错
       ws.onerror = () => {
-        finish(() => reject(new Error('APRS gateway WebSocket error')))
+        // 标记发生过 error；实际 reject 留给 onclose 拿到 code/reason
       }
 
-      ws.onclose = () => {
+      ws.onclose = (ev) => {
         if (!done) {
-          finish(() => reject(new Error('APRS gateway closed before response')))
+          const code = ev.code
+          const reason = ev.reason || describeCloseCode(code)
+          finish(() => reject(new Error(`APRS 网关连接关闭（code=${code}）：${reason}`)))
         }
       }
     })
+  }
+}
+
+/** 根据 WebSocket close code 映射到可读说明。参考 RFC 6455 §7.4.1。 */
+function describeCloseCode(code: number): string {
+  switch (code) {
+    case 1000:
+      return '正常关闭'
+    case 1001:
+      return '端点离开'
+    case 1002:
+      return '协议错误'
+    case 1003:
+      return '不接受的数据类型'
+    case 1006:
+      return '异常关闭（网络中断或对方未发 close 帧 · 可能被防火墙/代理拦截 · 证书/Origin 被网关拒绝）'
+    case 1008:
+      return '违反策略（可能是 Origin 或 IP 被拒）'
+    case 1011:
+      return '服务器内部错误'
+    case 1015:
+      return 'TLS 握手失败（证书问题）'
+    default:
+      return code >= 4000 ? '应用层关闭（服务器自定义）' : '未知原因'
   }
 }

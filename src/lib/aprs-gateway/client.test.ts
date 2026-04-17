@@ -23,9 +23,9 @@ class MockWebSocket {
     this.onmessage?.(new MessageEvent('message', { data: JSON.stringify(data) }))
   }
 
-  close() {
+  close(code = 1000, reason = '') {
     this.readyState = 3
-    this.onclose?.(new CloseEvent('close'))
+    this.onclose?.(new CloseEvent('close', { code, reason }))
   }
 
   send(data: string) {
@@ -96,7 +96,7 @@ describe('AprsGatewayClient.send', () => {
     vi.useRealTimers()
   })
 
-  it('连接关闭无响应时拒绝', async () => {
+  it('连接关闭无响应时拒绝并带 close code', async () => {
     const client = new AprsGatewayClient('wss://fake/ws')
     const p = client.send({
       mycall: 'BA0AX-5',
@@ -107,10 +107,10 @@ describe('AprsGatewayClient.send', () => {
     const ws = MockWebSocket.instances[0]!
     ws.open()
     ws.close()
-    await expect(p).rejects.toThrow(/closed before response/)
+    await expect(p).rejects.toThrow(/连接关闭/)
   })
 
-  it('onerror 时拒绝', async () => {
+  it('code=1006（异常关闭）被可读化', async () => {
     const client = new AprsGatewayClient('wss://fake/ws')
     const p = client.send({
       mycall: 'BA0AX-5',
@@ -119,8 +119,8 @@ describe('AprsGatewayClient.send', () => {
       rawPacket: 'p'
     })
     const ws = MockWebSocket.instances[0]!
-    ws.onerror?.(new Event('error'))
-    await expect(p).rejects.toThrow(/WebSocket error/)
+    ws.onclose?.(new CloseEvent('close', { code: 1006, reason: '' }))
+    await expect(p).rejects.toThrow(/1006.*异常关闭/)
   })
 
   it('server 失败响应时 success=false（不抛错，由 UI 层处理）', async () => {
