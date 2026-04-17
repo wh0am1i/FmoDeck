@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { MessageService } from '@/lib/message-service/client'
 import { notify } from '@/lib/notifications'
 import { connectionStore } from '@/stores/connection'
@@ -26,6 +27,7 @@ export function MessagesView() {
   const [replyTo, setReplyTo] = useState<string | null>(null)
   const [markingAll, setMarkingAll] = useState(false)
   const [deletingAll, setDeletingAll] = useState(false)
+  const [showDeleteAll, setShowDeleteAll] = useState(false)
   const [didAutoLoad, setDidAutoLoad] = useState(false)
 
   const canLoad = connectionStatus === 'connected' && client !== null
@@ -59,13 +61,13 @@ export function MessagesView() {
     }
   }
 
-  const deleteAll = async () => {
-    if (!client || deletingAll || count === 0) return
-    if (!window.confirm(t('messages.confirmDeleteAll', { count }))) return
+  const confirmDeleteAll = async () => {
+    if (!client) return
     setDeletingAll(true)
     try {
       const n = await messagesStore.getState().removeAll(new MessageService(client))
       toast.success(t('messages.deletedAll', { count: n }))
+      setShowDeleteAll(false)
     } catch (err) {
       toast.error(
         `${t('messages.deleteFailedPrefix')}${err instanceof Error ? err.message : String(err)}`
@@ -137,7 +139,7 @@ export function MessagesView() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => void deleteAll()}
+              onClick={() => setShowDeleteAll(true)}
               disabled={deletingAll}
               title={t('messages.deleteAllTitle')}
               className="text-destructive hover:bg-destructive/10 hover:text-destructive"
@@ -199,6 +201,18 @@ export function MessagesView() {
           if (!o) setReplyTo(null)
         }}
         initialTo={replyTo ?? ''}
+      />
+
+      <ConfirmDialog
+        open={showDeleteAll}
+        onOpenChange={setShowDeleteAll}
+        destructive
+        loading={deletingAll}
+        title={t('messages.confirmDeleteAllTitle')}
+        description={t('messages.confirmDeleteAll', { count })}
+        confirmLabel={t('messages.deleteAll')}
+        loadingLabel={t('messages.deletingAll')}
+        onConfirm={confirmDeleteAll}
       />
     </section>
   )
