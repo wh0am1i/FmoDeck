@@ -53,9 +53,7 @@ export function Top20View() {
     return (
       <section className="hud-frame p-6">
         <h2 className="hud-title text-primary mb-2">[ TOP 20 ]</h2>
-        <p className="hud-mono text-sm text-muted-foreground">
-          [ 暂无数据 · 先到 LOGS 拉取日志 ]
-        </p>
+        <p className="hud-mono text-sm text-muted-foreground">[ 暂无数据 · 先到 LOGS 拉取日志 ]</p>
       </section>
     )
   }
@@ -64,9 +62,7 @@ export function Top20View() {
     <section className="hud-frame flex flex-col gap-4 p-6">
       <div className="flex items-center justify-between">
         <h2 className="hud-title text-primary">[ TOP 20 ]</h2>
-        <span className="hud-mono text-xs text-muted-foreground">
-          基于 {total} 条日志聚合
-        </span>
+        <span className="hud-mono text-xs text-muted-foreground">基于 {total} 条日志聚合</span>
       </div>
 
       <ol className="flex flex-col gap-1">

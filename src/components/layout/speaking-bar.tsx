@@ -44,10 +44,7 @@ export function SpeakingBar() {
 
   if (!current) {
     return (
-      <div
-        aria-label="讲话状态栏"
-        className="border-b border-border bg-card/30 px-4 py-2"
-      >
+      <div aria-label="讲话状态栏" className="border-b border-border bg-card/30 px-4 py-2">
         <div className="mx-auto flex max-w-7xl items-center gap-3">
           <span className="h-2 w-2 rounded-full bg-muted-foreground" aria-hidden="true" />
           <span className="hud-mono text-xs text-muted-foreground">[ QUIET · 暂无人讲话 ]</span>
@@ -59,10 +56,7 @@ export function SpeakingBar() {
   const elapsed = formatElapsed(nowMs - current.startedAtMs)
 
   return (
-    <div
-      aria-label="讲话状态栏"
-      className="border-b border-primary/40 bg-primary/10 px-4 py-2"
-    >
+    <div aria-label="讲话状态栏" className="border-b border-primary/40 bg-primary/10 px-4 py-2">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-1">
         <span className="h-2 w-2 rounded-full bg-primary animate-pulse" aria-hidden="true" />
         <span className="hud-title text-primary">{current.callsign}</span>

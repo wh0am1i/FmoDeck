@@ -70,8 +70,7 @@ describe('FmoEventsClient', () => {
     c.connect()
     MockWebSocket.instances[0]!.open()
     // 两条粘连
-    const concat =
-      '{"type":"a","subType":"x","data":1}{"type":"b","subType":"y","data":2}'
+    const concat = '{"type":"a","subType":"x","data":1}{"type":"b","subType":"y","data":2}'
     MockWebSocket.instances[0]!.emit(concat)
     expect(received).toHaveLength(2)
     expect(received).toMatchObject([

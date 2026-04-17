@@ -18,7 +18,9 @@
 - [Phase 3b-logs + 4b · Logs 视图](docs/superpowers/plans/2026-04-17-phase-3b-4b-logs.md) ✅
 - Phase 4f · Messages 视图（含 messages store）✅
 - Phase 4g · APRS 远控（含 aprs store + gateway client）✅
-- Phase 3b 其余（top20/station/speaking stores）— 按 UI 需求分批规划
+- Phase 4c · SpeakingBar 实时讲话增强（含 speaking store + FmoEventsClient）✅
+- Phase 4d · Top20 排行榜 ✅
+- Phase 3b 其余（station/old-friends stores）— 按 UI 需求分批规划
 
 ## 技术栈
 
