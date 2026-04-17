@@ -13,26 +13,6 @@ FmoDeck 是基于 [**FmoLogs**](https://github.com/dingle1122/FmoLogs)（作者
 主题与若干打磨（见 CHANGELOG），但所有"能用起来"的根基都来自 FmoLogs。
 特此鸣谢 ✨
 
-## 设计文档
-
-- [迁移总设计](docs/superpowers/specs/2026-04-16-fmodeck-migration-design.md)
-
-## 实施计划
-
-- [Phase 1 · 地基](docs/superpowers/plans/2026-04-16-phase-1-foundation.md) ✅
-- [Phase 2a · 纯逻辑层](docs/superpowers/plans/2026-04-17-phase-2a-pure-logic.md) ✅
-- [Phase 2b · I/O 层](docs/superpowers/plans/2026-04-17-phase-2b-io-layer.md) ✅
-- [Phase 3a · 连接+设置 state 层](docs/superpowers/plans/2026-04-17-phase-3a-connection-settings.md) ✅
-- [Phase 4a · Settings + Connection UI](docs/superpowers/plans/2026-04-17-phase-4a-settings-ui.md) ✅
-- [Phase 3b-logs + 4b · Logs 视图](docs/superpowers/plans/2026-04-17-phase-3b-4b-logs.md) ✅
-- Phase 4f · Messages 视图（含 messages store）✅
-- Phase 4g · APRS 远控（含 aprs store + gateway client）✅
-- Phase 4c · SpeakingBar 实时讲话增强（含 speaking store + FmoEventsClient）✅
-- Phase 4d · Top20 排行榜 ✅
-- Phase 4e · Old Friends 视图（聚合 + 搜索 + 分页）✅
-- Phase 4h · ADIF 导出（导入留给下一轮）✅
-- Phase 3b 其余（station store · 按需再做）— 迁移基本完成
-
 ## 技术栈
 
 - **构建**：Vite 7 · TypeScript 5.7+ strict

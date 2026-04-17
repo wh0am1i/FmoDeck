@@ -1,16 +1,63 @@
+# ---- 依赖 ----
 node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# ---- 构建产物 ----
 dist/
+dist-ssr/
 build/
-.DS_Store
+*.tsbuildinfo
+.vite/
+.cache/
+.turbo/
+
+# ---- 测试 / 覆盖率 ----
+coverage/
+.nyc_output/
+.vitest/
+
+# ---- 日志 / 调试 ----
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ---- 环境变量 / 敏感配置 ----
 .env
 .env.local
 .env.*.local
-*.log
-.vite/
-.cache/
-*.tsbuildinfo
-coverage/
+*.pem
+*.key
+*.crt
+
+# ---- 操作系统噪音 ----
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ---- 编辑器 / IDE ----
 .idea/
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+*.swp
+*.swo
+*~
+.claude/
+
+# ---- 本地文档草稿（不推 GitHub） ----
+docs/
+
+# ---- Docker 运行时残留（如果本地试过 compose 之外的卷挂载）----
+# 容器内产物不该出现在仓库，但留个兜底
+.docker-compose.override.yml
