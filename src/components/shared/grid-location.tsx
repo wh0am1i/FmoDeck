@@ -65,6 +65,9 @@ export function GridLocation({ grid, className }: Props) {
       href={mapUrl(ll)}
       target="_blank"
       rel="noreferrer noopener"
+      // 阻止冒泡，避免父级 tr / button 的 onClick 同时触发（比如日志
+      // 表格行点击会打开详情弹窗 —— 不应因为点网格链接也弹出来）
+      onClick={(e) => e.stopPropagation()}
       className={cn(
         'hud-mono inline-flex flex-wrap items-baseline gap-x-1.5 text-primary hover:underline',
         className
