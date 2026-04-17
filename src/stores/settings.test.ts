@@ -20,6 +20,19 @@ describe('settings store', () => {
     expect(settingsStore.getState().fmoAddresses).toEqual([{ id: 'a', host: 'fmo.local' }])
   })
 
+  it('addAddress 首次添加时自动激活', () => {
+    settingsStore.getState().addAddress({ id: 'a', host: 'fmo.local' })
+    expect(settingsStore.getState().activeAddressId).toBe('a')
+  })
+
+  it('addAddress 已有激活项时不改变激活', () => {
+    const { addAddress, setActiveAddress } = settingsStore.getState()
+    addAddress({ id: 'a', host: 'a.local' })
+    setActiveAddress('a')
+    addAddress({ id: 'b', host: 'b.local' })
+    expect(settingsStore.getState().activeAddressId).toBe('a')
+  })
+
   it('setActiveAddress 切换激活项', () => {
     const { addAddress, setActiveAddress } = settingsStore.getState()
     addAddress({ id: 'a', host: 'fmo.local' })

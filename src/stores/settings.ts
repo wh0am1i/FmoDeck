@@ -50,7 +50,12 @@ export const settingsStore = create<SettingsState>()(
     (set) => ({
       ...INITIAL,
 
-      addAddress: (addr) => set((s) => ({ fmoAddresses: [...s.fmoAddresses, addr] })),
+      addAddress: (addr) =>
+        set((s) => ({
+          fmoAddresses: [...s.fmoAddresses, addr],
+          // 无激活地址时自动激活新增的这个（首次添加的常见诉求）
+          activeAddressId: s.activeAddressId ?? addr.id
+        })),
 
       updateAddress: (id, patch) =>
         set((s) => ({
