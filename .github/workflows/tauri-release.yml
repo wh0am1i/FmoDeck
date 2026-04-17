@@ -12,14 +12,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: 'macos-latest'
-            args: '--target aarch64-apple-darwin'
-          - platform: 'macos-latest'
-            args: '--target x86_64-apple-darwin'
+          # macOS 不打 DMG —— CI 上 bundle_dmg.sh 依赖 hdiutil/osascript，
+          # headless 环境易失败。改用 --bundles app，后接一步手动 zip 上传。
+          - platform: 'macos-14'
+            target: 'aarch64-apple-darwin'
+            bundles: 'app'
+          - platform: 'macos-13'
+            target: 'x86_64-apple-darwin'
+            bundles: 'app'
+          # Linux / Windows 用 tauri-action 默认全打
           - platform: 'ubuntu-22.04'
-            args: ''
+            target: ''
+            bundles: ''
           - platform: 'windows-latest'
-            args: ''
+            target: ''
+            bundles: ''
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -34,7 +41,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && (contains(matrix.args, 'aarch64') && 'aarch64-apple-darwin' || 'x86_64-apple-darwin') || '' }}
+          targets: ${{ matrix.target }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
@@ -59,7 +66,31 @@ jobs:
         shell: bash
         run: ./scripts/extract-changelog.sh
 
-      - name: Build Tauri app
+      # ------------- macOS 路径：手动 build + zip + 上传 -------------
+      - name: Build (macOS, no DMG)
+        if: startsWith(matrix.platform, 'macos-')
+        run: pnpm tauri build --target ${{ matrix.target }} --bundles app
+
+      - name: Zip .app
+        if: startsWith(matrix.platform, 'macos-')
+        shell: bash
+        run: |
+          cd "src-tauri/target/${{ matrix.target }}/release/bundle/macos"
+          zip -r -q "../../../../../../FmoDeck_${GITHUB_REF_NAME#v}_${{ matrix.target }}.app.zip" FmoDeck.app
+
+      - name: Upload macOS zip to release
+        if: startsWith(matrix.platform, 'macos-')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: FmoDeck ${{ github.ref_name }}
+          body: ${{ steps.changelog.outputs.body }}
+          draft: true
+          files: FmoDeck_*_${{ matrix.target }}.app.zip
+
+      # ------------- Linux / Windows：tauri-action 默认全打 -------------
+      - name: Build (Linux/Windows via tauri-action)
+        if: "!startsWith(matrix.platform, 'macos-')"
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -69,4 +100,3 @@ jobs:
           releaseBody: ${{ steps.changelog.outputs.body }}
           releaseDraft: true
           prerelease: false
-          args: ${{ matrix.args }}
