@@ -74,7 +74,17 @@ export class AprsGatewayClient {
           clearTimeout(connectTimer)
           connectTimer = null
         }
-        ws.send(JSON.stringify({ type: 'send', waitAck, ...req }))
+        // 显式构造 payload（避免 `...req` 把 undefined 覆盖默认值）
+        ws.send(
+          JSON.stringify({
+            type: 'send',
+            mycall: req.mycall,
+            passcode: req.passcode,
+            tocall: req.tocall,
+            rawPacket: req.rawPacket,
+            waitAck
+          })
+        )
         responseTimer = setTimeout(() => {
           finish(() => reject(new Error('APRS gateway response timeout')))
         }, responseTimeout)
