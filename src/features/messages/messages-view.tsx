@@ -10,7 +10,7 @@ import { messagesStore, selectHasMore, selectUnreadCount } from './store'
 import { ComposeDialog } from './components/compose-dialog'
 import { MessageDetailDialog } from './components/message-detail-dialog'
 import { MessagesList } from './components/messages-list'
-import { CheckCheck, ChevronDown, RefreshCw } from 'lucide-react'
+import { CheckCheck, ChevronDown, RefreshCw, Trash2 } from 'lucide-react'
 
 export function MessagesView() {
   const { t } = useTranslation()
@@ -25,6 +25,7 @@ export function MessagesView() {
   const [detailId, setDetailId] = useState<string | null>(null)
   const [replyTo, setReplyTo] = useState<string | null>(null)
   const [markingAll, setMarkingAll] = useState(false)
+  const [deletingAll, setDeletingAll] = useState(false)
   const [didAutoLoad, setDidAutoLoad] = useState(false)
 
   const canLoad = connectionStatus === 'connected' && client !== null
@@ -55,6 +56,22 @@ export function MessagesView() {
       if (n > 0) toast.success(t('messages.markedAllRead', { count: n }))
     } finally {
       setMarkingAll(false)
+    }
+  }
+
+  const deleteAll = async () => {
+    if (!client || deletingAll || count === 0) return
+    if (!window.confirm(t('messages.confirmDeleteAll', { count }))) return
+    setDeletingAll(true)
+    try {
+      const n = await messagesStore.getState().removeAll(new MessageService(client))
+      toast.success(t('messages.deletedAll', { count: n }))
+    } catch (err) {
+      toast.error(
+        `${t('messages.deleteFailedPrefix')}${err instanceof Error ? err.message : String(err)}`
+      )
+    } finally {
+      setDeletingAll(false)
     }
   }
 
@@ -114,6 +131,19 @@ export function MessagesView() {
             >
               <CheckCheck className="h-4 w-4" />
               {t('messages.markAllRead')}
+            </Button>
+          )}
+          {count > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void deleteAll()}
+              disabled={deletingAll}
+              title={t('messages.deleteAllTitle')}
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+              {t('messages.deleteAll')}
             </Button>
           )}
           <Button

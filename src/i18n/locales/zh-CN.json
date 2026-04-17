@@ -245,7 +245,15 @@
     "refresh": "刷新",
     "markAllRead": "全部已读",
     "markAllReadTitle": "把所有未读消息标记为已读",
-    "markedAllRead": "已标记 {{count}} 条为已读"
+    "markedAllRead": "已标记 {{count}} 条为已读",
+    "deleteAll": "删除全部",
+    "deleteAllTitle": "删除收件箱里所有消息",
+    "confirmDelete": "确认删除来自 {{from}} 的这条消息？此操作不可恢复。",
+    "confirmDeleteAll": "确认删除所有 {{count}} 条消息？此操作不可恢复。",
+    "deleted": "消息已删除",
+    "deletedAll": "已删除 {{count}} 条消息",
+    "deleteFailedPrefix": "删除失败: ",
+    "deleteOneAria": "删除来自 {{from}} 的消息"
   },
   "compose": {
     "button": "撰写",

@@ -20,6 +20,10 @@ export interface MessagesState {
   markRead: (messageId: string) => void
   /** 批量标已读：对所有 isRead=false 的条目调 svc.setRead，然后本地全部置为已读。 */
   markAllRead: (svc: MessageService) => Promise<number>
+  /** 删除单条：调 svc.deleteItem，然后从本地 list 移除。 */
+  removeOne: (svc: MessageService, messageId: string) => Promise<void>
+  /** 删除全部：调 svc.deleteAll，然后清空本地 list。 */
+  removeAll: (svc: MessageService) => Promise<number>
 }
 
 const INITIAL = {
@@ -100,6 +104,18 @@ export const messagesStore = create<MessagesState>()((set, get) => ({
     await Promise.all(Array.from({ length: Math.min(CONCURRENCY, unread.length) }, worker))
     set((state) => ({ list: state.list.map((m) => ({ ...m, isRead: true })) }))
     return unread.length
+  },
+
+  removeOne: async (svc: MessageService, messageId: string) => {
+    await svc.deleteItem(messageId)
+    set((state) => ({ list: state.list.filter((m) => m.messageId !== messageId) }))
+  },
+
+  removeAll: async (svc: MessageService) => {
+    const count = get().list.length
+    await svc.deleteAll()
+    set({ list: [], nextAnchorId: 0 })
+    return count
   }
 }))
 

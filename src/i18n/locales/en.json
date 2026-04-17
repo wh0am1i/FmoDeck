@@ -245,7 +245,15 @@
     "refresh": "Refresh",
     "markAllRead": "Mark all read",
     "markAllReadTitle": "Mark all unread messages as read",
-    "markedAllRead": "Marked {{count}} as read"
+    "markedAllRead": "Marked {{count}} as read",
+    "deleteAll": "Delete all",
+    "deleteAllTitle": "Delete every message in the inbox",
+    "confirmDelete": "Delete the message from {{from}}? This cannot be undone.",
+    "confirmDeleteAll": "Delete all {{count}} messages? This cannot be undone.",
+    "deleted": "Message deleted",
+    "deletedAll": "Deleted {{count}} messages",
+    "deleteFailedPrefix": "Delete failed: ",
+    "deleteOneAria": "Delete message from {{from}}"
   },
   "compose": {
     "button": "Compose",

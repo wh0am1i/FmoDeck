@@ -1,6 +1,11 @@
+import { useState } from 'react'
+import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
-import { messagesStore } from '../store'
+import { Trash2 } from 'lucide-react'
+import { MessageService } from '@/lib/message-service/client'
+import { connectionStore } from '@/stores/connection'
 import { cn } from '@/lib/utils'
+import { messagesStore } from '../store'
 
 function formatTs(unixSeconds: number): string {
   const d = new Date(unixSeconds * 1000)
@@ -15,6 +20,27 @@ interface Props {
 export function MessagesList({ onRowClick }: Props) {
   const { t } = useTranslation()
   const list = messagesStore((s) => s.list)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  async function handleDelete(messageId: string, from: string) {
+    const client = connectionStore.getState().client
+    if (!client) {
+      toast.error(t('connection.unavailable'))
+      return
+    }
+    if (!window.confirm(t('messages.confirmDelete', { from }))) return
+    setDeletingId(messageId)
+    try {
+      await messagesStore.getState().removeOne(new MessageService(client), messageId)
+      toast.success(t('messages.deleted'))
+    } catch (err) {
+      toast.error(
+        `${t('messages.deleteFailedPrefix')}${err instanceof Error ? err.message : String(err)}`
+      )
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   if (list.length === 0) {
     return <div className="hud-mono text-sm text-muted-foreground py-4">{t('messages.empty')}</div>
@@ -23,15 +49,19 @@ export function MessagesList({ onRowClick }: Props) {
   return (
     <ul className="flex flex-col gap-1" aria-label={t('messages.listAria')}>
       {list.map((m) => (
-        <li key={m.messageId}>
+        <li
+          key={m.messageId}
+          className={cn(
+            'hud-mono flex items-stretch rounded-sm border border-border text-sm',
+            'hover:bg-primary/5',
+            !m.isRead && 'border-l-2 border-l-primary'
+          )}
+        >
           <button
             type="button"
             onClick={() => onRowClick(m.messageId)}
-            className={cn(
-              'hud-mono flex w-full items-center gap-3 rounded-sm border border-border px-3 py-2 text-left text-sm',
-              'hover:bg-primary/5',
-              !m.isRead && 'border-l-2 border-l-primary'
-            )}
+            className="flex flex-1 items-center gap-3 px-3 py-2 text-left outline-none focus-visible:bg-primary/10"
+            aria-label={m.from}
           >
             <span className="flex h-2 w-2 flex-none items-center justify-center">
               {!m.isRead && <span className="h-2 w-2 rounded-full bg-primary" />}
@@ -40,6 +70,21 @@ export function MessagesList({ onRowClick }: Props) {
               {m.from}
             </span>
             <span className="text-xs text-muted-foreground">{formatTs(m.timestamp)}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleDelete(m.messageId, m.from)}
+            disabled={deletingId === m.messageId}
+            aria-label={t('messages.deleteOneAria', { from: m.from })}
+            title={t('common.delete')}
+            className={cn(
+              'flex w-10 flex-none items-center justify-center border-l border-border/60',
+              'text-muted-foreground hover:bg-destructive/10 hover:text-destructive',
+              'disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-muted-foreground',
+              'focus-visible:bg-destructive/10 focus-visible:text-destructive outline-none'
+            )}
+          >
+            <Trash2 className="h-4 w-4" />
           </button>
         </li>
       ))}
