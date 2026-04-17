@@ -299,6 +299,18 @@
     "enterCallsign": "请先输入呼号",
     "label": "Passcode"
   },
+  "audio": {
+    "on": "收听",
+    "off": "收听",
+    "titleEnable": "点此开始收听 FMO 音频（首次点会请求浏览器权限）",
+    "titleOffline": "连上 FMO 后可用",
+    "titleMute": "点此静音（保持连接）",
+    "titleUnmute": "点此取消静音",
+    "volumeLabel": "音量",
+    "volumeAria": "音量调节",
+    "volumeDesc": "0% = 静音 · 100% = 正常 · 200% = 放大（可能削波）",
+    "errorPrefix": "错误："
+  },
   "aprsRemote": {
     "sectionParams": "[ APRS 参数 ]",
     "sectionParamsDesc": "通过 APRS-IS 网关跨网络控制设备",

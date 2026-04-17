@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { AudioControl } from '@/features/audio/components/audio-control'
 import { logsStore } from '@/features/logs/store'
 import { speakingStore } from '@/features/speaking/store'
 import { parseCallsignSsid } from '@/lib/utils/callsign'
@@ -79,6 +80,7 @@ export function SpeakingBar() {
           <span className="h-2 w-2 rounded-full bg-muted-foreground" aria-hidden="true" />
           <span className="hud-mono text-xs text-muted-foreground">{t('speaking.quiet')}</span>
           <div className="flex-1" />
+          <AudioControl />
           <SpeakingHistoryPopover myCallsign={myCallsign} />
         </div>
       </div>
@@ -153,6 +155,7 @@ export function SpeakingBar() {
           </>
         )}
         <div className="flex-1" />
+        <AudioControl />
         <SpeakingHistoryPopover myCallsign={myCallsign} />
       </div>
     </div>

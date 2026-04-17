@@ -299,6 +299,18 @@
     "enterCallsign": "Enter a callsign first",
     "label": "Passcode"
   },
+  "audio": {
+    "on": "Listen",
+    "off": "Listen",
+    "titleEnable": "Start listening to FMO audio (first click also unlocks browser audio)",
+    "titleOffline": "Available after connecting to FMO",
+    "titleMute": "Mute (keep connection)",
+    "titleUnmute": "Unmute",
+    "volumeLabel": "Volume",
+    "volumeAria": "Volume control",
+    "volumeDesc": "0% = mute · 100% = normal · 200% = amplified (may clip)",
+    "errorPrefix": "Error: "
+  },
   "aprsRemote": {
     "sectionParams": "[ APRS PARAMS ]",
     "sectionParamsDesc": "Cross-network device control via APRS-IS gateway",
