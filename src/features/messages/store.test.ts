@@ -1,9 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import {
-  messagesStore,
-  resetMessagesForTest,
-  selectUnreadCount
-} from './store'
+import { messagesStore, resetMessagesForTest, selectUnreadCount } from './store'
 import type { MessageService } from '@/lib/message-service/client'
 import type { MessagePage, MessageSummary } from '@/types/message'
 

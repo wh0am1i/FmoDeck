@@ -38,7 +38,8 @@ export function MessagesView() {
       setDidAutoLoad(true)
       void refresh()
     }
-    const svc = new MessageService(client!)
+    if (!client) return
+    const svc = new MessageService(client)
     const unsub = svc.onSummary((s) => {
       messagesStore.getState().prependSummary(s)
       toast.info(`新消息来自 ${s.from}`)

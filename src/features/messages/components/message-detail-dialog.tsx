@@ -63,9 +63,7 @@ export function MessageDetailDialog({ messageId, onClose }: Props) {
             {detail ? `来自 ${detail.from} · ${formatTs(detail.timestamp)}` : '加载中...'}
           </DialogDescription>
         </DialogHeader>
-        {loading && (
-          <div className="hud-mono py-6 text-sm text-muted-foreground">加载中...</div>
-        )}
+        {loading && <div className="hud-mono py-6 text-sm text-muted-foreground">加载中...</div>}
         {detail && (
           <div className="hud-mono whitespace-pre-wrap break-words py-2 text-sm">
             {detail.content}

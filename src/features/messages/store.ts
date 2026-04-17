@@ -39,9 +39,7 @@ export const messagesStore = create<MessagesState>()((set) => ({
 
   prependSummary: (s: MessageSummary) =>
     set((state) =>
-      state.list.some((m) => m.messageId === s.messageId)
-        ? state
-        : { list: [s, ...state.list] }
+      state.list.some((m) => m.messageId === s.messageId) ? state : { list: [s, ...state.list] }
     ),
 
   markRead: (messageId: string) =>

@@ -73,10 +73,7 @@ export function ComposeDialog() {
             autoFocus
             aria-invalid={to.length > 0 && !toValid}
           />
-          <label
-            className="hud-mono text-xs text-muted-foreground mt-2"
-            htmlFor="compose-content"
-          >
+          <label className="hud-mono text-xs text-muted-foreground mt-2" htmlFor="compose-content">
             内容
           </label>
           <textarea
