@@ -91,7 +91,7 @@ export function SpeakingBar() {
             )}
           </span>
         ) : (
-          <span className="hud-mono text-xs text-muted-foreground">首次通联</span>
+          <span className="hud-mono text-xs text-muted-foreground">还未通联</span>
         )}
       </div>
     </div>
