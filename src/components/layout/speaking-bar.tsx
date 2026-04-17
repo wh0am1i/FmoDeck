@@ -29,6 +29,9 @@ export function SpeakingBar() {
   const [nowMs, setNowMs] = useState(() => Date.now())
   useEffect(() => {
     if (!current) return
+    // 新讲话者出现时立即对齐 nowMs，避免 "elapsed 为负" 抖动
+    // （nowMs 在 mount 时锁住，若新 startedAtMs 在其之后，旧值会产生负差）
+    setNowMs(Date.now())
     const id = setInterval(() => setNowMs(Date.now()), 1000)
     return () => clearInterval(id)
   }, [current])
@@ -53,7 +56,8 @@ export function SpeakingBar() {
     )
   }
 
-  const elapsed = formatElapsed(nowMs - current.startedAtMs)
+  // Math.max 防御 nowMs 尚未追上 startedAtMs 的极短窗口
+  const elapsed = formatElapsed(Math.max(0, nowMs - current.startedAtMs))
 
   return (
     <div aria-label="讲话状态栏" className="border-b border-primary/40 bg-primary/10 px-4 py-2">
