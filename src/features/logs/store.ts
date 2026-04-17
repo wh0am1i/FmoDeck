@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { QsoService } from '@/lib/qso-service/client'
+import type { SyncMode } from '@/stores/settings'
 import type { QsoSummary } from '@/types/qso'
 
 export type LogsStatus = 'idle' | 'loading' | 'error'
@@ -11,10 +12,16 @@ export interface LogsState {
   pageSize: number
   status: LogsStatus
   error: Error | null
+  /**
+   * 当前生效的同步模式，从 active FmoAddress 镜像过来（由 useSyncPolicy 维护）。
+   * 默认 `all`；为 `today` 时选择器按本地时区"今天 00:00 起"过滤 `all`。
+   */
+  syncMode: SyncMode
 
   load: (svc: QsoService) => Promise<void>
   setFilter: (s: string) => void
   setPage: (n: number) => void
+  setSyncMode: (m: SyncMode) => void
 }
 
 const INITIAL = {
@@ -23,7 +30,8 @@ const INITIAL = {
   page: 0,
   pageSize: 20,
   status: 'idle' as LogsStatus,
-  error: null as Error | null
+  error: null as Error | null,
+  syncMode: 'all' as SyncMode
 }
 
 export const logsStore = create<LogsState>()((set) => ({
@@ -44,14 +52,38 @@ export const logsStore = create<LogsState>()((set) => ({
 
   setFilter: (s: string) => set({ filter: s, page: 0 }),
 
-  setPage: (n: number) => set({ page: Math.max(0, n) })
+  setPage: (n: number) => set({ page: Math.max(0, n) }),
+
+  setSyncMode: (m: SyncMode) =>
+    set((s) => (s.syncMode === m ? s : { syncMode: m, page: 0 }))
 }))
 
-/** 按 filter 前缀匹配 toCallsign（大小写无关）。 */
+/** 本地时区"今天 00:00"的 Unix 秒。 */
+function startOfLocalToday(nowMs: number = Date.now()): number {
+  const d = new Date(nowMs)
+  d.setHours(0, 0, 0, 0)
+  return Math.floor(d.getTime() / 1000)
+}
+
+/**
+ * 应用 syncMode 后的日志 "有效全量"。
+ * - `all`：原样返回
+ * - `today`：筛掉 timestamp < 今日本地 00:00 的记录
+ *
+ * 所有其他选择器（filter / page / top20 / old-friends）都在此之上派生。
+ */
+export function selectSyncedAll(s: LogsState): QsoSummary[] {
+  if (s.syncMode !== 'today') return s.all
+  const cutoff = startOfLocalToday()
+  return s.all.filter((r) => r.timestamp >= cutoff)
+}
+
+/** 文本过滤（基于 syncMode 筛过的列表）。 */
 export function selectFiltered(s: LogsState): QsoSummary[] {
+  const base = selectSyncedAll(s)
   const q = s.filter.trim().toUpperCase()
-  if (!q) return s.all
-  return s.all.filter((r) => r.toCallsign.toUpperCase().startsWith(q))
+  if (!q) return base
+  return base.filter((r) => r.toCallsign.toUpperCase().startsWith(q))
 }
 
 /** 当前页的记录。 */

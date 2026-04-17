@@ -4,6 +4,7 @@ import {
   resetLogsForTest,
   selectFiltered,
   selectPageSlice,
+  selectSyncedAll,
   selectTotalPages
 } from './store'
 import type { QsoService } from '@/lib/qso-service/client'
@@ -108,5 +109,69 @@ describe('selectors', () => {
 
   it('selectTotalPages · 空列表返回 1（UI 不显示 0/0）', () => {
     expect(selectTotalPages(logsStore.getState())).toBe(1)
+  })
+})
+
+describe('syncMode', () => {
+  it('默认 syncMode 为 all', () => {
+    expect(logsStore.getState().syncMode).toBe('all')
+  })
+
+  it('setSyncMode 切换并重置 page 到 0', () => {
+    logsStore.setState({ page: 5 })
+    logsStore.getState().setSyncMode('today')
+    expect(logsStore.getState().syncMode).toBe('today')
+    expect(logsStore.getState().page).toBe(0)
+  })
+
+  it('setSyncMode 相同值不触发 page 重置', () => {
+    logsStore.setState({ page: 3, syncMode: 'today' })
+    logsStore.getState().setSyncMode('today')
+    expect(logsStore.getState().page).toBe(3)
+  })
+
+  it('selectSyncedAll · all 模式返回全部', () => {
+    logsStore.setState({
+      all: [makeSummary({ logId: 1 }), makeSummary({ logId: 2 })],
+      syncMode: 'all'
+    })
+    expect(selectSyncedAll(logsStore.getState())).toHaveLength(2)
+  })
+
+  it('selectSyncedAll · today 模式筛掉昨天及更早', () => {
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const todayStartSec = Math.floor(todayStart.getTime() / 1000)
+
+    logsStore.setState({
+      all: [
+        makeSummary({ logId: 1, timestamp: todayStartSec - 3600 }), // 昨天 23:00
+        makeSummary({ logId: 2, timestamp: todayStartSec }), // 今天 00:00
+        makeSummary({ logId: 3, timestamp: todayStartSec + 3600 }) // 今天 01:00
+      ],
+      syncMode: 'today'
+    })
+    const synced = selectSyncedAll(logsStore.getState())
+    expect(synced).toHaveLength(2)
+    expect(synced.map((r) => r.logId).sort()).toEqual([2, 3])
+  })
+
+  it('selectFiltered 基于 syncedAll（today + text 组合）', () => {
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const todayStartSec = Math.floor(todayStart.getTime() / 1000)
+
+    logsStore.setState({
+      all: [
+        makeSummary({ logId: 1, toCallsign: 'BG1', timestamp: todayStartSec - 100 }),
+        makeSummary({ logId: 2, toCallsign: 'BG2', timestamp: todayStartSec + 100 }),
+        makeSummary({ logId: 3, toCallsign: 'BY3', timestamp: todayStartSec + 200 })
+      ],
+      syncMode: 'today',
+      filter: 'BG'
+    })
+    const res = selectFiltered(logsStore.getState())
+    expect(res).toHaveLength(1)
+    expect(res[0]?.logId).toBe(2)
   })
 })
