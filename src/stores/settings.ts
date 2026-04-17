@@ -4,11 +4,13 @@ import { persist } from 'zustand/middleware'
 /**
  * 日志同步模式：
  * - `all`：拉取服务器全量日志（默认）
- * - `today`：只保留本地时区"今天"（00:00 起）的日志
+ * - `today`：只拉取本地时区"今天"（00:00 起）的日志
+ * - `incremental`：只拉比本地已有最新一条更新的记录（首次加载等同 `all`）
  *
- * 服务器当前不支持时间过滤参数 → 客户端筛选。
+ * 服务器按时间倒序分页返回（固定 pageSize=20），三种模式通过
+ * `QsoService.getListAll` 的 `stopAt` 回调实现 early-break。
  */
-export type SyncMode = 'all' | 'today'
+export type SyncMode = 'all' | 'today' | 'incremental'
 
 export interface FmoAddress {
   id: string

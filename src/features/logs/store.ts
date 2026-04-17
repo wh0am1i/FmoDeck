@@ -46,13 +46,24 @@ export const logsStore = create<LogsState>()((set, get) => ({
 
   load: async (svc: QsoService) => {
     set({ status: 'loading', error: null })
-    const mode = get().syncMode
-    const cutoff = mode === 'today' ? startOfLocalToday() : null
+    const { syncMode, all: existing } = get()
     try {
-      const all = await svc.getListAll(
-        cutoff !== null ? { stopAt: (r) => r.timestamp < cutoff } : {}
-      )
-      set({ all, status: 'idle', page: 0 })
+      if (syncMode === 'incremental' && existing.length > 0) {
+        // 增量：按已有最大 logId 边界 stopAt，拉回来的全部是新记录
+        const maxExistingLogId = existing[0]?.logId ?? 0
+        const fresh = await svc.getListAll({
+          stopAt: (r) => r.logId <= maxExistingLogId
+        })
+        set({ all: [...fresh, ...existing], status: 'idle', page: 0 })
+      } else if (syncMode === 'today') {
+        const cutoff = startOfLocalToday()
+        const all = await svc.getListAll({ stopAt: (r) => r.timestamp < cutoff })
+        set({ all, status: 'idle', page: 0 })
+      } else {
+        // 'all' 或 incremental 首次加载
+        const all = await svc.getListAll({})
+        set({ all, status: 'idle', page: 0 })
+      }
     } catch (err) {
       set({
         status: 'error',

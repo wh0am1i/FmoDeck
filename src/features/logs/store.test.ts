@@ -79,6 +79,52 @@ describe('logs store · load', () => {
     await logsStore.getState().load(svc)
     expect(logsStore.getState().page).toBe(0)
   })
+
+  it('syncMode=incremental 首次加载（existing 空）等同 all', async () => {
+    const getListAll = vi.fn().mockResolvedValue([makeSummary({ logId: 1 })])
+    const svc = { getListAll } as unknown as QsoService
+    logsStore.setState({ syncMode: 'incremental', all: [] })
+    await logsStore.getState().load(svc)
+    const opts = getListAll.mock.calls[0]?.[0] as { stopAt?: unknown } | undefined
+    expect(opts?.stopAt).toBeUndefined()
+    expect(logsStore.getState().all).toHaveLength(1)
+  })
+
+  it('syncMode=incremental 有 existing 时 stopAt 按最大 logId 边界', async () => {
+    const existing = [makeSummary({ logId: 100 }), makeSummary({ logId: 99 })]
+    const getListAll = vi.fn().mockResolvedValue([])
+    const svc = { getListAll } as unknown as QsoService
+    logsStore.setState({ syncMode: 'incremental', all: existing })
+    await logsStore.getState().load(svc)
+
+    const opts = getListAll.mock.calls[0]?.[0] as
+      | { stopAt?: (r: QsoSummary) => boolean }
+      | undefined
+    expect(typeof opts?.stopAt).toBe('function')
+    expect(opts!.stopAt!(makeSummary({ logId: 101 }))).toBe(false) // 新记录继续
+    expect(opts!.stopAt!(makeSummary({ logId: 100 }))).toBe(true) // 命中边界停
+    expect(opts!.stopAt!(makeSummary({ logId: 50 }))).toBe(true) // 更旧也停
+  })
+
+  it('syncMode=incremental 把拉回来的 fresh 记录 prepend 到 existing', async () => {
+    const existing = [makeSummary({ logId: 100 }), makeSummary({ logId: 99 })]
+    const fresh = [makeSummary({ logId: 102 }), makeSummary({ logId: 101 })]
+    const getListAll = vi.fn().mockResolvedValue(fresh)
+    const svc = { getListAll } as unknown as QsoService
+    logsStore.setState({ syncMode: 'incremental', all: existing })
+    await logsStore.getState().load(svc)
+    expect(logsStore.getState().all.map((r) => r.logId)).toEqual([102, 101, 100, 99])
+  })
+
+  it('syncMode=incremental 无新记录时保留 existing 不变', async () => {
+    const existing = [makeSummary({ logId: 100 })]
+    const getListAll = vi.fn().mockResolvedValue([])
+    const svc = { getListAll } as unknown as QsoService
+    logsStore.setState({ syncMode: 'incremental', all: existing })
+    await logsStore.getState().load(svc)
+    expect(logsStore.getState().all).toHaveLength(1)
+    expect(logsStore.getState().all[0]?.logId).toBe(100)
+  })
 })
 
 describe('logs store · filter/page', () => {
