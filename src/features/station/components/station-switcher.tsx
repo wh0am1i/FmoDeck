@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { StationService } from '@/lib/station-service/client'
 import { connectionStore } from '@/stores/connection'
 import { cn } from '@/lib/utils'
 import { stationStore } from '../store'
-import { ChevronLeft, ChevronRight, RefreshCw, Radio } from 'lucide-react'
+import { ChevronLeft, ChevronRight, RefreshCw, Radio, Search, X } from 'lucide-react'
 
 export function StationSwitcher() {
   const { t } = useTranslation()
@@ -16,6 +17,22 @@ export function StationSwitcher() {
   const status = stationStore((s) => s.status)
   const connectionStatus = connectionStore((s) => s.status)
   const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+
+  // 关闭弹窗时清空搜索关键词
+  useEffect(() => {
+    if (!open) setQuery('')
+  }, [open])
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return list
+    return list.filter((s) => {
+      const name = s.name?.toLowerCase() ?? ''
+      const uid = String(s.uid)
+      return name.includes(q) || uid.includes(q)
+    })
+  }, [list, query])
 
   const client = connectionStore.getState().client
   const svc = client ? new StationService(client) : null
@@ -118,38 +135,82 @@ export function StationSwitcher() {
           )}
 
           {list.length > 0 && (
-            <ul
-              className="flex max-h-64 flex-col gap-0.5 overflow-y-auto"
-              aria-label={t('station.listAria')}
-            >
-              {list.map((s) => {
-                const isActive = s.uid === current?.uid
-                return (
-                  <li key={s.uid}>
+            <>
+              {/* 搜索框 —— 列表 ≥ 6 条时才出现，短列表直接挑更快 */}
+              {list.length >= 6 && (
+                <div className="relative">
+                  <Search
+                    className="pointer-events-none absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <Input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={t('station.searchPlaceholder')}
+                    aria-label={t('station.searchAria')}
+                    className="h-7 pl-7 pr-7 text-xs"
+                  />
+                  {query && (
                     <button
                       type="button"
-                      disabled={busy || isActive}
-                      onClick={() =>
-                        void swap(
-                          () => stationStore.getState().setCurrent(svc, s),
-                          t('station.verbSwitch')
-                        )
-                      }
-                      className={cn(
-                        'flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-xs',
-                        isActive
-                          ? 'bg-primary/10 text-primary'
-                          : 'hover:bg-primary/5 disabled:opacity-50'
-                      )}
+                      onClick={() => setQuery('')}
+                      aria-label={t('oldFriends.clearFilter')}
+                      className="absolute right-1 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:text-primary"
                     >
-                      <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
-                      <span className="flex-1 truncate">{s.name}</span>
-                      <span className="text-muted-foreground/70">#{s.uid}</span>
+                      <X className="h-3 w-3" />
                     </button>
-                  </li>
-                )
-              })}
-            </ul>
+                  )}
+                </div>
+              )}
+
+              {filtered.length === 0 ? (
+                <div className="py-4 text-center text-xs text-muted-foreground">
+                  {t('common.noMatch')}
+                </div>
+              ) : (
+                <ul
+                  className="flex max-h-64 flex-col gap-0.5 overflow-y-auto"
+                  aria-label={t('station.listAria')}
+                >
+                  {filtered.map((s) => {
+                    const isActive = s.uid === current?.uid
+                    return (
+                      <li key={s.uid}>
+                        <button
+                          type="button"
+                          disabled={busy || isActive}
+                          onClick={() =>
+                            void swap(
+                              () => stationStore.getState().setCurrent(svc, s),
+                              t('station.verbSwitch')
+                            )
+                          }
+                          className={cn(
+                            'flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-xs',
+                            isActive
+                              ? 'bg-primary/10 text-primary'
+                              : 'hover:bg-primary/5 disabled:opacity-50'
+                          )}
+                        >
+                          <span
+                            className="h-1.5 w-1.5 rounded-full bg-current"
+                            aria-hidden="true"
+                          />
+                          <span className="flex-1 truncate">{s.name}</span>
+                          <span className="text-muted-foreground/70">#{s.uid}</span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+
+              {query && filtered.length > 0 && (
+                <span className="hud-mono text-[10px] text-muted-foreground/60">
+                  {t('station.searchMatched', { count: filtered.length, total: list.length })}
+                </span>
+              )}
+            </>
           )}
         </div>
       </PopoverContent>
