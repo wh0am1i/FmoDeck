@@ -1,9 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render as rtlRender, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import { Top20View } from '../top20-view'
 import { logsStore, resetLogsForTest } from '@/features/logs/store'
 import { connectionStore, resetConnectionForTest } from '@/stores/connection'
 import type { QsoSummary } from '@/types/qso'
+
+function render(ui: React.ReactElement) {
+  return rtlRender(<MemoryRouter>{ui}</MemoryRouter>)
+}
 
 function makeSummary(overrides: Partial<QsoSummary> = {}): QsoSummary {
   return {
@@ -72,6 +77,20 @@ describe('Top20View', () => {
     const listItems = screen.getAllByRole('listitem')
     expect(listItems[0]).toHaveTextContent('NEW')
     expect(listItems[1]).toHaveTextContent('OLD')
+  })
+
+  it('点击条目设置 logs filter 为该呼号', async () => {
+    connectionStore.setState({ status: 'connected' })
+    logsStore.setState({
+      all: [
+        makeSummary({ logId: 1, toCallsign: 'BG1ABC' }),
+        makeSummary({ logId: 2, toCallsign: 'BG1ABC' })
+      ]
+    })
+    const user = (await import('@testing-library/user-event')).default.setup()
+    render(<Top20View />)
+    await user.click(screen.getByRole('button', { name: /查看 BG1ABC/ }))
+    expect(logsStore.getState().filter).toBe('BG1ABC')
   })
 
   it('syncMode=today 时只聚合今天的记录', () => {

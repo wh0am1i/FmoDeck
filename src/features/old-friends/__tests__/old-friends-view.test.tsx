@@ -1,10 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render as rtlRender, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
 import { OldFriendsView } from '../old-friends-view'
 import { logsStore, resetLogsForTest } from '@/features/logs/store'
 import { connectionStore, resetConnectionForTest } from '@/stores/connection'
 import type { QsoSummary } from '@/types/qso'
+
+function render(ui: React.ReactElement) {
+  return rtlRender(<MemoryRouter>{ui}</MemoryRouter>)
+}
 
 function makeSummary(overrides: Partial<QsoSummary> = {}): QsoSummary {
   return {

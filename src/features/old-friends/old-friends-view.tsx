@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { logsStore, selectSyncedAll } from '@/features/logs/store'
@@ -50,8 +51,14 @@ export function OldFriendsView() {
   const all = logsStore((s) => s.all)
   const syncMode = logsStore((s) => s.syncMode)
   const connectionStatus = connectionStore((s) => s.status)
+  const navigate = useNavigate()
   const [filter, setFilter] = useState('')
   const [page, setPage] = useState(0)
+
+  function gotoLogs(callsign: string) {
+    logsStore.getState().setFilter(callsign)
+    navigate('/logs')
+  }
 
   const synced = useMemo(
     () => selectSyncedAll({ ...logsStore.getState(), all, syncMode }),
@@ -143,7 +150,11 @@ export function OldFriendsView() {
             </thead>
             <tbody>
               {slice.map((f, i) => (
-                <tr key={f.callsign} className="border-b border-border/40">
+                <tr
+                  key={f.callsign}
+                  onClick={() => gotoLogs(f.callsign)}
+                  className="cursor-pointer border-b border-border/40 hover:bg-primary/5"
+                >
                   <td className="px-3 py-2 text-muted-foreground">
                     {currentPage * PAGE_SIZE + i + 1}
                   </td>

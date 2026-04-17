@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useNavigate } from 'react-router'
 import { logsStore, selectSyncedAll } from '@/features/logs/store'
 import { connectionStore } from '@/stores/connection'
 import type { QsoSummary } from '@/types/qso'
@@ -44,6 +45,12 @@ export function Top20View() {
   const total = synced.length
   const rawTotal = all.length
   const connectionStatus = connectionStore((s) => s.status)
+  const navigate = useNavigate()
+
+  function gotoLogs(callsign: string) {
+    logsStore.getState().setFilter(callsign)
+    navigate('/logs')
+  }
 
   if (connectionStatus !== 'connected') {
     return (
@@ -83,19 +90,25 @@ export function Top20View() {
       ) : (
         <ol className="flex flex-col gap-1">
           {top20.map((item, i) => (
-            <li
-              key={item.callsign}
-              className="hud-mono flex items-center gap-3 rounded-sm border border-border/60 px-3 py-2"
-            >
-              <span className="w-6 text-right text-xs text-muted-foreground">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <span className="flex-1 text-sm text-primary">{item.callsign}</span>
-              <span className="text-xs text-muted-foreground">最近 {formatTs(item.lastTime)}</span>
-              <span className="min-w-8 text-right text-sm">
-                <span className="text-primary">{item.count}</span>
-                <span className="text-muted-foreground"> 次</span>
-              </span>
+            <li key={item.callsign}>
+              <button
+                type="button"
+                onClick={() => gotoLogs(item.callsign)}
+                className="hud-mono flex w-full items-center gap-3 rounded-sm border border-border/60 px-3 py-2 text-left hover:bg-primary/5"
+                aria-label={`查看 ${item.callsign} 的通联记录`}
+              >
+                <span className="w-6 text-right text-xs text-muted-foreground">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <span className="flex-1 text-sm text-primary">{item.callsign}</span>
+                <span className="text-xs text-muted-foreground">
+                  最近 {formatTs(item.lastTime)}
+                </span>
+                <span className="min-w-8 text-right text-sm">
+                  <span className="text-primary">{item.count}</span>
+                  <span className="text-muted-foreground"> 次</span>
+                </span>
+              </button>
             </li>
           ))}
         </ol>
