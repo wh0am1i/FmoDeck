@@ -196,8 +196,13 @@ GitHub Release 草稿。
 
 ### 不签名的代价
 
-- **macOS**：首次打开要「右键 → 打开」绕过 Gatekeeper；想消掉警告需 Apple 开发者账号（$99/年）
-- **Windows**：首次运行 SmartScreen 会警告，点「仍要运行」即可；签名证书 $200+/年
+- **macOS**：CI 会做 ad-hoc 本地签名 + `ditto` 打包保留签名元数据，
+  大多数情况下首次打开只需右键 → 打开绕过 Gatekeeper。若仍报「已损坏」
+  （quarantine 属性被强制留下），终端跑 `xattr -cr /Applications/FmoDeck.app`
+  清掉后再打开即可。想彻底消除警告需 Apple 开发者账号（$99/年）做真实签名 +
+  公证。
+- **Windows**：首次运行 SmartScreen 会警告，点「仍要运行」即可；
+  签名证书 $200+/年
 - **Linux**：无签名负担，`.deb` / `.AppImage` 双击即用
 
 ## 部署（Docker · HTTP）

@@ -71,17 +71,32 @@ jobs:
         shell: bash
         run: ./scripts/extract-changelog.sh
 
-      # ------------- macOS 路径：手动 build + zip + 上传 -------------
+      # ------------- macOS 路径：手动 build + ad-hoc 签名 + ditto zip + 上传 -------------
       - name: Build (macOS, no DMG)
         if: startsWith(matrix.platform, 'macos-')
         run: pnpm tauri build --target ${{ matrix.target }} --bundles app
+
+      # 未签名的 app 下载后挂 quarantine 打开会报"已损坏"。ad-hoc 签名
+      # （身份 "-"）是本地签名，没有开发者证书也能把签名状态从"无效"
+      # 变成"有效但本地"，满足 Gatekeeper 的完整性校验；用户首次打开
+      # 仍是"未知开发者"（右键 → 打开即可绕过），但不会再报"已损坏"。
+      - name: Ad-hoc codesign .app
+        if: startsWith(matrix.platform, 'macos-')
+        run: |
+          codesign --force --deep --sign - \
+            "src-tauri/target/${{ matrix.target }}/release/bundle/macos/FmoDeck.app"
+          codesign --verify --verbose \
+            "src-tauri/target/${{ matrix.target }}/release/bundle/macos/FmoDeck.app"
 
       - name: Zip .app
         if: startsWith(matrix.platform, 'macos-')
         shell: bash
         run: |
           cd "src-tauri/target/${{ matrix.target }}/release/bundle/macos"
-          zip -r -q "../../../../../../FmoDeck_${GITHUB_REF_NAME#v}_${{ matrix.target }}.app.zip" FmoDeck.app
+          # 用 ditto 代替 zip：保留扩展属性和签名元数据，避免解压后签名失效
+          ditto -c -k --sequesterRsrc --keepParent \
+            FmoDeck.app \
+            "../../../../../../FmoDeck_${GITHUB_REF_NAME#v}_${{ matrix.target }}.app.zip"
 
       - name: Upload macOS zip to release
         if: startsWith(matrix.platform, 'macos-')

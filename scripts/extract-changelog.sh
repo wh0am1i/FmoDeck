@@ -35,8 +35,13 @@ read -r -d '' footer <<'EOF' || true
 - Linux：`FmoDeck_*_amd64.deb` 或 `.AppImage`
 
 未签名版本首次打开会被 Gatekeeper / SmartScreen 拦截：
-- macOS：右键 → 打开
-- Windows：点"更多信息 → 仍要运行"
+
+**macOS**（已做 ad-hoc 签名，仍可能被 Gatekeeper 拦）
+- 常规：右键 `FmoDeck.app` → 打开 → "仍要打开"
+- 若提示"已损坏"：终端执行 `xattr -cr /Applications/FmoDeck.app` 后再打开
+
+**Windows**
+- 点"更多信息 → 仍要运行"
 EOF
 
 full="$body
