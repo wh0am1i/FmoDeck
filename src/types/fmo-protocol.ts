@@ -14,12 +14,7 @@ export type MessageSubType =
   | 'deleteItemResponse'
   | 'deleteAllResponse'
 
-export type StationSubType =
-  | 'getListRange'
-  | 'getCurrent'
-  | 'setCurrent'
-  | 'next'
-  | 'prev'
+export type StationSubType = 'getListRange' | 'getCurrent' | 'setCurrent' | 'next' | 'prev'
 
 export type QsoSubType = 'getList' | 'getDetail'
 

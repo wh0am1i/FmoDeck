@@ -16,19 +16,19 @@ describe('buildAprsPacket', () => {
   it('生成符合 APRS 格式的数据包', () => {
     const packet = buildAprsPacket(baseParams)
     expect(packet).toMatch(
-      /^BA0AX-5>APFMO0,TCPIP\*::BY4SDL   :CONTROL,NORMAL,29334000,0,[0-9A-F]{16}$/
+      /^BA0AX-5>APFMO0,TCPIP\*::BY4SDL {3}:CONTROL,NORMAL,29334000,0,[0-9A-F]{16}$/
     )
   })
 
   it('addressee 段右填空格到 9 位', () => {
     const packet = buildAprsPacket({ ...baseParams, toCall: 'BY1', toSsid: 0 })
-    const match = packet.match(/::(.{9}):/)
+    const match = /::(.{9}):/.exec(packet)
     expect(match?.[1]).toBe('BY1      ')
   })
 
   it('toSsid > 0 时 addressee 带后缀', () => {
     const packet = buildAprsPacket({ ...baseParams, toCall: 'BA0AX', toSsid: 3 })
-    const match = packet.match(/::(.{9}):/)
+    const match = /::(.{9}):/.exec(packet)
     expect(match?.[1]).toBe('BA0AX-3  ')
   })
 
@@ -48,8 +48,8 @@ describe('buildAprsPacket', () => {
   })
 
   it('目标呼号超过 9 位时抛错', () => {
-    expect(() =>
-      buildAprsPacket({ ...baseParams, toCall: 'BY4SDLXYZ', toSsid: 15 })
-    ).toThrow(/过长/)
+    expect(() => buildAprsPacket({ ...baseParams, toCall: 'BY4SDLXYZ', toSsid: 15 })).toThrow(
+      /过长/
+    )
   })
 })

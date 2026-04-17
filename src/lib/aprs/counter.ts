@@ -31,7 +31,7 @@ export class AprsCounter {
 
   next(timeSlot: number): number {
     const state = readState(this.storage)
-    const counter = state && state.time_slot === timeSlot ? state.counter + 1 : 0
+    const counter = state?.time_slot === timeSlot ? state.counter + 1 : 0
 
     const newState: CounterState = {
       time_slot: timeSlot,
