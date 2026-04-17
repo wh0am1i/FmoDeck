@@ -93,14 +93,16 @@ export function MessagesView() {
 
   return (
     <section className="hud-frame flex flex-col gap-4 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="hud-title text-primary">{t('messages.title')}</h2>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-2">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h2 className="hud-title text-primary">{t('messages.title')}</h2>
           <span className="hud-mono text-xs text-muted-foreground">
             {unread > 0
               ? t('messages.countUnread', { unread, total: count })
               : t('messages.countTotal', { count })}
           </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           <ComposeDialog />
           {unread > 0 && (
             <Button
