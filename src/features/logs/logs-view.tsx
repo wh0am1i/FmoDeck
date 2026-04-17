@@ -83,11 +83,11 @@ export function LogsView() {
           <Button
             variant="outline"
             size="sm"
-            disabled={totalCount === 0}
+            disabled={filteredCount === 0}
             onClick={() => {
-              const all = logsStore.getState().all
-              downloadAdif(all, `fmodeck-logs-${Date.now()}.adi`)
-              toast.success(t('logs.exported', { count: all.length }))
+              const rows = selectFiltered(logsStore.getState())
+              downloadAdif(rows, `fmodeck-logs-${Date.now()}.adi`)
+              toast.success(t('logs.exported', { count: rows.length }))
             }}
           >
             <Download className="h-4 w-4" />

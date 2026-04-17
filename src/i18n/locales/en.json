@@ -82,6 +82,7 @@
     "self": "You",
     "selfShort": "Me",
     "notWorked": "Not worked",
+    "newBadge": "NEW",
     "worked": "Worked {{count}} times",
     "lastWorked": "Last {{time}}",
     "history": "History",
@@ -156,6 +157,11 @@
     "emptyTable": "[ NO RECORDS · awaiting connection or clear the filter ]",
     "filterPlaceholder": "Filter by callsign prefix (e.g. BG)",
     "filterAria": "Filter callsign",
+    "dateFilterAria": "Date range",
+    "dateAll": "All",
+    "dateToday": "Today",
+    "date7d": "Last 7d",
+    "date30d": "Last 30d",
     "colTime": "TIME",
     "colAgo": "AGO",
     "colToCall": "TO CALL",
@@ -222,7 +228,10 @@
     "loadMore": "Load more",
     "empty": "[ NO MESSAGES · inbox is empty ]",
     "listAria": "Messages list",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "markAllRead": "Mark all read",
+    "markAllReadTitle": "Mark all unread messages as read",
+    "markedAllRead": "Marked {{count}} as read"
   },
   "compose": {
     "button": "Compose",
@@ -240,7 +249,8 @@
     "title": "[ MESSAGE ]",
     "header": "From {{from}} · {{time}}",
     "loading": "Loading...",
-    "loadFailedPrefix": "Load failed: "
+    "loadFailedPrefix": "Load failed: ",
+    "reply": "Reply"
   },
   "aprs": {
     "modeNormal": "Normal mode",

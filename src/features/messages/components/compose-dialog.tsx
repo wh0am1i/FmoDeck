@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
@@ -17,12 +17,37 @@ import { connectionStore } from '@/stores/connection'
 import { isValidChineseCallsign } from '@/lib/utils/callsign'
 import { Send } from 'lucide-react'
 
-export function ComposeDialog() {
+interface Props {
+  /** 受控模式：外部控制打开状态（省略则走内部状态 + [撰写] 按钮触发）。 */
+  open?: boolean
+  onOpenChange?: (o: boolean) => void
+  /** 预填收件人（比如从"回复"入口调用）。 */
+  initialTo?: string
+  /** 受控模式下通常不需要默认的触发按钮。 */
+  hideTrigger?: boolean
+}
+
+export function ComposeDialog({ open, onOpenChange, initialTo, hideTrigger }: Props = {}) {
   const { t } = useTranslation()
-  const [open, setOpen] = useState(false)
-  const [to, setTo] = useState('')
+  const [internalOpen, setInternalOpen] = useState(false)
+  const controlled = open !== undefined
+  const actualOpen = controlled ? open : internalOpen
+  const setOpen = (o: boolean) => {
+    if (controlled) onOpenChange?.(o)
+    else setInternalOpen(o)
+  }
+
+  const [to, setTo] = useState(initialTo ?? '')
   const [content, setContent] = useState('')
   const [sending, setSending] = useState(false)
+
+  // 每次外部打开 + 传入新的 initialTo 时同步预填
+  useEffect(() => {
+    if (actualOpen) {
+      setTo(initialTo ?? '')
+      setContent('')
+    }
+  }, [actualOpen, initialTo])
 
   const toValid = to.trim().length > 0 && isValidChineseCallsign(to)
   const canSend = toValid && content.trim().length > 0 && !sending
@@ -39,8 +64,6 @@ export function ComposeDialog() {
       await new MessageService(client).send(to.trim().toUpperCase(), content.trim())
       toast.success(t('compose.sent'))
       setOpen(false)
-      setTo('')
-      setContent('')
     } catch (err) {
       toast.error(
         `${t('compose.sendFailedPrefix')}${err instanceof Error ? err.message : String(err)}`
@@ -51,13 +74,15 @@ export function ComposeDialog() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Send className="h-4 w-4" />
-          {t('compose.button')}
-        </Button>
-      </DialogTrigger>
+    <Dialog open={actualOpen} onOpenChange={setOpen}>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Send className="h-4 w-4" />
+            {t('compose.button')}
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="hud-title text-primary">{t('compose.title')}</DialogTitle>

@@ -5,13 +5,16 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { MessageService } from '@/lib/message-service/client'
 import { connectionStore } from '@/stores/connection'
 import { messagesStore } from '../store'
 import type { MessageDetail } from '@/types/message'
+import { Reply } from 'lucide-react'
 
 function formatTs(unixSeconds: number): string {
   return new Date(unixSeconds * 1000).toLocaleString()
@@ -20,9 +23,11 @@ function formatTs(unixSeconds: number): string {
 interface Props {
   messageId: string | null
   onClose: () => void
+  /** 点击"回复"时触发：关闭详情并让父组件打开撰写对话框并预填收件人。 */
+  onReply?: (from: string) => void
 }
 
-export function MessageDetailDialog({ messageId, onClose }: Props) {
+export function MessageDetailDialog({ messageId, onClose, onReply }: Props) {
   const { t } = useTranslation()
   const [detail, setDetail] = useState<MessageDetail | null>(null)
   const [loading, setLoading] = useState(false)
@@ -76,6 +81,14 @@ export function MessageDetailDialog({ messageId, onClose }: Props) {
           <div className="hud-mono whitespace-pre-wrap break-words py-2 text-sm">
             {detail.content}
           </div>
+        )}
+        {detail && onReply && (
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => onReply(detail.from)}>
+              <Reply className="h-4 w-4" />
+              {t('messageDetail.reply')}
+            </Button>
+          </DialogFooter>
         )}
       </DialogContent>
     </Dialog>

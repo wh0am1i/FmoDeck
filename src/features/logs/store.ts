@@ -8,6 +8,9 @@ import type { LocalQso, QsoSummary } from '@/types/qso'
 
 export type LogsStatus = 'idle' | 'loading' | 'error'
 
+/** 客户端日期过滤（与 syncMode 正交：syncMode 决定从服务器拉什么，dateFilter 决定展示什么）。 */
+export type DateFilter = 'all' | 'today' | '7d' | '30d'
+
 /**
  * 表格/聚合展示用的行。合并 server 和本地 ADIF 导入两种来源。
  * 下游（filter / page / top20 / old-friends / speaking-bar 统计）都基于此类型。
@@ -29,6 +32,7 @@ export interface LogsState {
   /** ADIF 导入的本地记录（IndexedDB 镜像）。 */
   local: LocalQso[]
   filter: string
+  dateFilter: DateFilter
   page: number
   pageSize: number
   status: LogsStatus
@@ -44,6 +48,7 @@ export interface LogsState {
   }>
   clearLocal: () => Promise<void>
   setFilter: (s: string) => void
+  setDateFilter: (f: DateFilter) => void
   setPage: (n: number) => void
   setSyncMode: (m: SyncMode) => void
 }
@@ -52,6 +57,7 @@ const INITIAL = {
   all: [] as QsoSummary[],
   local: [] as LocalQso[],
   filter: '',
+  dateFilter: 'all' as DateFilter,
   page: 0,
   pageSize: 20,
   status: 'idle' as LogsStatus,
@@ -129,6 +135,8 @@ export const logsStore = create<LogsState>()((set, get) => ({
 
   setFilter: (s: string) => set({ filter: s, page: 0 }),
 
+  setDateFilter: (f: DateFilter) => set({ dateFilter: f, page: 0 }),
+
   setPage: (n: number) => set({ page: Math.max(0, n) }),
 
   setSyncMode: (m: SyncMode) => set((s) => (s.syncMode === m ? s : { syncMode: m, page: 0 }))
@@ -174,12 +182,28 @@ export function selectSyncedAll(s: LogsState): QsoSummary[] {
   return s.all.filter((r) => r.timestamp >= cutoff)
 }
 
-/** 文本过滤（基于 merged + syncMode 过滤）。 */
+/** 日期过滤的 Unix 秒下界；`'all'` 返回 null 表示不过滤。 */
+function dateFilterCutoff(f: DateFilter, nowMs: number = Date.now()): number | null {
+  if (f === 'all') return null
+  if (f === 'today') {
+    const d = new Date(nowMs)
+    d.setHours(0, 0, 0, 0)
+    return Math.floor(d.getTime() / 1000)
+  }
+  const days = f === '7d' ? 7 : 30
+  return Math.floor(nowMs / 1000) - days * 86400
+}
+
+/** 文本 + 日期过滤（在 merged + syncMode 基础上叠加）。 */
 export function selectFiltered(s: LogsState): DisplayRow[] {
   const base = selectMergedRows(s)
   const q = s.filter.trim().toUpperCase()
-  if (!q) return base
-  return base.filter((r) => r.toCallsign.toUpperCase().startsWith(q))
+  const cutoff = dateFilterCutoff(s.dateFilter)
+  return base.filter((r) => {
+    if (cutoff !== null && r.timestamp < cutoff) return false
+    if (q && !r.toCallsign.toUpperCase().startsWith(q)) return false
+    return true
+  })
 }
 
 /** 当前页的记录。 */

@@ -8,7 +8,7 @@ import { messagesStore, selectHasMore, selectUnreadCount } from './store'
 import { ComposeDialog } from './components/compose-dialog'
 import { MessageDetailDialog } from './components/message-detail-dialog'
 import { MessagesList } from './components/messages-list'
-import { ChevronDown, RefreshCw } from 'lucide-react'
+import { CheckCheck, ChevronDown, RefreshCw } from 'lucide-react'
 
 export function MessagesView() {
   const { t } = useTranslation()
@@ -21,6 +21,8 @@ export function MessagesView() {
   const client = connectionStore((s) => s.client)
 
   const [detailId, setDetailId] = useState<string | null>(null)
+  const [replyTo, setReplyTo] = useState<string | null>(null)
+  const [markingAll, setMarkingAll] = useState(false)
   const [didAutoLoad, setDidAutoLoad] = useState(false)
 
   const canLoad = connectionStatus === 'connected' && client !== null
@@ -40,6 +42,17 @@ export function MessagesView() {
       await messagesStore.getState().loadMore(new MessageService(client))
     } catch {
       /* store 已记录 error */
+    }
+  }
+
+  const markAllRead = async () => {
+    if (!client || markingAll) return
+    setMarkingAll(true)
+    try {
+      const n = await messagesStore.getState().markAllRead(new MessageService(client))
+      if (n > 0) toast.success(t('messages.markedAllRead', { count: n }))
+    } finally {
+      setMarkingAll(false)
     }
   }
 
@@ -83,6 +96,18 @@ export function MessagesView() {
               : t('messages.countTotal', { count })}
           </span>
           <ComposeDialog />
+          {unread > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void markAllRead()}
+              disabled={markingAll}
+              title={t('messages.markAllReadTitle')}
+            >
+              <CheckCheck className="h-4 w-4" />
+              {t('messages.markAllRead')}
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -120,7 +145,23 @@ export function MessagesView() {
         </div>
       )}
 
-      <MessageDetailDialog messageId={detailId} onClose={() => setDetailId(null)} />
+      <MessageDetailDialog
+        messageId={detailId}
+        onClose={() => setDetailId(null)}
+        onReply={(from) => {
+          setDetailId(null)
+          setReplyTo(from)
+        }}
+      />
+
+      <ComposeDialog
+        hideTrigger
+        open={replyTo !== null}
+        onOpenChange={(o) => {
+          if (!o) setReplyTo(null)
+        }}
+        initialTo={replyTo ?? ''}
+      />
     </section>
   )
 }

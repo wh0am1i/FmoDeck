@@ -18,6 +18,8 @@ export interface MessagesState {
   /** 新推送的摘要 prepend 到最前（按 messageId 去重）。 */
   prependSummary: (s: MessageSummary) => void
   markRead: (messageId: string) => void
+  /** 批量标已读：对所有 isRead=false 的条目调 svc.setRead，然后本地全部置为已读。 */
+  markAllRead: (svc: MessageService) => Promise<number>
 }
 
 const INITIAL = {
@@ -77,7 +79,28 @@ export const messagesStore = create<MessagesState>()((set, get) => ({
   markRead: (messageId: string) =>
     set((state) => ({
       list: state.list.map((m) => (m.messageId === messageId ? { ...m, isRead: true } : m))
-    }))
+    })),
+
+  markAllRead: async (svc: MessageService) => {
+    const unread = get().list.filter((m) => !m.isRead)
+    // 并发但限制在 8 路，避免对设备 WS 压力过大
+    const CONCURRENCY = 8
+    let cursor = 0
+    async function worker(): Promise<void> {
+      while (cursor < unread.length) {
+        const m = unread[cursor++]
+        if (!m) return
+        try {
+          await svc.setRead(m.messageId)
+        } catch {
+          /* 单条失败忽略，不阻塞其他 */
+        }
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, unread.length) }, worker))
+    set((state) => ({ list: state.list.map((m) => ({ ...m, isRead: true })) }))
+    return unread.length
+  }
 }))
 
 export function selectUnreadCount(s: MessagesState): number {

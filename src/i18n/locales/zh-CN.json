@@ -82,6 +82,7 @@
     "self": "我自己",
     "selfShort": "我",
     "notWorked": "还未通联",
+    "newBadge": "新朋友",
     "worked": "已通联 {{count}} 次",
     "lastWorked": "上次 {{time}}",
     "history": "历史",
@@ -156,6 +157,11 @@
     "emptyTable": "[ 无记录 · 等连接或清过滤条件 ]",
     "filterPlaceholder": "按呼号前缀过滤（如 BG）",
     "filterAria": "过滤呼号",
+    "dateFilterAria": "日期范围",
+    "dateAll": "全部",
+    "dateToday": "今天",
+    "date7d": "近 7 天",
+    "date30d": "近 30 天",
     "colTime": "时间",
     "colAgo": "距今",
     "colToCall": "对方呼号",
@@ -222,7 +228,10 @@
     "loadMore": "加载更多",
     "empty": "[ 无消息 · 收件箱为空 ]",
     "listAria": "消息列表",
-    "refresh": "刷新"
+    "refresh": "刷新",
+    "markAllRead": "全部已读",
+    "markAllReadTitle": "把所有未读消息标记为已读",
+    "markedAllRead": "已标记 {{count}} 条为已读"
   },
   "compose": {
     "button": "撰写",
@@ -240,7 +249,8 @@
     "title": "[ 消息 ]",
     "header": "来自 {{from}} · {{time}}",
     "loading": "加载中...",
-    "loadFailedPrefix": "加载失败: "
+    "loadFailedPrefix": "加载失败: ",
+    "reply": "回复"
   },
   "aprs": {
     "modeNormal": "普通模式",

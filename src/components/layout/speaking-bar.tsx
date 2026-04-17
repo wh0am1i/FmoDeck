@@ -135,8 +135,14 @@ export function SpeakingBar() {
                 )}
               </span>
             ) : (
-              <span className="hud-mono text-xs text-muted-foreground">
-                {t('speaking.notWorked')}
+              <span
+                className={cn(
+                  'hud-mono rounded-sm border px-1.5 py-0.5 text-xs',
+                  'border-[oklch(0.76_0.19_142)] bg-[oklch(0.76_0.19_142)]/15 text-[oklch(0.76_0.19_142)]'
+                )}
+                title={t('speaking.notWorked')}
+              >
+                ✦ {t('speaking.newBadge')}
               </span>
             )}
           </>

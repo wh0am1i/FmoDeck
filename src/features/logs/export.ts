@@ -1,6 +1,12 @@
 import { formatAdif } from '@/lib/adif/formatter'
 import type { ParsedAdif } from '@/lib/adif/parser'
-import type { QsoSummary } from '@/types/qso'
+
+/** 导出需要的最小字段形。QsoSummary / DisplayRow 皆兼容。 */
+export interface ExportRow {
+  timestamp: number
+  toCallsign: string
+  grid: string
+}
 
 function toAdifDate(unixSeconds: number): string {
   const d = new Date(unixSeconds * 1000)
@@ -22,7 +28,7 @@ function toAdifTime(unixSeconds: number): string {
  * - `gridsquare` ← grid
  * - `qso_date` + `time_on` ← timestamp（UTC）
  */
-export function summariesToAdif(summaries: readonly QsoSummary[]): string {
+export function summariesToAdif(summaries: readonly ExportRow[]): string {
   const parsed: ParsedAdif = {
     header: {
       text: 'FmoDeck Export',
@@ -43,7 +49,7 @@ export function summariesToAdif(summaries: readonly QsoSummary[]): string {
  * 触发浏览器下载 ADIF 文件。
  */
 export function downloadAdif(
-  summaries: readonly QsoSummary[],
+  summaries: readonly ExportRow[],
   filename = 'fmodeck-export.adi'
 ): void {
   const adif = summariesToAdif(summaries)
