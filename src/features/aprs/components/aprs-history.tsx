@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { aprsStore, type AprsHistoryRecord } from '../store'
 import { cn } from '@/lib/utils'
@@ -24,19 +25,26 @@ const PREFIX: Record<AprsHistoryRecord['operationType'], string> = {
 }
 
 export function AprsHistory() {
+  const { t } = useTranslation()
   const history = aprsStore((s) => s.history)
 
   if (history.length === 0) {
-    return <div className="hud-mono text-sm text-muted-foreground py-4">[ NO HISTORY ]</div>
+    return (
+      <div className="hud-mono text-sm text-muted-foreground py-4">
+        {t('aprsRemote.historyEmpty')}
+      </div>
+    )
   }
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="hud-mono text-xs text-muted-foreground">最近 {history.length} 条</span>
+        <span className="hud-mono text-xs text-muted-foreground">
+          {t('aprsRemote.historyRecent', { count: history.length })}
+        </span>
         <Button variant="ghost" size="sm" onClick={() => aprsStore.getState().clearHistory()}>
           <Trash2 className="h-4 w-4" />
-          清空历史
+          {t('aprsRemote.historyClear')}
         </Button>
       </div>
       <ul className="flex flex-col gap-1">

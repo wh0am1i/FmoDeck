@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import i18n from '@/i18n'
 import { AprsGatewayClient, type AprsSendResponse } from '@/lib/aprs-gateway/client'
 import { AprsCounter } from '@/lib/aprs/counter'
 import { buildAprsPacket } from '@/lib/aprs/packet'
@@ -52,10 +53,10 @@ function appendHistory(existing: AprsHistoryRecord[], rec: AprsHistoryRecord): A
   return [rec, ...existing].slice(0, HISTORY_MAX)
 }
 
-const ACTION_LABEL: Record<AprsAction, string> = {
-  NORMAL: '普通模式',
-  STANDBY: '待机模式',
-  REBOOT: '软重启'
+const ACTION_I18N_KEY: Record<AprsAction, string> = {
+  NORMAL: 'aprsRemote.modeNormal',
+  STANDBY: 'aprsRemote.modeStandby',
+  REBOOT: 'aprsRemote.modeReboot'
 }
 
 export const aprsStore = create<AprsState>()(
@@ -75,9 +76,9 @@ export const aprsStore = create<AprsState>()(
         const secret = state.secret.trim()
         const tocallInput = state.tocall.trim() || mycallInput
 
-        if (!mycallInput) throw new Error('请输入登录呼号')
-        if (!passcode) throw new Error('请输入 APRS Passcode（APRS-IS 登录密码）')
-        if (!secret) throw new Error('请输入设备密钥')
+        if (!mycallInput) throw new Error(i18n.t('aprsRemote.errMycall'))
+        if (!passcode) throw new Error(i18n.t('aprsRemote.errPasscode'))
+        if (!secret) throw new Error(i18n.t('aprsRemote.errSecret'))
 
         const { call: myCall, ssid: mySsid } = parseCallsignSsid(mycallInput)
         const { call: toCall, ssid: toSsid } = parseCallsignSsid(tocallInput)
@@ -95,15 +96,20 @@ export const aprsStore = create<AprsState>()(
           secret
         })
 
+        const actionLabel = i18n.t(ACTION_I18N_KEY[action])
         const sendRec: AprsHistoryRecord = {
           timestamp: new Date().toISOString(),
           operationType: 'send',
-          message: `${myCall}-${mySsid} → ${toCall}-${toSsid} 发送「${ACTION_LABEL[action]}」`,
+          message: i18n.t('aprsRemote.sendLog', {
+            from: `${myCall}-${mySsid}`,
+            to: `${toCall}-${toSsid}`,
+            action: actionLabel
+          }),
           raw: rawPacket
         }
         set((s) => ({
           status: 'sending',
-          lastMessage: `正在发送 ${action} 指令...`,
+          lastMessage: i18n.t('aprsRemote.sendingStatus', { action: actionLabel }),
           history: appendHistory(s.history, sendRec)
         }))
 

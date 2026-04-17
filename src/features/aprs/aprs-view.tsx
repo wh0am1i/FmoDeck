@@ -1,4 +1,5 @@
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { aprsStore, type AprsAction } from './store'
 import { AprsHistory } from './components/aprs-history'
@@ -7,13 +8,21 @@ import { PasscodeCalculator } from './components/passcode-calculator'
 import { AlertTriangle, Pause, Play, Power } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const ACTIONS: { key: AprsAction; label: string; icon: typeof Play; variant: string }[] = [
-  { key: 'NORMAL', label: '普通模式', icon: Play, variant: 'default' },
-  { key: 'STANDBY', label: '待机模式', icon: Pause, variant: 'secondary' },
-  { key: 'REBOOT', label: '软重启', icon: Power, variant: 'destructive' }
+interface ActionDef {
+  key: AprsAction
+  labelKey: string
+  icon: typeof Play
+  variant: 'default' | 'secondary' | 'destructive'
+}
+
+const ACTIONS: readonly ActionDef[] = [
+  { key: 'NORMAL', labelKey: 'aprsRemote.modeNormal', icon: Play, variant: 'default' },
+  { key: 'STANDBY', labelKey: 'aprsRemote.modeStandby', icon: Pause, variant: 'secondary' },
+  { key: 'REBOOT', labelKey: 'aprsRemote.modeReboot', icon: Power, variant: 'destructive' }
 ]
 
 export function AprsView() {
+  const { t } = useTranslation()
   const status = aprsStore((s) => s.status)
   const lastMessage = aprsStore((s) => s.lastMessage)
   const mycall = aprsStore((s) => s.mycall)
@@ -22,9 +31,9 @@ export function AprsView() {
   const sending = status === 'sending'
 
   const missing: string[] = []
-  if (!mycall.trim()) missing.push('登录呼号')
-  if (!passcode.trim()) missing.push('APRS Passcode')
-  if (!secret.trim()) missing.push('设备密钥')
+  if (!mycall.trim()) missing.push(t('aprsRemote.missingMycall'))
+  if (!passcode.trim()) missing.push(t('aprsRemote.missingPasscode'))
+  if (!secret.trim()) missing.push(t('aprsRemote.missingSecret'))
   const ready = missing.length === 0
   const disabled = !ready || sending
 
@@ -46,27 +55,27 @@ export function AprsView() {
     <div className="flex flex-col gap-6">
       <section className="hud-frame flex flex-col gap-4 p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="hud-title text-primary">[ APRS 参数 ]</h2>
+          <h2 className="hud-title text-primary">{t('aprsRemote.sectionParams')}</h2>
           <span className="hud-mono text-xs text-muted-foreground">
-            APRS 远程控制（走 APRS-IS · 可跨网络）
+            {t('aprsRemote.sectionParamsDesc')}
           </span>
         </div>
         <AprsParamsForm />
       </section>
 
       <section className="hud-frame flex flex-col gap-4 p-6">
-        <h2 className="hud-title text-primary">[ APRS 远程控制 ]</h2>
+        <h2 className="hud-title text-primary">{t('aprsRemote.sectionControl')}</h2>
         <div className="flex flex-wrap gap-3">
-          {ACTIONS.map(({ key, label, icon: Icon, variant }) => (
+          {ACTIONS.map(({ key, labelKey, icon: Icon, variant }) => (
             <Button
               key={key}
-              variant={variant as 'default' | 'secondary' | 'destructive'}
+              variant={variant}
               disabled={disabled}
               onClick={() => void handleSend(key)}
               className="min-w-32"
             >
               <Icon className="h-4 w-4" />
-              {label}
+              {t(labelKey)}
             </Button>
           ))}
         </div>
@@ -77,7 +86,8 @@ export function AprsView() {
           >
             <AlertTriangle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
             <span>
-              需先在上方填写：<span className="font-bold">{missing.join(' · ')}</span>
+              {t('aprsRemote.missingHintPrefix')}
+              <span className="font-bold">{missing.join(' · ')}</span>
             </span>
           </div>
         )}
@@ -96,7 +106,7 @@ export function AprsView() {
       </section>
 
       <section className="hud-frame flex flex-col gap-4 p-6">
-        <h2 className="hud-title text-primary">[ 历史 ]</h2>
+        <h2 className="hud-title text-primary">{t('aprsRemote.sectionHistory')}</h2>
         <AprsHistory />
       </section>
 
