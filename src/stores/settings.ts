@@ -24,6 +24,10 @@ export interface SettingsState {
   activeAddressId: string | null
   currentCallsign: string
   protocol: 'ws' | 'wss'
+  /** HUD 装饰强度，0 = 纯净 · 1 = 默认 · 2 = 强化（辉光+扫描线）。 */
+  hudIntensity: number
+  /** 扫描线覆盖层不透明度，0 ~ 0.2 之间合理。 */
+  hudScanlineOpacity: number
 
   addAddress: (addr: FmoAddress) => void
   updateAddress: (id: string, patch: Partial<Omit<FmoAddress, 'id'>>) => void
@@ -31,18 +35,32 @@ export interface SettingsState {
   setActiveAddress: (id: string | null) => void
   setCurrentCallsign: (call: string) => void
   setProtocol: (p: 'ws' | 'wss') => void
+  setHudIntensity: (v: number) => void
+  setHudScanlineOpacity: (v: number) => void
 }
 
 type PersistedFields = Pick<
   SettingsState,
-  'fmoAddresses' | 'activeAddressId' | 'currentCallsign' | 'protocol'
+  | 'fmoAddresses'
+  | 'activeAddressId'
+  | 'currentCallsign'
+  | 'protocol'
+  | 'hudIntensity'
+  | 'hudScanlineOpacity'
 >
 
 const INITIAL: PersistedFields = {
   fmoAddresses: [],
   activeAddressId: null,
   currentCallsign: '',
-  protocol: 'ws'
+  protocol: 'ws',
+  hudIntensity: 1,
+  hudScanlineOpacity: 0.05
+}
+
+function clamp(v: number, min: number, max: number): number {
+  if (Number.isNaN(v)) return min
+  return Math.min(max, Math.max(min, v))
 }
 
 export const settingsStore = create<SettingsState>()(
@@ -72,7 +90,11 @@ export const settingsStore = create<SettingsState>()(
 
       setCurrentCallsign: (call) => set({ currentCallsign: call.trim().toUpperCase() }),
 
-      setProtocol: (p) => set({ protocol: p })
+      setProtocol: (p) => set({ protocol: p }),
+
+      setHudIntensity: (v) => set({ hudIntensity: clamp(v, 0, 2) }),
+
+      setHudScanlineOpacity: (v) => set({ hudScanlineOpacity: clamp(v, 0, 0.2) })
     }),
     {
       name: 'fmodeck-settings',
@@ -80,7 +102,9 @@ export const settingsStore = create<SettingsState>()(
         fmoAddresses: s.fmoAddresses,
         activeAddressId: s.activeAddressId,
         currentCallsign: s.currentCallsign,
-        protocol: s.protocol
+        protocol: s.protocol,
+        hudIntensity: s.hudIntensity,
+        hudScanlineOpacity: s.hudScanlineOpacity
       })
     }
   )

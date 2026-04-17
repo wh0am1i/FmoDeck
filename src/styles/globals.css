@@ -192,4 +192,35 @@
     letter-spacing: 0.12em;
     font-weight: 600;
   }
+  /* HUD 主题的原生 range input 样式（用于强度 / 扫描线调节）。 */
+  .hud-range {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: hsl(var(--muted));
+    border-radius: var(--radius);
+    outline: none;
+  }
+  .hud-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    background: hsl(var(--primary));
+    cursor: pointer;
+    box-shadow: 0 0 calc(6px * var(--hud-intensity))
+      hsl(var(--primary) / calc(0.6 * var(--hud-intensity)));
+  }
+  .hud-range::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    border: none;
+    background: hsl(var(--primary));
+    cursor: pointer;
+    box-shadow: 0 0 calc(6px * var(--hud-intensity))
+      hsl(var(--primary) / calc(0.6 * var(--hud-intensity)));
+  }
 }
