@@ -1,0 +1,42 @@
+[
+  {
+    "fromCall": "BA0AX",
+    "fromSsid": 5,
+    "type": "CONTROL",
+    "action": "NORMAL",
+    "timeSlot": 29334000,
+    "counter": 0,
+    "secret": "ABCDEFGHJKLM",
+    "expected": "8B7C854CDF37FC61"
+  },
+  {
+    "fromCall": "BA0AX",
+    "fromSsid": 5,
+    "type": "CONTROL",
+    "action": "NORMAL",
+    "timeSlot": 29334000,
+    "counter": 1,
+    "secret": "ABCDEFGHJKLM",
+    "expected": "018FD1054B9C4596"
+  },
+  {
+    "fromCall": "BA0AX",
+    "fromSsid": 0,
+    "type": "CONTROL",
+    "action": "REBOOT",
+    "timeSlot": 29334060,
+    "counter": 0,
+    "secret": "ABCDEFGHJKLM",
+    "expected": "51177AE5419789A8"
+  },
+  {
+    "fromCall": "BY4SDL",
+    "fromSsid": 3,
+    "type": "CONTROL",
+    "action": "NORMAL",
+    "timeSlot": 29334000,
+    "counter": 7,
+    "secret": "ZYXWVUTSRQPN",
+    "expected": "011ECD1CC4FB5F54"
+  }
+]
