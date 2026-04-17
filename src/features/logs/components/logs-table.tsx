@@ -1,3 +1,4 @@
+import { useShallow } from 'zustand/react/shallow'
 import { logsStore, selectPageSlice } from '../store'
 
 function formatTs(unixSeconds: number): string {
@@ -11,7 +12,7 @@ interface Props {
 }
 
 export function LogsTable({ onRowClick }: Props) {
-  const slice = logsStore(selectPageSlice)
+  const slice = logsStore(useShallow(selectPageSlice))
 
   if (slice.length === 0) {
     return (

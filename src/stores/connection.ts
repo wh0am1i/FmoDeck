@@ -52,6 +52,9 @@ export const connectionStore = create<ConnectionState>()((set, get) => ({
 }))
 
 export function resetConnectionForTest(): void {
-  connectionStore.getState().client?.disconnect()
+  const client = connectionStore.getState().client
+  if (client && typeof client.disconnect === 'function') {
+    client.disconnect()
+  }
   connectionStore.setState({ ...INITIAL })
 }
