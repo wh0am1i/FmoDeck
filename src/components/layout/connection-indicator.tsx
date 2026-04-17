@@ -40,9 +40,11 @@ export function ConnectionIndicator() {
     <div
       className="hud-mono flex items-center gap-2 text-xs text-muted-foreground"
       aria-label={t('connection.status')}
+      title={label}
     >
       <span className={cn('h-2 w-2 flex-shrink-0 rounded-full', dotClass)} aria-hidden="true" />
-      <span className="max-w-[10rem] truncate whitespace-nowrap">{label}</span>
+      {/* 窄屏只保留圆点（站名已由 StationSwitcher 显示），sm 以上才出文字 */}
+      <span className="hidden max-w-[10rem] truncate whitespace-nowrap sm:inline">{label}</span>
     </div>
   )
 }
