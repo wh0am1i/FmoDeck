@@ -1449,4 +1449,26 @@ Phase 2b 结束后即可进入 Phase 3（状态层 + React hooks）的 brainstor
 
 ## 附录：Task 1 实机探测结果
 
-（Task 1 执行时追加）
+**日期**：2026-04-17
+**服务器**：`ws://fmo.local/ws`（Node 24.14.1 内建 WebSocket 客户端）
+
+**请求发出**：
+```json
+{"type":"station","subType":"getCurrent","reqId":"zpqnitu7"}
+```
+
+**服务器响应**：
+```json
+{"type":"station","subType":"getCurrentResponse","data":{"uid":3867322085,"name":"如意甘肃"},"code":0}
+```
+
+**结论**：
+- ❌ 服务端**不回传 reqId**
+- ✅ 连接和请求本身工作正常，`type:subType:Response` 匹配（`getCurrent` → `getCurrentResponse`）
+- 决策：**Task 5 FmoApiClient 走路线 B（串行队列）**，与 FmoLogs `messageService.js` / `fmoApi.js` 行为一致
+
+**串行队列要点**：
+- 同时只 in-flight 1 个请求
+- 响应按 `${subType}Response === ${requestSubType}Response` 或预定义映射匹配
+- 后续请求排队等待，`processQueue()` 按序触发
+- 超时/断连时当前 in-flight 被拒绝，队列清空
