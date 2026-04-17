@@ -28,8 +28,6 @@ export interface SettingsState {
   hudIntensity: number
   /** 扫描线覆盖层不透明度，0 ~ 0.2 之间合理。 */
   hudScanlineOpacity: number
-  /** 桌面通知总开关（除此之外还要浏览器授权）。 */
-  notificationsEnabled: boolean
 
   addAddress: (addr: FmoAddress) => void
   updateAddress: (id: string, patch: Partial<Omit<FmoAddress, 'id'>>) => void
@@ -39,7 +37,6 @@ export interface SettingsState {
   setProtocol: (p: 'ws' | 'wss') => void
   setHudIntensity: (v: number) => void
   setHudScanlineOpacity: (v: number) => void
-  setNotificationsEnabled: (v: boolean) => void
 }
 
 type PersistedFields = Pick<
@@ -50,7 +47,6 @@ type PersistedFields = Pick<
   | 'protocol'
   | 'hudIntensity'
   | 'hudScanlineOpacity'
-  | 'notificationsEnabled'
 >
 
 const INITIAL: PersistedFields = {
@@ -59,8 +55,7 @@ const INITIAL: PersistedFields = {
   currentCallsign: '',
   protocol: 'ws',
   hudIntensity: 0.15,
-  hudScanlineOpacity: 0.05,
-  notificationsEnabled: false
+  hudScanlineOpacity: 0.05
 }
 
 function clamp(v: number, min: number, max: number): number {
@@ -99,9 +94,7 @@ export const settingsStore = create<SettingsState>()(
 
       setHudIntensity: (v) => set({ hudIntensity: clamp(v, 0, 2) }),
 
-      setHudScanlineOpacity: (v) => set({ hudScanlineOpacity: clamp(v, 0, 0.2) }),
-
-      setNotificationsEnabled: (v) => set({ notificationsEnabled: v })
+      setHudScanlineOpacity: (v) => set({ hudScanlineOpacity: clamp(v, 0, 0.2) })
     }),
     {
       name: 'fmodeck-settings',
@@ -111,8 +104,7 @@ export const settingsStore = create<SettingsState>()(
         currentCallsign: s.currentCallsign,
         protocol: s.protocol,
         hudIntensity: s.hudIntensity,
-        hudScanlineOpacity: s.hudScanlineOpacity,
-        notificationsEnabled: s.notificationsEnabled
+        hudScanlineOpacity: s.hudScanlineOpacity
       })
     }
   )
