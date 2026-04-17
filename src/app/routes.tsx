@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router'
 import { AprsView } from '@/features/aprs/aprs-view'
+import { ControlView } from '@/features/control/control-view'
 import { LogsView } from '@/features/logs/logs-view'
 import { Top20View } from '@/features/top20/top20-view'
 import { OldFriendsView } from '@/features/old-friends/old-friends-view'
@@ -14,6 +15,7 @@ export function AppRoutes() {
       <Route path="/top20" element={<Top20View />} />
       <Route path="/old-friends" element={<OldFriendsView />} />
       <Route path="/messages" element={<MessagesView />} />
+      <Route path="/control" element={<ControlView />} />
       <Route path="/aprs" element={<AprsView />} />
       <Route path="/settings" element={<SettingsView />} />
       <Route path="*" element={<Navigate to="/logs" replace />} />
