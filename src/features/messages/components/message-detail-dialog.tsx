@@ -79,7 +79,7 @@ export function MessageDetailDialog({ messageId, onClose, onReply }: Props) {
         )}
         {detail && (
           <div className="hud-mono whitespace-pre-wrap break-words py-2 text-sm">
-            {detail.content}
+            {detail.message}
           </div>
         )}
         {detail && onReply && (

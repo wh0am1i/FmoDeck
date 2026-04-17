@@ -6,7 +6,8 @@ export interface MessageSummary {
 }
 
 export interface MessageDetail extends MessageSummary {
-  content: string
+  /** 消息正文。对齐 FMO 服务端字段名（`message`，不是 `content`）。 */
+  message: string
 }
 
 /** 服务器 message/getList 的分页响应形状。 */

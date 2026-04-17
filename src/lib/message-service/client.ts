@@ -22,9 +22,14 @@ export class MessageService {
       data: { messageId }
     })
     if (resp.code !== 0) throw new Error(`getDetail failed: code=${resp.code}`)
-    const data = resp.data as { message?: MessageDetail } | MessageDetail
-    if (data && typeof data === 'object' && 'message' in data && data.message) {
-      return data.message
+    // 服务器返回两种可能形状：
+    //   A. { message: { ...detail, message: "正文" } }（嵌套在 wrapper 里）
+    //   B. { ...detail, message: "正文" }（扁平）
+    // MessageDetail 自己也有个 `message` 字段（正文）。用"嵌套对象"来区分
+    // wrapper vs 扁平：wrapper.message 是 object，detail.message 是 string。
+    const data = resp.data as { message?: unknown } & Partial<MessageDetail>
+    if (data && typeof data === 'object' && typeof data.message === 'object' && data.message !== null) {
+      return data.message as MessageDetail
     }
     return data as MessageDetail
   }

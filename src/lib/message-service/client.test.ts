@@ -60,13 +60,13 @@ describe('MessageService', () => {
           from: 'BA0AX',
           timestamp: 1,
           isRead: true,
-          content: '嗨'
+          message: '嗨'
         }
       }
     })
     const svc = new MessageService(api)
     const detail = await svc.getDetail('x')
-    expect(detail.content).toBe('嗨')
+    expect(detail.message).toBe('嗨')
   })
 
   it('onSummary 只转发 message/summary 推送', () => {
