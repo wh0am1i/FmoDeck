@@ -1,7 +1,19 @@
 import { useEffect, useState } from 'react'
 import { logsStore } from '@/features/logs/store'
 import { speakingStore } from '@/features/speaking/store'
+import { parseCallsignSsid } from '@/lib/utils/callsign'
+import { settingsStore } from '@/stores/settings'
 import { cn } from '@/lib/utils'
+
+/** 比较两个呼号（含可选 SSID）的基号是否相同。任一解析失败返回 false。 */
+function isSameOperator(a: string, b: string): boolean {
+  if (!a || !b) return false
+  try {
+    return parseCallsignSsid(a).call === parseCallsignSsid(b).call
+  } catch {
+    return false
+  }
+}
 
 function formatElapsed(ms: number): string {
   const s = Math.floor(ms / 1000)
@@ -24,6 +36,9 @@ function formatTimeAgo(unixSeconds: number, nowMs: number): string {
 export function SpeakingBar() {
   const current = speakingStore((s) => s.current)
   const logs = logsStore((s) => s.all)
+  const myCallsign = settingsStore((s) => s.currentCallsign)
+
+  const isSelf = current !== null && isSameOperator(current.callsign, myCallsign)
 
   // 每秒重新渲染以更新 "讲话了多少秒"
   const [nowMs, setNowMs] = useState(() => Date.now())
@@ -77,21 +92,33 @@ export function SpeakingBar() {
           </span>
         )}
         <span className="hud-mono text-xs text-accent">{elapsed}</span>
-        <span className="hud-mono text-xs text-muted-foreground">·</span>
-        {stats && stats.count > 0 ? (
-          <span className="hud-mono text-xs">
-            <span className="text-muted-foreground">已通联 </span>
-            <span className="text-primary">{stats.count}</span>
-            <span className="text-muted-foreground"> 次</span>
-            {stats.lastTime !== null && (
-              <>
-                <span className="text-muted-foreground"> · 上次 </span>
-                <span className="text-primary">{formatTimeAgo(stats.lastTime, nowMs)}</span>
-              </>
+        {isSelf ? (
+          <span
+            className={cn(
+              'hud-mono rounded-sm border border-primary bg-primary/10 px-1.5 py-0.5 text-xs text-primary'
             )}
+          >
+            我自己
           </span>
         ) : (
-          <span className="hud-mono text-xs text-muted-foreground">还未通联</span>
+          <>
+            <span className="hud-mono text-xs text-muted-foreground">·</span>
+            {stats && stats.count > 0 ? (
+              <span className="hud-mono text-xs">
+                <span className="text-muted-foreground">已通联 </span>
+                <span className="text-primary">{stats.count}</span>
+                <span className="text-muted-foreground"> 次</span>
+                {stats.lastTime !== null && (
+                  <>
+                    <span className="text-muted-foreground"> · 上次 </span>
+                    <span className="text-primary">{formatTimeAgo(stats.lastTime, nowMs)}</span>
+                  </>
+                )}
+              </span>
+            ) : (
+              <span className="hud-mono text-xs text-muted-foreground">还未通联</span>
+            )}
+          </>
         )}
       </div>
     </div>
