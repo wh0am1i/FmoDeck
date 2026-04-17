@@ -48,9 +48,7 @@ export function FmoAddressList() {
             </div>
             <button
               type="button"
-              onClick={() =>
-                settingsStore.getState().updateAddress(a.id, { syncMode: nextMode })
-              }
+              onClick={() => settingsStore.getState().updateAddress(a.id, { syncMode: nextMode })}
               className={cn(
                 'hud-mono rounded-sm border px-2 py-0.5 text-xs',
                 mode === 'today'

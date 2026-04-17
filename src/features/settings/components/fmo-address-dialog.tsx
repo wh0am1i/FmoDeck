@@ -15,23 +15,13 @@ import { settingsStore, type SyncMode } from '@/stores/settings'
 import { cn } from '@/lib/utils'
 import { Plus } from 'lucide-react'
 
-function SyncModeRadio({
-  value,
-  onChange
-}: {
-  value: SyncMode
-  onChange: (m: SyncMode) => void
-}) {
+function SyncModeRadio({ value, onChange }: { value: SyncMode; onChange: (m: SyncMode) => void }) {
   const options: { key: SyncMode; label: string; hint: string }[] = [
     { key: 'all', label: '全量同步', hint: '拉取服务器全部日志（默认）' },
     { key: 'today', label: '只同步当天', hint: '只保留本地时区今天的日志' }
   ]
   return (
-    <div
-      role="radiogroup"
-      aria-label="同步模式"
-      className="flex flex-col gap-2"
-    >
+    <div role="radiogroup" aria-label="同步模式" className="flex flex-col gap-2">
       {options.map((o) => {
         const active = value === o.key
         return (

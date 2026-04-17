@@ -54,8 +54,7 @@ export const logsStore = create<LogsState>()((set) => ({
 
   setPage: (n: number) => set({ page: Math.max(0, n) }),
 
-  setSyncMode: (m: SyncMode) =>
-    set((s) => (s.syncMode === m ? s : { syncMode: m, page: 0 }))
+  setSyncMode: (m: SyncMode) => set((s) => (s.syncMode === m ? s : { syncMode: m, page: 0 }))
 }))
 
 /** 本地时区"今天 00:00"的 Unix 秒。 */
