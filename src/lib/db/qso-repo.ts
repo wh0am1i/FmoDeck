@@ -35,12 +35,28 @@ export async function insertLocalQsos(records: readonly LocalQso[]): Promise<voi
   }
 }
 
-/** 读全部。按 timestamp 倒序（新的在前）。 */
+/**
+ * 读全部。按 timestamp 倒序（新的在前），并按 (呼号, 时间戳) 去重。
+ *
+ * 去重的动机：老版本生成的 id 带 `-{index}` 后缀，同一条 QSO 行顺序变了
+ * 就会被当成新记录存一份。读取时按内容去重，让 UI 看起来是干净的；
+ * 保留内容等同的首条。DB 里残留的旧记录不会被主动清（等用户下次
+ * "清空本地"时一起去掉，或之后的 import 覆盖到新 id 上）。
+ */
 export async function loadAllLocalQsos(): Promise<LocalQso[]> {
   const db = await openRepo()
   try {
     const list = await getAll<LocalQso>(db, STORE)
-    return list.sort((a, b) => b.timestamp - a.timestamp)
+    const sorted = list.sort((a, b) => b.timestamp - a.timestamp)
+    const seen = new Set<string>()
+    const deduped: LocalQso[] = []
+    for (const r of sorted) {
+      const key = `${r.toCallsign}\u0001${r.timestamp}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      deduped.push(r)
+    }
+    return deduped
   } finally {
     db.close()
   }

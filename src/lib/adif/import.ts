@@ -38,7 +38,10 @@ export function adifDateTimeToUnix(
 /**
  * 把一条 ADIF 记录映射到 LocalQso。
  *
- * - `id` = `local-{qso_date}-{time_on}-{call}-{index}`（幂等：同一条 ADIF 再导入不重复）
+ * - `id` = `local-{qso_date}-{time_on}-{call}`（仅依赖内容，不带行号）
+ *   一条 QSO 用 (日期, 时间, 呼号) 唯一标识；同一条再导入会 upsert 覆盖，
+ *   不产生重复。
+ *   注：第二个参数 `_index` 保留签名兼容 adifRecordsToLocal，但不再参与 id。
  * - `timestamp` 从 `qso_date` + `time_on` 解析（UTC）
  * - `toCallsign` ← `call`
  * - `grid` ← `gridsquare`
@@ -46,14 +49,13 @@ export function adifDateTimeToUnix(
  *
  * 缺少必要字段（call 或 qso_date）时返回 null（该条被跳过）。
  */
-export function adifRecordToLocal(record: AdifRecord, index: number): LocalQso | null {
+export function adifRecordToLocal(record: AdifRecord, _index: number): LocalQso | null {
   const call = record.call?.trim().toUpperCase()
   if (!call) return null
   const timestamp = adifDateTimeToUnix(record.qso_date, record.time_on)
   if (timestamp === null) return null
 
-  const idBase = `${record.qso_date ?? ''}-${record.time_on ?? ''}-${call}`
-  const id = `local-${idBase}-${index}`
+  const id = `local-${record.qso_date ?? ''}-${record.time_on ?? ''}-${call}`
 
   return {
     id,

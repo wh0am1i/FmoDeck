@@ -46,7 +46,7 @@ describe('adifRecordToLocal', () => {
     expect(local!.toCallsign).toBe('BA0AX')
     expect(local!.grid).toBe('OM89')
     expect(local!.fields.mode).toBe('FM')
-    expect(local!.id).toMatch(/^local-20260417-123000-BA0AX-0$/)
+    expect(local!.id).toBe('local-20260417-123000-BA0AX')
   })
 
   it('call 被大写化 + trim', () => {
@@ -69,10 +69,11 @@ describe('adifRecordToLocal', () => {
     expect(local?.grid).toBe('')
   })
 
-  it('同条记录再次导入（index 相同）id 相同 → repo put 覆盖', () => {
-    const a = adifRecordToLocal({ call: 'BA0AX', qso_date: '20260417', time_on: '1200' }, 3)
-    const b = adifRecordToLocal({ call: 'BA0AX', qso_date: '20260417', time_on: '1200' }, 3)
+  it('同条记录再次导入 id 相同（与 index 无关）→ repo put 覆盖', () => {
+    const a = adifRecordToLocal({ call: 'BA0AX', qso_date: '20260417', time_on: '1200' }, 0)
+    const b = adifRecordToLocal({ call: 'BA0AX', qso_date: '20260417', time_on: '1200' }, 7)
     expect(a?.id).toBe(b?.id)
+    expect(a?.id).toBe('local-20260417-1200-BA0AX')
   })
 })
 
