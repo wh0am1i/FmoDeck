@@ -8,7 +8,8 @@ import { LogDetailDialog } from './components/log-detail-dialog'
 import { LogsFilter } from './components/logs-filter'
 import { LogsPagination } from './components/logs-pagination'
 import { LogsTable } from './components/logs-table'
-import { RefreshCw } from 'lucide-react'
+import { downloadAdif } from './export'
+import { Download, RefreshCw } from 'lucide-react'
 
 export function LogsView() {
   const status = logsStore((s) => s.status)
@@ -63,6 +64,19 @@ export function LogsView() {
               ? `${totalCount} 条`
               : `${filteredCount} / ${totalCount} 条`}
           </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={totalCount === 0}
+            onClick={() => {
+              const all = logsStore.getState().all
+              downloadAdif(all, `fmodeck-logs-${Date.now()}.adi`)
+              toast.success(`已导出 ${all.length} 条日志`)
+            }}
+          >
+            <Download className="h-4 w-4" />
+            导出 ADIF
+          </Button>
           <Button
             variant="outline"
             size="sm"
