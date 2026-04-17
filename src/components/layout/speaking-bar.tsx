@@ -120,6 +120,17 @@ export function SpeakingBar() {
         ) : (
           <>
             <span className="hud-mono text-xs text-muted-foreground">·</span>
+            {stats?.count === 1 && (
+              <span
+                className={cn(
+                  'hud-mono rounded-sm border px-1.5 py-0.5 text-xs',
+                  'border-[oklch(0.76_0.19_142)] bg-[oklch(0.76_0.19_142)]/15 text-[oklch(0.76_0.19_142)]'
+                )}
+                title={t('speaking.newBadgeTitle')}
+              >
+                ✦ {t('speaking.newBadge')}
+              </span>
+            )}
             {stats && stats.count > 0 ? (
               <span className="hud-mono text-xs">
                 <span className="text-muted-foreground">{t('speaking.workedPrefix')}</span>
@@ -135,14 +146,8 @@ export function SpeakingBar() {
                 )}
               </span>
             ) : (
-              <span
-                className={cn(
-                  'hud-mono rounded-sm border px-1.5 py-0.5 text-xs',
-                  'border-[oklch(0.76_0.19_142)] bg-[oklch(0.76_0.19_142)]/15 text-[oklch(0.76_0.19_142)]'
-                )}
-                title={t('speaking.notWorked')}
-              >
-                ✦ {t('speaking.newBadge')}
+              <span className="hud-mono text-xs text-muted-foreground">
+                {t('speaking.notWorked')}
               </span>
             )}
           </>

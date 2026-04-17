@@ -17,7 +17,8 @@ interface CallsignEventData {
 }
 
 /**
- * 新讲话者首次开口时，如果从未通联过且不是自己，触发一条桌面通知。
+ * 新讲话者开口时，若是"新朋友"（从未通联或只通联过 1 次）且不是自己，
+ * 触发一条桌面通知。超过 1 次视作老朋友，不打扰。
  * 只在 settings.notificationsEnabled 为 true 时生效；notify() 内部还会
  * 再判一次"页面失焦"才弹，避免在用户正看页面时打扰。
  */
@@ -31,9 +32,10 @@ function maybeNotifyNewFriend(callsign: string): void {
     /* 解析失败不阻塞判断 */
   }
   const { all, local } = logsStore.getState()
-  const workedBefore =
-    all.some((r) => r.toCallsign === callsign) || local.some((r) => r.toCallsign === callsign)
-  if (workedBefore) return
+  let count = 0
+  for (const r of all) if (r.toCallsign === callsign) count++
+  for (const r of local) if (r.toCallsign === callsign) count++
+  if (count > 1) return
   const title = i18n.t('speaking.newFriendTitle', { callsign })
   const body = i18n.t('speaking.newFriendBody')
   notify(title, body)

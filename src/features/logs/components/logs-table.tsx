@@ -59,6 +59,7 @@ export function LogsTable({ onRowClick }: Props) {
   const all = logsStore((s) => s.all)
   const local = logsStore((s) => s.local)
   const filter = logsStore((s) => s.filter)
+  const dateFilter = logsStore((s) => s.dateFilter)
   const page = logsStore((s) => s.page)
   const pageSize = logsStore((s) => s.pageSize)
   const syncMode = logsStore((s) => s.syncMode)
@@ -70,11 +71,12 @@ export function LogsTable({ onRowClick }: Props) {
         all,
         local,
         filter,
+        dateFilter,
         page,
         pageSize,
         syncMode
       }),
-    [all, local, filter, page, pageSize, syncMode]
+    [all, local, filter, dateFilter, page, pageSize, syncMode]
   )
 
   const countByCall = useMemo(() => {
