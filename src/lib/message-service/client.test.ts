@@ -10,21 +10,29 @@ function mockClient(): FmoApiClient {
 }
 
 describe('MessageService', () => {
-  it('getList 返回数组', async () => {
+  it('getList 返回分页响应对象', async () => {
     const api = mockClient()
     vi.mocked(api.send).mockResolvedValue({
       type: 'message',
       subType: 'getListResponse',
       code: 0,
-      data: [{ messageId: '1', from: 'BA0AX', timestamp: 1000, isRead: false }]
+      data: {
+        list: [{ messageId: '1', from: 'BA0AX', timestamp: 1000, isRead: false }],
+        anchorId: 0,
+        nextAnchorId: 1,
+        page: 0,
+        pageSize: 20,
+        count: 1
+      }
     })
     const svc = new MessageService(api)
-    const list = await svc.getList({ limit: 10 })
-    expect(list).toHaveLength(1)
+    const page = await svc.getList({ pageSize: 20 })
+    expect(page.list).toHaveLength(1)
+    expect(page.nextAnchorId).toBe(1)
     expect(api.send).toHaveBeenCalledWith({
       type: 'message',
       subType: 'getList',
-      data: { limit: 10 }
+      data: { pageSize: 20 }
     })
   })
 

@@ -1,15 +1,20 @@
 import type { FmoApiClient } from '@/lib/fmo-api/client'
-import type { MessageDetail, MessageSummary } from '@/types/message'
+import type { MessageDetail, MessagePage, MessageSummary } from '@/types/message'
 
 type Unsub = () => void
 
 export class MessageService {
   constructor(private readonly api: FmoApiClient) {}
 
-  async getList(params: { limit?: number; offset?: number } = {}): Promise<MessageSummary[]> {
+  /**
+   * 返回分页响应。服务器返回 `{list, anchorId, nextAnchorId, page, pageSize, count}`。
+   */
+  async getList(
+    params: { anchorId?: number; pageSize?: number } = {}
+  ): Promise<MessagePage> {
     const resp = await this.api.send({ type: 'message', subType: 'getList', data: params })
     if (resp.code !== 0) throw new Error(`getList failed: code=${resp.code}`)
-    return (resp.data ?? []) as MessageSummary[]
+    return resp.data as MessagePage
   }
 
   async getDetail(messageId: string): Promise<MessageDetail> {
