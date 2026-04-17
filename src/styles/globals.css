@@ -112,6 +112,11 @@
   body {
     min-height: 100vh;
   }
+  /* 大字体模式：除了放大字号，整体字重也加粗（可读性更好）。
+     .hud-title 已经是 600/700 不受影响；普通文本从默认 400 提到 600。 */
+  html.font-large body {
+    font-weight: 600;
+  }
   ::selection {
     background: hsl(var(--primary) / 0.4);
     color: hsl(var(--primary-foreground));

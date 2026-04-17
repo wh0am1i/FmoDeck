@@ -18,5 +18,6 @@ export function useHudStyles(): void {
     root.style.setProperty('--hud-intensity', String(intensity))
     root.style.setProperty('--hud-scanline-opacity', String(scanlineOpacity))
     root.style.fontSize = `${FONT_SIZE_PX[fontSize]}px`
+    root.classList.toggle('font-large', fontSize === 'large')
   }, [intensity, scanlineOpacity, fontSize])
 }

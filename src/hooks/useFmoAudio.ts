@@ -1,18 +1,34 @@
 import { useEffect, useRef } from 'react'
 import { AudioEngine } from '@/lib/audio/engine'
+import { parseCallsignSsid } from '@/lib/utils/callsign'
 import { normalizeHost } from '@/lib/utils/url'
 import { audioStore } from '@/features/audio/store'
 import { connectionStore } from '@/stores/connection'
 import { settingsStore } from '@/stores/settings'
+import { speakingStore } from '@/features/speaking/store'
 
 /**
  * 音频下行管理：跟随 audioStore.enabled 与 settings.activeAddress，
  * 在连接建立时起 AudioEngine；disable / 换地址 / 断连时 stop。
  *
+ * 自言自语过滤：当检测到当前讲话者是自己（settings.currentCallsign
+ * 与 speaking.current.callsign 基号匹配）时，暂停音频输出，避免听到
+ * 自己经设备回授的声音。
+ *
  * 注意：AudioEngine.start() 必须在用户手势触发的回调里调用（浏览器
  * AudioContext 解锁要求）。这里只根据 store 状态做 start/stop 驱动；
  * 首次 enable 由 UI 按钮点击触发（满足手势要求）。
  */
+
+function isSameOperator(a: string, b: string): boolean {
+  if (!a || !b) return false
+  try {
+    return parseCallsignSsid(a).call === parseCallsignSsid(b).call
+  } catch {
+    return false
+  }
+}
+
 export function useFmoAudio(): void {
   const engineRef = useRef<AudioEngine | null>(null)
 
@@ -23,7 +39,6 @@ export function useFmoAudio(): void {
       const { fmoAddresses, activeAddressId, protocol } = settingsStore.getState()
       const addr = fmoAddresses.find((a) => a.id === activeAddressId)
 
-      // 必须：enabled + 已连接 + 有地址
       const shouldRun = enabled && connStatus === 'connected' && !!addr
 
       if (!shouldRun) {
@@ -35,13 +50,9 @@ export function useFmoAudio(): void {
         return
       }
 
-      // 需要起（或换地址重建）
-      const url = `${protocol}://${normalizeHost(addr.host)}/audio`
-      if (engineRef.current) {
-        // 粗略判断：如果已经有引擎就继续用（切地址的场景走 stop+start 重建）
-        return
-      }
+      if (engineRef.current) return
 
+      const url = `${protocol}://${normalizeHost(addr.host)}/audio`
       const engine = new AudioEngine(url, {
         onStatus: (s, err) => {
           audioStore.getState().setStatus(s, err?.message ?? null)
@@ -49,8 +60,19 @@ export function useFmoAudio(): void {
       })
       engineRef.current = engine
       engine.setVolume(volume)
-      engine.setMuted(muted)
+      engine.setMuted(muted || isSelfSpeaking())
       void engine.start()
+    }
+
+    const isSelfSpeaking = (): boolean => {
+      const current = speakingStore.getState().current
+      const my = settingsStore.getState().currentCallsign
+      return !!current && isSameOperator(current.callsign, my)
+    }
+
+    const applySuppress = () => {
+      const userMuted = audioStore.getState().muted
+      engineRef.current?.setMuted(userMuted || isSelfSpeaking())
     }
 
     sync()
@@ -58,7 +80,7 @@ export function useFmoAudio(): void {
     const unsubAudio = audioStore.subscribe((s, prev) => {
       if (s.enabled !== prev.enabled) sync()
       if (s.volume !== prev.volume) engineRef.current?.setVolume(s.volume)
-      if (s.muted !== prev.muted) engineRef.current?.setMuted(s.muted)
+      if (s.muted !== prev.muted) applySuppress()
     })
 
     const unsubConn = connectionStore.subscribe((s, prev) => {
@@ -71,18 +93,23 @@ export function useFmoAudio(): void {
         s.protocol !== prev.protocol ||
         s.fmoAddresses !== prev.fmoAddresses
       ) {
-        // 地址变了，先 stop 再 sync
         engineRef.current?.stop()
         engineRef.current = null
         audioStore.getState().setStatus('idle')
         sync()
       }
+      if (s.currentCallsign !== prev.currentCallsign) applySuppress()
+    })
+
+    const unsubSpeaking = speakingStore.subscribe((s, prev) => {
+      if (s.current?.callsign !== prev.current?.callsign) applySuppress()
     })
 
     return () => {
       unsubAudio()
       unsubConn()
       unsubSettings()
+      unsubSpeaking()
       engineRef.current?.stop()
       engineRef.current = null
     }

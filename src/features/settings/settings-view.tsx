@@ -7,6 +7,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { settingsStore } from '@/stores/settings'
+import { CallsignField } from './components/callsign-field'
 import { FmoAddressDialog } from './components/fmo-address-dialog'
 import { FmoAddressList } from './components/fmo-address-list'
 import { FontSizeField } from './components/font-size-field'
@@ -25,6 +26,11 @@ export function SettingsView() {
           <FmoAddressDialog />
         </div>
         <FmoAddressList />
+      </section>
+
+      <section className="hud-frame p-6 flex flex-col gap-4">
+        <h2 className="hud-title text-primary">{t('settings.sectionIdentity')}</h2>
+        <CallsignField />
       </section>
 
       <section className="hud-frame p-6 flex flex-col gap-2">

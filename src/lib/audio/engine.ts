@@ -42,6 +42,11 @@ export class AudioEngine {
   private status: AudioEngineStatus = 'idle'
   private shouldReconnect = false
   private reconnectAttempts = 0
+  /** 当前用户音量（0~2），muted=true 时 gain 被强制 0 但此值保留。 */
+  private userVolume = 1.0
+  /** 抑制标志：用户手动静音 OR 自己正在讲话（过滤自语回声）。
+   *  为 true 时丢弃 incoming PCM，gain 置 0；为 false 时恢复正常。 */
+  private suppressed = false
 
   constructor(
     private readonly url: string,
@@ -68,19 +73,38 @@ export class AudioEngine {
   }
 
   setVolume(v: number): void {
-    if (!this.gain) return
-    // v: 0 ~ 2，线性映射到 gain。
-    this.gain.gain.value = Math.max(0, Math.min(2, v))
+    this.userVolume = Math.max(0, Math.min(2, v))
+    this.applyGain()
   }
 
+  /**
+   * 静音 / 抑制。统一入口：
+   * - 用户手动静音
+   * - 自己正在讲话时过滤（避免自语回声）
+   *
+   * 实现上做两件事：
+   * 1. 后续 incoming PCM 直接丢弃（避免在 ctx 暂停期间堆满调度队列，
+   *    恢复时一口气播出来造成时间错位）
+   * 2. gain 立即置 0，已调度的残余样本静音播完
+   *
+   * 不用 ctx.suspend() 是因为已经 start() 的 AudioBufferSourceNode 在
+   * suspend 期间不会被丢弃，resume 后会一窝蜂倒出来，反而加剧回声。
+   */
   setMuted(m: boolean): void {
-    if (!this.ctx) return
-    if (m) void this.ctx.suspend()
-    else void this.ctx.resume()
+    if (this.suppressed === m) return
+    this.suppressed = m
+    this.applyGain()
+    // 状态切换时重置锚点，下一个 packet 重新起播
+    this.nextStartTime = 0
   }
 
   getStatus(): AudioEngineStatus {
     return this.status
+  }
+
+  private applyGain(): void {
+    if (!this.gain) return
+    this.gain.gain.value = this.suppressed ? 0 : this.userVolume
   }
 
   // -------------------------------------------------------------------
@@ -136,7 +160,7 @@ export class AudioEngine {
     compressor.release.value = 0.25
 
     const gain = this.ctx.createGain()
-    gain.gain.value = 1.5
+    gain.gain.value = this.suppressed ? 0 : this.userVolume
 
     hpf.connect(lpf)
     lpf.connect(eqLow)
@@ -202,6 +226,8 @@ export class AudioEngine {
 
   private ingest(buf: ArrayBuffer): void {
     if (!this.ctx || !this.chainHead) return
+    // 抑制状态下丢弃 incoming，防止恢复时一口气 flush 出旧声音
+    if (this.suppressed) return
 
     const int16 = new Int16Array(buf)
     if (int16.length === 0) return
