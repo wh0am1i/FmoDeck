@@ -11,7 +11,7 @@ export function Header() {
           <span className="hud-title whitespace-nowrap text-primary">[ FMODECK ]</span>
           <span className="hud-mono hidden text-xs text-muted-foreground sm:inline">v0.1.0</span>
         </div>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-2 md:gap-x-4">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2 gap-y-2 md:gap-x-4">
           <StationSwitcher />
           <ConnectionIndicator />
           <LanguageSwitcher />
