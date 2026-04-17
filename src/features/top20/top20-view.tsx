@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { GridLocation } from '@/components/shared/grid-location'
 import { logsStore, selectMergedRows, type DisplayRow } from '@/features/logs/store'
 import { connectionStore } from '@/stores/connection'
 
@@ -8,17 +9,26 @@ interface Top20Item {
   callsign: string
   count: number
   lastTime: number
+  /** 最近一次通联时记录的 grid（来源于 DisplayRow.grid）。 */
+  grid: string
 }
 
 function aggregateTop20(logs: DisplayRow[]): Top20Item[] {
-  const map = new Map<string, { count: number; lastTime: number }>()
+  const map = new Map<string, { count: number; lastTime: number; grid: string }>()
   for (const l of logs) {
     const prev = map.get(l.toCallsign)
     if (prev) {
       prev.count++
-      if (l.timestamp > prev.lastTime) prev.lastTime = l.timestamp
+      if (l.timestamp > prev.lastTime) {
+        prev.lastTime = l.timestamp
+        // 最新一次出现的 grid 覆盖旧值（更可能是对方现在的位置）
+        if (l.grid) prev.grid = l.grid
+      } else if (!prev.grid && l.grid) {
+        // 旧记录但补了缺失的 grid
+        prev.grid = l.grid
+      }
     } else {
-      map.set(l.toCallsign, { count: 1, lastTime: l.timestamp })
+      map.set(l.toCallsign, { count: 1, lastTime: l.timestamp, grid: l.grid ?? '' })
     }
   }
   return [...map.entries()]
@@ -96,11 +106,14 @@ export function Top20View() {
       ) : (
         <ol className="flex flex-col gap-1">
           {top20.map((item, i) => (
-            <li key={item.callsign}>
+            <li
+              key={item.callsign}
+              className="hud-mono flex flex-wrap items-center gap-x-3 gap-y-1 rounded-sm border border-border/60 px-3 py-2 hover:bg-primary/5"
+            >
               <button
                 type="button"
                 onClick={() => gotoLogs(item.callsign)}
-                className="hud-mono flex w-full items-center gap-3 rounded-sm border border-border/60 px-3 py-2 text-left hover:bg-primary/5"
+                className="flex flex-1 items-center gap-3 text-left outline-none"
                 aria-label={t('top20.viewQsoOf', { callsign: item.callsign })}
               >
                 <span className="w-6 text-right text-xs text-muted-foreground">
@@ -115,6 +128,12 @@ export function Top20View() {
                   {t('top20.timesCount', { count: item.count })}
                 </span>
               </button>
+              {item.grid && (
+                <GridLocation
+                  grid={item.grid}
+                  className="basis-full text-xs sm:basis-auto sm:pl-9"
+                />
+              )}
             </li>
           ))}
         </ol>
