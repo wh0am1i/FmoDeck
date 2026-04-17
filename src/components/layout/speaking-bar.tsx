@@ -4,6 +4,7 @@ import { speakingStore } from '@/features/speaking/store'
 import { parseCallsignSsid } from '@/lib/utils/callsign'
 import { settingsStore } from '@/stores/settings'
 import { cn } from '@/lib/utils'
+import { SpeakingHistoryPopover } from './speaking-history-popover'
 
 /** 比较两个呼号（含可选 SSID）的基号是否相同。任一解析失败返回 false。 */
 function isSameOperator(a: string, b: string): boolean {
@@ -66,6 +67,8 @@ export function SpeakingBar() {
         <div className="mx-auto flex max-w-7xl items-center gap-3">
           <span className="h-2 w-2 rounded-full bg-muted-foreground" aria-hidden="true" />
           <span className="hud-mono text-xs text-muted-foreground">[ QUIET · 暂无人讲话 ]</span>
+          <div className="flex-1" />
+          <SpeakingHistoryPopover myCallsign={myCallsign} />
         </div>
       </div>
     )
@@ -120,6 +123,8 @@ export function SpeakingBar() {
             )}
           </>
         )}
+        <div className="flex-1" />
+        <SpeakingHistoryPopover myCallsign={myCallsign} />
       </div>
     </div>
   )
