@@ -1,4 +1,5 @@
-import { formatAdif, type ParsedAdif } from '@/lib/adif/formatter'
+import { formatAdif } from '@/lib/adif/formatter'
+import type { ParsedAdif } from '@/lib/adif/parser'
 import type { QsoSummary } from '@/types/qso'
 
 function toAdifDate(unixSeconds: number): string {

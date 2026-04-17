@@ -20,7 +20,9 @@
 - Phase 4g · APRS 远控（含 aprs store + gateway client）✅
 - Phase 4c · SpeakingBar 实时讲话增强（含 speaking store + FmoEventsClient）✅
 - Phase 4d · Top20 排行榜 ✅
-- Phase 3b 其余（station/old-friends stores）— 按 UI 需求分批规划
+- Phase 4e · Old Friends 视图（聚合 + 搜索 + 分页）✅
+- Phase 4h · ADIF 导出（导入留给下一轮）✅
+- Phase 3b 其余（station store · 按需再做）— 迁移基本完成
 
 ## 技术栈
 
