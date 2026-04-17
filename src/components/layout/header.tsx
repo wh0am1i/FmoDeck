@@ -6,12 +6,12 @@ import { ThemeSwitcher } from './theme-switcher'
 export function Header() {
   return (
     <header className="border-b border-border bg-card">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3">
         <div className="flex items-center gap-3">
-          <span className="hud-title text-primary">[ FMODECK ]</span>
-          <span className="hud-mono text-xs text-muted-foreground">v0.1.0</span>
+          <span className="hud-title whitespace-nowrap text-primary">[ FMODECK ]</span>
+          <span className="hud-mono hidden text-xs text-muted-foreground sm:inline">v0.1.0</span>
         </div>
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-2 md:gap-x-4">
           <StationSwitcher />
           <ConnectionIndicator />
           <LanguageSwitcher />

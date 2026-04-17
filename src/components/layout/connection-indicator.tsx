@@ -41,8 +41,8 @@ export function ConnectionIndicator() {
       className="hud-mono flex items-center gap-2 text-xs text-muted-foreground"
       aria-label={t('connection.status')}
     >
-      <span className={cn('h-2 w-2 rounded-full', dotClass)} aria-hidden="true" />
-      <span>{label}</span>
+      <span className={cn('h-2 w-2 flex-shrink-0 rounded-full', dotClass)} aria-hidden="true" />
+      <span className="max-w-[10rem] truncate whitespace-nowrap">{label}</span>
     </div>
   )
 }
