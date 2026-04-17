@@ -5,13 +5,13 @@
     "en": "English"
   },
   "nav": {
-    "logs": "LOGS",
-    "top20": "TOP 20",
-    "oldFriends": "OLD FRIENDS",
-    "messages": "MSG",
-    "control": "CONTROL",
+    "logs": "日志",
+    "top20": "排行榜",
+    "oldFriends": "老朋友",
+    "messages": "消息",
+    "control": "控制",
     "aprs": "APRS",
-    "settings": "SETTINGS"
+    "settings": "设置"
   },
   "header": {
     "appName": "FMODECK",

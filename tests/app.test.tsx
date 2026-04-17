@@ -15,20 +15,21 @@ describe('App 烟雾测试', () => {
     expect(screen.getByText('v0.1.0')).toBeInTheDocument()
   })
 
-  it('Nav 包含 5 个路由 tab', () => {
+  it('Nav 包含各路由 tab（zh-CN 标签）', () => {
     render(<App />)
     const nav = screen.getByRole('navigation', { name: '主导航' })
-    expect(nav).toHaveTextContent('LOGS')
-    expect(nav).toHaveTextContent('TOP 20')
-    expect(nav).toHaveTextContent('OLD FRIENDS')
-    expect(nav).toHaveTextContent('MSG')
-    expect(nav).toHaveTextContent('SETTINGS')
+    expect(nav).toHaveTextContent('日志')
+    expect(nav).toHaveTextContent('排行榜')
+    expect(nav).toHaveTextContent('老朋友')
+    expect(nav).toHaveTextContent('消息')
+    expect(nav).toHaveTextContent('控制')
+    expect(nav).toHaveTextContent('设置')
   })
 
-  it('点击 TOP 20 tab 切换视图', async () => {
+  it('点击排行榜 tab 切换视图', async () => {
     const user = userEvent.setup()
     render(<App />)
-    await user.click(screen.getByRole('link', { name: 'TOP 20' }))
+    await user.click(screen.getByRole('link', { name: '排行榜' }))
     expect(screen.getByText('[ TOP 20 ]')).toBeInTheDocument()
   })
 
