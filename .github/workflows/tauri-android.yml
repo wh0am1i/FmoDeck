@@ -75,11 +75,12 @@ jobs:
           cat "$MANIFEST"
 
       # Tauri 2 Android 默认 edge-to-edge（WebView 画到状态栏下方），
-      # 我们用纯 web 技术（sticky / fixed / env()）在 Tauri WebView 里
-      # 都没稳定的方法把状态栏区域保护住，干脆关掉 edge-to-edge：
-      # override onCreate 调用 WindowCompat.setDecorFitsSystemWindows(true)，
-      # WebView 自动从状态栏下方开始，系统帮我们留出 status bar 高度
+      # 纯 web 方案（sticky / fixed / env(safe-area-inset-top)）在 Tauri
+      # WebView 里都不稳，改成 native 层 override MainActivity.onCreate
+      # 关掉 edge-to-edge + 清 translucent flag + 强制 statusBarColor，
+      # 让系统自动在状态栏区域留白，WebView 从下方渲染
       - name: Disable edge-to-edge in MainActivity
+        shell: bash
         run: |
           MAIN_ACTIVITY=$(find src-tauri/gen/android/app/src/main/java -name MainActivity.kt | head -1)
           if [ -z "$MAIN_ACTIVITY" ]; then
@@ -90,27 +91,12 @@ jobs:
           echo "=== Original MainActivity.kt ==="
           cat "$MAIN_ACTIVITY"
 
-          # 取 package 行（Tauri 生成的包名来自 tauri.conf.json 的 identifier）
-          PKG=$(head -1 "$MAIN_ACTIVITY")
+          # 从原文件拿 package 名
+          PKG=$(head -1 "$MAIN_ACTIVITY" | awk '{print $2}')
+          echo "Package: $PKG"
 
-          cat > "$MAIN_ACTIVITY" <<EOF
-          $PKG
-
-          import android.os.Bundle
-          import androidx.core.view.WindowCompat
-
-          class MainActivity : TauriActivity() {
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  super.onCreate(savedInstanceState)
-                  // 关掉 edge-to-edge：WebView 从状态栏下方渲染，
-                  // 避免内容被系统状态栏遮挡
-                  WindowCompat.setDecorFitsSystemWindows(window, true)
-              }
-          }
-          EOF
-
-          # 前置 4 个空格是 heredoc 为了可读性加的，去掉
-          sed -i 's/^          //' "$MAIN_ACTIVITY"
+          # 用模板文件替换 —— 避开 YAML 里 heredoc 缩进的坑
+          sed "s/%PKG%/${PKG}/" scripts/android-main-activity.kt.tpl > "$MAIN_ACTIVITY"
 
           echo "=== Modified MainActivity.kt ==="
           cat "$MAIN_ACTIVITY"
