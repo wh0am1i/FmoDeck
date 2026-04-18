@@ -94,13 +94,14 @@ jobs:
           echo "=== Modified MainActivity.kt ==="
           cat "$MAIN_ACTIVITY"
 
-      # 验证 MainActivity patch 生效（不含 enableEdgeToEdge + 含 inset listener）
+      # 验证 MainActivity patch 生效（没有实际调用 edge-to-edge 启用 +
+      # 含 inset listener）。用 ^\s*pattern 匹配代码行，避开 block 注释
       - name: Verify Android patches applied
         shell: bash
         run: |
           MAIN_ACTIVITY=$(find src-tauri/gen/android/app/src/main/java -name MainActivity.kt | head -1)
-          if grep -q 'enableEdgeToEdge' "$MAIN_ACTIVITY"; then
-            echo "::error::MainActivity.kt still contains enableEdgeToEdge()"
+          if grep -qE '^[[:space:]]*enableEdgeToEdge[[:space:]]*\(' "$MAIN_ACTIVITY"; then
+            echo "::error::MainActivity.kt still calls enableEdgeToEdge()"
             exit 1
           fi
           if ! grep -q 'setOnApplyWindowInsetsListener' "$MAIN_ACTIVITY"; then

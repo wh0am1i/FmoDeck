@@ -7,17 +7,14 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
 /**
- * FmoDeck 的 Android Activity。
+ * FmoDeck Android Activity.
  *
- * Tauri 2 默认模板在 onCreate 里调 `enableEdgeToEdge()`，把 app 切到
- * 边到边模式（WebView 画到状态栏下方）。targetSdk 36 (Android 16)
- * 起这个模式是系统强制的，无法通过 `windowOptOutEdgeToEdgeEnforcement`
- * opt-out。正确做法是接受 edge-to-edge，在根 View 上注册
- * WindowInsetsListener，把系统栏 insets 作 padding 喂给 View ——
- * WebView 就从状态栏下方开始渲染。
+ * targetSdk 36 (Android 16) 起系统强制边到边，WebView 会画到状态栏
+ * 下方。我们接受这点，在根 View 上注册 insets listener，把系统栏
+ * 空间转成 padding 喂给 View —— WebView 从状态栏下方开始渲染。
  *
- * 此模板由 CI (.github/workflows/tauri-android.yml) 每次覆盖 Tauri
- * 生成的 MainActivity.kt。
+ * CI (.github/workflows/tauri-android.yml) 每次都用此模板覆盖 Tauri
+ * 生成的默认 MainActivity。
  */
 class MainActivity : TauriActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
