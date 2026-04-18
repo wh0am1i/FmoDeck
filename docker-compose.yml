@@ -7,7 +7,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      # 若需子路径部署，在 Dockerfile 顶部改 BASE_PATH，或此处 args 覆盖
+      args:
+        # 高德 key：从宿主 shell / .env 变量读取（没设就空，运行时 fallback BDC）
+        VITE_AMAP_KEY: ${VITE_AMAP_KEY:-}
+      # 若需子路径部署，在 Dockerfile 顶部改 BASE_PATH，或此处 args 补充
       # args:
       #   BASE_PATH: /fmodeck/
       #   LISTEN_PORT: "80"
