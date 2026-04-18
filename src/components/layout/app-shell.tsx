@@ -9,16 +9,26 @@ import { WelcomeBanner } from './welcome-banner'
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <div className="relative flex min-h-screen flex-col bg-background text-foreground">
-      <Header />
-      <WelcomeBanner />
-      <ConnectionErrorBanner />
-      <SpeakingBar />
-      <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
-        <Nav />
-        <main className="mt-6">{children}</main>
+    // 整个应用锁定在视口里（h-dvh + overflow-hidden），内部用
+    // overflow-y-auto 做滚动。这样顶部的 40px 状态栏保护条永远在
+    // 视口最上方，怎么滚动都不会跑到屏幕外面。
+    // Tauri Android WebView 的 position: sticky / fixed / env() 都
+    // 不稳，这个"内部滚动容器"方案是各种 WebView / 浏览器都吃的方案。
+    <div className="fixed inset-0 flex flex-col bg-background text-foreground">
+      {/* 移动端状态栏保护：40px 实底条，始终在视口顶部（不在滚动区里） */}
+      <div className="h-10 shrink-0 bg-background sm:hidden" aria-hidden="true" />
+
+      <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+        <Header />
+        <WelcomeBanner />
+        <ConnectionErrorBanner />
+        <SpeakingBar />
+        <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
+          <Nav />
+          <main className="mt-6">{children}</main>
+        </div>
+        <Footer />
       </div>
-      <Footer />
       <ScanlineOverlay />
     </div>
   )

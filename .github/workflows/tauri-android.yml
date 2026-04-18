@@ -74,33 +74,6 @@ jobs:
           fi
           cat "$MANIFEST"
 
-      # Tauri 2 Android 默认 edge-to-edge（WebView 画到状态栏下方），
-      # 纯 web 方案（sticky / fixed / env(safe-area-inset-top)）在 Tauri
-      # WebView 里都不稳，改成 native 层 override MainActivity.onCreate
-      # 关掉 edge-to-edge + 清 translucent flag + 强制 statusBarColor，
-      # 让系统自动在状态栏区域留白，WebView 从下方渲染
-      - name: Disable edge-to-edge in MainActivity
-        shell: bash
-        run: |
-          MAIN_ACTIVITY=$(find src-tauri/gen/android/app/src/main/java -name MainActivity.kt | head -1)
-          if [ -z "$MAIN_ACTIVITY" ]; then
-            echo "::error::MainActivity.kt not found"
-            find src-tauri/gen/android -type f | head -30
-            exit 1
-          fi
-          echo "=== Original MainActivity.kt ==="
-          cat "$MAIN_ACTIVITY"
-
-          # 从原文件拿 package 名
-          PKG=$(head -1 "$MAIN_ACTIVITY" | awk '{print $2}')
-          echo "Package: $PKG"
-
-          # 用模板文件替换 —— 避开 YAML 里 heredoc 缩进的坑
-          sed "s/%PKG%/${PKG}/" scripts/android-main-activity.kt.tpl > "$MAIN_ACTIVITY"
-
-          echo "=== Modified MainActivity.kt ==="
-          cat "$MAIN_ACTIVITY"
-
       # --debug 让 Gradle 用自动 debug keystore 出可安装 APK（省签名流程）；
       # 只打 arm64 + armv7 两个 ABI，覆盖新老设备，跳过模拟器专用的 x86
       - name: Build Android APK (debug signed, arm64 + armv7)
