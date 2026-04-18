@@ -99,6 +99,11 @@ export function HistoryTable() {
                       </span>
                     )}
                   </span>
+                  {grid && (
+                    <div className="mt-0.5 text-xs text-muted-foreground sm:hidden">
+                      <GridLocation grid={grid} />
+                    </div>
+                  )}
                 </td>
                 <td className="hidden px-3 py-2 text-muted-foreground sm:table-cell">
                   {grid ? <GridLocation grid={grid} /> : <span className="opacity-40">—</span>}

@@ -162,7 +162,14 @@ export function OldFriendsView() {
                   <td className="px-3 py-2 text-muted-foreground">
                     {currentPage * PAGE_SIZE + i + 1}
                   </td>
-                  <td className="px-3 py-2 text-primary">{f.callsign}</td>
+                  <td className="px-3 py-2 text-primary">
+                    <span>{f.callsign}</span>
+                    {f.grid && (
+                      <div className="mt-0.5 text-xs text-muted-foreground sm:hidden">
+                        <GridLocation grid={f.grid} />
+                      </div>
+                    )}
+                  </td>
                   <td className="px-3 py-2 hidden sm:table-cell text-muted-foreground">
                     <GridLocation grid={f.grid} />
                   </td>

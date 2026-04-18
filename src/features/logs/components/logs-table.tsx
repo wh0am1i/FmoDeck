@@ -165,6 +165,11 @@ export function LogsTable({ onRowClick }: Props) {
                         </span>
                       )}
                     </span>
+                    {r.grid && (
+                      <div className="mt-0.5 text-xs text-muted-foreground sm:hidden">
+                        <GridLocation grid={r.grid} />
+                      </div>
+                    )}
                   </td>
                   <td className="hidden sm:table-cell px-3 py-2 text-muted-foreground">
                     <GridLocation grid={r.grid} />

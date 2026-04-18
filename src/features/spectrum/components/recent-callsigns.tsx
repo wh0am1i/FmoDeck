@@ -57,7 +57,7 @@ export function RecentCallsigns() {
   const hasAny = current !== null || sorted.length > 0
 
   return (
-    <div className="flex flex-wrap items-center gap-2 p-3">
+    <div className="flex max-h-24 flex-wrap items-center gap-2 overflow-y-auto p-3 sm:max-h-none">
       {current && (
         <button
           type="button"

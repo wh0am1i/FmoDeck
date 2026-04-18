@@ -56,8 +56,8 @@ export function SpectrumView() {
           </div>
         </div>
 
-        {/* 讲话者名册：当前 + 历史 callsign 芯片 */}
-        <Panel title={t('spectrum.panelRoster')}>
+        {/* 讲话者名册：当前 + 历史 callsign 芯片；粘顶，滚动时常驻 */}
+        <Panel title={t('spectrum.panelRoster')} sticky>
           <RecentCallsigns />
         </Panel>
 
@@ -105,16 +105,22 @@ export function SpectrumView() {
 function Panel({
   title,
   children,
-  dim
+  dim,
+  sticky
 }: {
   title: string
   children: React.ReactNode
   dim?: boolean
+  sticky?: boolean
 }) {
   return (
     <div
       className={cn(
-        'flex flex-col overflow-hidden rounded-sm border border-primary/20 bg-background/40',
+        'flex flex-col overflow-hidden rounded-sm border border-primary/20',
+        // sticky 版本用不透明 bg（叠在瀑布 / 示波器上方，不能透过去）
+        sticky
+          ? 'sticky top-0 z-20 bg-background shadow-lg shadow-background/60'
+          : 'bg-background/40',
         dim && 'opacity-60'
       )}
     >

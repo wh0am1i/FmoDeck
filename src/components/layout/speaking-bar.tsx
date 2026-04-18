@@ -102,36 +102,25 @@ export function SpeakingBar() {
       aria-label={t('speaking.barAria')}
       className="border-b border-primary/40 bg-primary/10 px-4 py-2"
     >
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-1">
-        <span className="h-2 w-2 rounded-full bg-primary animate-pulse" aria-hidden="true" />
-        <span className="hud-title text-primary">{current.callsign}</span>
-        {current.grid && (
-          <span className="hud-mono text-xs text-muted-foreground">
-            <GridLocation grid={current.grid} />
-          </span>
-        )}
-        {current.isHost && (
-          <span
-            className={cn(
-              'hud-mono rounded-sm border border-accent bg-accent/10 px-1.5 py-0.5 text-xs text-accent'
+      <div className="mx-auto flex max-w-7xl items-center gap-3">
+        {/* 左侧说话人信息块：移动端两行（呼号+徽章 / 地名+统计），
+            桌面 sm+ 回到一行 flex-wrap */}
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-1">
+          {/* Row 1: 呼号 + 徽章 + 时长 */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-primary animate-pulse" aria-hidden="true" />
+            <span className="hud-title text-primary">{current.callsign}</span>
+            {current.isHost && (
+              <span className="hud-mono rounded-sm border border-accent bg-accent/10 px-1.5 py-0.5 text-xs text-accent">
+                HOST
+              </span>
             )}
-          >
-            HOST
-          </span>
-        )}
-        <span className="hud-mono text-xs text-accent">{elapsed}</span>
-        {isSelf ? (
-          <span
-            className={cn(
-              'hud-mono rounded-sm border border-primary bg-primary/10 px-1.5 py-0.5 text-xs text-primary'
+            {isSelf && (
+              <span className="hud-mono rounded-sm border border-primary bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
+                {t('speaking.self')}
+              </span>
             )}
-          >
-            {t('speaking.self')}
-          </span>
-        ) : (
-          <>
-            <span className="hud-mono text-xs text-muted-foreground">·</span>
-            {stats?.count === 1 && (
+            {!isSelf && stats?.count === 1 && (
               <span
                 className={cn(
                   'hud-mono rounded-sm border px-1.5 py-0.5 text-xs',
@@ -142,30 +131,44 @@ export function SpeakingBar() {
                 ✦ {t('speaking.newBadge')}
               </span>
             )}
-            {stats && stats.count > 0 ? (
-              <span className="hud-mono text-xs">
-                <span className="text-muted-foreground">{t('speaking.workedPrefix')}</span>
-                <span className="text-primary">{stats.count}</span>
-                <span className="text-muted-foreground">{t('speaking.workedSuffix')}</span>
-                {stats.lastTime !== null && (
-                  <>
-                    <span className="text-muted-foreground">{t('speaking.lastPrefix')}</span>
-                    <span className="text-primary">
-                      {formatTimeAgo(stats.lastTime, nowMs, t('speaking.agoSuffix'))}
-                    </span>
-                  </>
-                )}
-              </span>
-            ) : (
-              <span className="hud-mono text-xs text-muted-foreground">
-                {t('speaking.notWorked')}
-              </span>
-            )}
-          </>
-        )}
-        <div className="flex-1" />
+            <span className="hud-mono text-xs text-accent">{elapsed}</span>
+          </div>
+
+          {/* Row 2: 地名 + 通联统计 */}
+          {(current.grid || !isSelf) && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
+              {current.grid && (
+                <span className="hud-mono text-xs text-muted-foreground">
+                  <GridLocation grid={current.grid} />
+                </span>
+              )}
+              {!isSelf &&
+                (stats && stats.count > 0 ? (
+                  <span className="hud-mono text-xs">
+                    <span className="text-muted-foreground">{t('speaking.workedPrefix')}</span>
+                    <span className="text-primary">{stats.count}</span>
+                    <span className="text-muted-foreground">{t('speaking.workedSuffix')}</span>
+                    {stats.lastTime !== null && (
+                      <>
+                        <span className="text-muted-foreground">{t('speaking.lastPrefix')}</span>
+                        <span className="text-primary">
+                          {formatTimeAgo(stats.lastTime, nowMs, t('speaking.agoSuffix'))}
+                        </span>
+                      </>
+                    )}
+                  </span>
+                ) : (
+                  <span className="hud-mono text-xs text-muted-foreground">
+                    {t('speaking.notWorked')}
+                  </span>
+                ))}
+            </div>
+          )}
+        </div>
+
+        {/* 右侧：迷你频谱 + 收听控件 */}
         {audioEnabled && (
-          <div className="w-14 sm:w-24 md:w-32" aria-hidden="true">
+          <div className="w-14 flex-shrink-0 sm:w-24 md:w-32" aria-hidden="true">
             <SpectrumVisualizer height={18} bars={14} gap={1} smoothing={0.3} />
           </div>
         )}
