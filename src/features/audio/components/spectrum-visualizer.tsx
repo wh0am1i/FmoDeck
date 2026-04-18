@@ -73,7 +73,6 @@ export function SpectrumVisualizer({
         Math.ceil((maxFreqHz / (sampleRate / 2)) * analyser.frequencyBinCount)
       )
     )
-    const binsPerBar = Math.max(1, Math.floor(maxBin / bars))
     const heights = new Float32Array(bars) // EMA 后的标准化高度 0~1
     const peaks = new Float32Array(bars) // 峰值保持（0~1），每帧慢衰减
 
@@ -129,11 +128,13 @@ export function SpectrumVisualizer({
       ctx.shadowBlur = idle ? 0 : 6
 
       for (let i = 0; i < bars; i++) {
-        const start = i * binsPerBar
-        const end = Math.min(start + binsPerBar, maxBin)
+        // 比例映射：第 i 柱取 [i/bars, (i+1)/bars) 区间对应的 bin 平均值
+        // bars > maxBin 时多根柱共享同一 bin（等价于水平拉伸），不再空置
+        const start = Math.floor((i * maxBin) / bars)
+        const end = Math.max(start + 1, Math.floor(((i + 1) * maxBin) / bars))
         let sum = 0
         for (let j = start; j < end; j++) sum += freqData[j] ?? 0
-        const avg = end > start ? sum / (end - start) : 0
+        const avg = sum / (end - start)
         const target = avg / 255
 
         const prev = heights[i] ?? 0
