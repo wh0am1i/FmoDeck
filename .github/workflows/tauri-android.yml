@@ -30,12 +30,12 @@ jobs:
       - name: Export NDK_HOME
         run: echo "NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
 
-      # 只编 arm64：99% 的现代 Android 设备都是 aarch64。
-      # 打全 4 个 ABI 会让 debug APK 撑到 ~300MB，单 aarch64 才 ~40MB
-      - name: Install Rust + aarch64 Android target
+      # arm64 覆盖 2018 年后的设备，armv7 兜底更老机型；x86_64 / i686
+      # 只有模拟器用得到，跳过以控制 debug APK 体积
+      - name: Install Rust + ARM Android targets
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-linux-android
+          targets: aarch64-linux-android,armv7-linux-androideabi
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
@@ -75,9 +75,9 @@ jobs:
           cat "$MANIFEST"
 
       # --debug 让 Gradle 用自动 debug keystore 出可安装 APK（省签名流程）；
-      # --target aarch64 只打 arm64 ABI，覆盖 2018 年之后几乎所有 Android 设备
-      - name: Build Android APK (debug signed, aarch64 only)
-        run: pnpm tauri android build --apk --debug --target aarch64
+      # 只打 arm64 + armv7 两个 ABI，覆盖新老设备，跳过模拟器专用的 x86
+      - name: Build Android APK (debug signed, arm64 + armv7)
+        run: pnpm tauri android build --apk --debug --target aarch64 --target armv7
 
       - name: Locate and rename APK
         shell: bash
