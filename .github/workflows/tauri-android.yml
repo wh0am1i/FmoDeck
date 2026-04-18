@@ -74,6 +74,44 @@ jobs:
           fi
           cat "$MANIFEST"
 
+      # Tauri 2 默认生成的 MainActivity.kt 调 enableEdgeToEdge() 把 app
+      # 切到边到边模式（WebView 画到状态栏下方 → 内容和状态栏重叠）。
+      # 用模板替换掉，去掉 enableEdgeToEdge + 加 setDecorFitsSystemWindows
+      - name: Replace MainActivity to disable edge-to-edge
+        shell: bash
+        run: |
+          MAIN_ACTIVITY=$(find src-tauri/gen/android/app/src/main/java -name MainActivity.kt | head -1)
+          if [ -z "$MAIN_ACTIVITY" ]; then
+            echo "::error::MainActivity.kt not found"
+            find src-tauri/gen/android -type f -name '*.kt' | head -20
+            exit 1
+          fi
+          echo "=== Original MainActivity.kt ==="
+          cat "$MAIN_ACTIVITY"
+          PKG=$(head -1 "$MAIN_ACTIVITY" | awk '{print $2}')
+          echo "Package: $PKG"
+          sed "s/%PKG%/${PKG}/" scripts/android-main-activity.kt.tpl > "$MAIN_ACTIVITY"
+          echo "=== Modified MainActivity.kt ==="
+          cat "$MAIN_ACTIVITY"
+
+      # Android 15 (targetSdk 35) 强制 edge-to-edge，光改 Kotlin 不够，
+      # 还得在 theme 里 opt-out。顺便把状态栏 / 导航栏颜色定死成 app 背景色
+      - name: Opt out of Android 15 edge-to-edge enforcement
+        shell: bash
+        run: |
+          THEMES=src-tauri/gen/android/app/src/main/res/values/themes.xml
+          if [ ! -f "$THEMES" ]; then
+            echo "::error::themes.xml not found"
+            find src-tauri/gen/android/app/src/main/res -type f | head -20
+            exit 1
+          fi
+          echo "=== Original themes.xml ==="
+          cat "$THEMES"
+          # 用 Python 在主 theme 的 </style> 前插入 opt-out + 颜色 item
+          python3 scripts/android-patch-themes.py "$THEMES"
+          echo "=== Modified themes.xml ==="
+          cat "$THEMES"
+
       # --debug 让 Gradle 用自动 debug keystore 出可安装 APK（省签名流程）；
       # 只打 arm64 + armv7 两个 ABI，覆盖新老设备，跳过模拟器专用的 x86
       - name: Build Android APK (debug signed, arm64 + armv7)
