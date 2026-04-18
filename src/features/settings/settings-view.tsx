@@ -12,6 +12,7 @@ import { FmoAddressDialog } from './components/fmo-address-dialog'
 import { FmoAddressList } from './components/fmo-address-list'
 import { HudIntensityField } from './components/hud-intensity-field'
 import { NotificationsField } from './components/notifications-field'
+import { PasscodeCalculator } from './components/passcode-calculator'
 
 export function SettingsView() {
   const { t } = useTranslation()
@@ -60,6 +61,8 @@ export function SettingsView() {
         <h2 className="hud-title text-primary">{t('settings.sectionNotifications')}</h2>
         <NotificationsField />
       </section>
+
+      <PasscodeCalculator />
     </div>
   )
 }

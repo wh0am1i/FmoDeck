@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button'
 import { aprsStore, type AprsAction } from './store'
 import { AprsHistory } from './components/aprs-history'
 import { AprsParamsForm } from './components/aprs-params-form'
-import { PasscodeCalculator } from './components/passcode-calculator'
 import { AlertTriangle, Pause, Play, Power } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -109,8 +108,6 @@ export function AprsView() {
         <h2 className="hud-title text-primary">{t('aprsRemote.sectionHistory')}</h2>
         <AprsHistory />
       </section>
-
-      <PasscodeCalculator />
     </div>
   )
 }
