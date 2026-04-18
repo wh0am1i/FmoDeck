@@ -60,9 +60,9 @@ export function ImportAdifDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" title={t('adifImport.button')}>
           <FileUp className="h-4 w-4" />
-          {t('adifImport.button')}
+          <span className="hidden sm:inline">{t('adifImport.button')}</span>
         </Button>
       </DialogTrigger>
       <DialogContent>

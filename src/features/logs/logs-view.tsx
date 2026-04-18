@@ -89,6 +89,7 @@ export function LogsView() {
             variant="outline"
             size="sm"
             disabled={filteredCount === 0}
+            title={t('logs.exportAdif')}
             onClick={() => {
               const rows = selectFiltered(logsStore.getState())
               downloadAdif(rows, `fmodeck-logs-${Date.now()}.adi`)
@@ -96,7 +97,7 @@ export function LogsView() {
             }}
           >
             <Download className="h-4 w-4" />
-            {t('logs.exportAdif')}
+            <span className="hidden sm:inline">{t('logs.exportAdif')}</span>
           </Button>
           <Button
             variant="outline"
@@ -106,7 +107,7 @@ export function LogsView() {
             title={!canLoadServer ? t('logs.refreshDisabled') : t('logs.refreshHint')}
           >
             <RefreshCw className={status === 'loading' ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
-            {t('common.refresh')}
+            <span className="hidden sm:inline">{t('common.refresh')}</span>
           </Button>
         </div>
       </div>
