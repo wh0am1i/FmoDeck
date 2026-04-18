@@ -109,7 +109,7 @@ export function SpeakingBar() {
           {/* Row 1: 呼号 + 徽章 + 时长 */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-primary animate-pulse" aria-hidden="true" />
-            <span className="hud-title text-primary">{current.callsign}</span>
+            <span className="hud-title text-base text-primary sm:text-lg">{current.callsign}</span>
             {current.isHost && (
               <span className="hud-mono rounded-sm border border-accent bg-accent/10 px-1.5 py-0.5 text-xs text-accent">
                 HOST
@@ -138,8 +138,8 @@ export function SpeakingBar() {
           {(current.grid || !isSelf) && (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
               {current.grid && (
-                <span className="hud-mono text-xs text-muted-foreground">
-                  <GridLocation grid={current.grid} />
+                <span className="hud-mono text-sm">
+                  <GridLocation grid={current.grid} emphasized />
                 </span>
               )}
               {!isSelf &&

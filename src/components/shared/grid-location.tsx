@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils'
 interface Props {
   grid: string
   className?: string
+  /** 副文本（地名）用高亮色显示，适合 SpeakingBar 等需要突出地址的场景 */
+  emphasized?: boolean
 }
 
 /**
@@ -17,7 +19,7 @@ interface Props {
  * 地名由 Nominatim 反查并缓存到 localStorage；查询未完成时先显示
  * 经纬度作为占位，查到后替换为地名。
  */
-export function GridLocation({ grid, className }: Props) {
+export function GridLocation({ grid, className, emphasized = false }: Props) {
   const { i18n } = useTranslation()
   const lang: 'en' | 'zh-CN' = i18n.language.startsWith('en') ? 'en' : 'zh-CN'
 
@@ -51,15 +53,23 @@ export function GridLocation({ grid, className }: Props) {
 
   // 副文本：优先地名；查询中用半透明经纬度；查过无结果用实色经纬度
   // whitespace-nowrap：防止中文地名在窄列里被按字符断行（"甘肃 / 省"）
+  // emphasized：SpeakingBar 用突出色彩；普通列表用 muted
+  const nameCls = emphasized
+    ? 'whitespace-nowrap text-foreground font-medium'
+    : 'whitespace-nowrap text-muted-foreground'
+  const dimCls = emphasized
+    ? 'whitespace-nowrap text-muted-foreground'
+    : 'whitespace-nowrap text-muted-foreground/60'
+
   let subtext: React.ReactNode
   let subtextTitle = ''
   if (name) {
-    subtext = <span className="whitespace-nowrap text-muted-foreground">{name}</span>
+    subtext = <span className={nameCls}>{name}</span>
     subtextTitle = formatLatLng(ll)
   } else if (name === null) {
-    subtext = <span className="whitespace-nowrap text-muted-foreground">{formatLatLng(ll)}</span>
+    subtext = <span className={nameCls}>{formatLatLng(ll)}</span>
   } else {
-    subtext = <span className="whitespace-nowrap text-muted-foreground/60">{formatLatLng(ll)}</span>
+    subtext = <span className={dimCls}>{formatLatLng(ll)}</span>
   }
 
   return (

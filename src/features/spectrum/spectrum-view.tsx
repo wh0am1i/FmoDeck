@@ -65,8 +65,8 @@ export function SpectrumView() {
         <Panel title={t('spectrum.panelBars')} dim={dimmed}>
           <SpectrumVisualizer
             height={240}
-            bars={72}
-            gap={3}
+            bars={32}
+            gap={6}
             smoothing={0.22}
             mirror
             peakHold
