@@ -15,8 +15,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     // Tauri Android WebView 的 position: sticky / fixed / env() 都
     // 不稳，这个"内部滚动容器"方案是各种 WebView / 浏览器都吃的方案。
     <div className="fixed inset-0 flex flex-col bg-background text-foreground">
-      {/* 移动端状态栏保护：40px 实底条，始终在视口顶部（不在滚动区里） */}
-      <div className="h-10 shrink-0 bg-background sm:hidden" aria-hidden="true" />
+      {/* 状态栏保护：40px 实底条，始终在视口顶部（不在滚动区里）。
+          不加 sm:hidden，因为 Tauri Android WebView 的 CSS 宽度不一定
+          < 640px（有时被当 desktop mode），加了反而会被隐藏。桌面上
+          顶部多 40px 留白是可以接受的代价。 */}
+      <div className="h-10 shrink-0 bg-background" aria-hidden="true" />
 
       <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
         <Header />
