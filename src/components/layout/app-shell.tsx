@@ -9,7 +9,7 @@ import { WelcomeBanner } from './welcome-banner'
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <div className="relative flex min-h-screen flex-col bg-background text-foreground">
+    <div className="relative flex min-h-screen flex-col bg-background pt-[env(safe-area-inset-top)] text-foreground">
       <Header />
       <WelcomeBanner />
       <ConnectionErrorBanner />

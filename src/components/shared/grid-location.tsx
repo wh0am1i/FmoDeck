@@ -50,15 +50,16 @@ export function GridLocation({ grid, className }: Props) {
   }
 
   // 副文本：优先地名；查询中用半透明经纬度；查过无结果用实色经纬度
+  // whitespace-nowrap：防止中文地名在窄列里被按字符断行（"甘肃 / 省"）
   let subtext: React.ReactNode
   let subtextTitle = ''
   if (name) {
-    subtext = <span className="text-muted-foreground">{name}</span>
+    subtext = <span className="whitespace-nowrap text-muted-foreground">{name}</span>
     subtextTitle = formatLatLng(ll)
   } else if (name === null) {
-    subtext = <span className="text-muted-foreground">{formatLatLng(ll)}</span>
+    subtext = <span className="whitespace-nowrap text-muted-foreground">{formatLatLng(ll)}</span>
   } else {
-    subtext = <span className="text-muted-foreground/60">{formatLatLng(ll)}</span>
+    subtext = <span className="whitespace-nowrap text-muted-foreground/60">{formatLatLng(ll)}</span>
   }
 
   return (

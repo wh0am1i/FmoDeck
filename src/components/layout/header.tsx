@@ -6,7 +6,7 @@ import { ThemeSwitcher } from './theme-switcher'
 
 export function Header() {
   return (
-    <header className="border-b border-border bg-card pt-[env(safe-area-inset-top)]">
+    <header className="border-b border-border bg-card">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3">
         <div className="flex items-center gap-3">
           <span className="hud-title whitespace-nowrap text-primary">[ FMODECK ]</span>
