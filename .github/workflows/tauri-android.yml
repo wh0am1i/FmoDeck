@@ -94,23 +94,58 @@ jobs:
           echo "=== Modified MainActivity.kt ==="
           cat "$MAIN_ACTIVITY"
 
-      # Android 15 (targetSdk 35) 强制 edge-to-edge，光改 Kotlin 不够，
-      # 还得在 theme 里 opt-out。顺便把状态栏 / 导航栏颜色定死成 app 背景色
-      - name: Opt out of Android 15 edge-to-edge enforcement
+      # Tauri 2 默认 targetSdk=36 (Android 16)，在这个版本上
+      # windowOptOutEdgeToEdgeEnforcement 被废弃且忽略。降到 34 让 opt-out
+      # 有效 —— 这是 Tauri Android 关 edge-to-edge 最关键的一步
+      - name: Downgrade targetSdk to 34 so edge-to-edge opt-out actually works
         shell: bash
         run: |
-          THEMES=src-tauri/gen/android/app/src/main/res/values/themes.xml
-          if [ ! -f "$THEMES" ]; then
-            echo "::error::themes.xml not found"
-            find src-tauri/gen/android/app/src/main/res -type f | head -20
+          GRADLE=src-tauri/gen/android/app/build.gradle.kts
+          if [ ! -f "$GRADLE" ]; then
+            echo "::error::build.gradle.kts not found"
             exit 1
           fi
-          echo "=== Original themes.xml ==="
-          cat "$THEMES"
-          # 用 Python 在主 theme 的 </style> 前插入 opt-out + 颜色 item
-          python3 scripts/android-patch-themes.py "$THEMES"
-          echo "=== Modified themes.xml ==="
-          cat "$THEMES"
+          sed -i 's/targetSdk = 36/targetSdk = 34/; s/compileSdk = 36/compileSdk = 34/' "$GRADLE"
+          echo "=== SDK 版本 ==="
+          grep -E 'compileSdk|targetSdk|minSdk' "$GRADLE"
+
+      # 同时在主 theme 和 night theme（深色）里 opt-out，强制 statusBar /
+      # navigationBar 颜色。两个文件 Tauri 都生成，各自都要 patch
+      - name: Opt out of edge-to-edge enforcement (themes.xml + values-night)
+        shell: bash
+        run: |
+          for THEMES in \
+            src-tauri/gen/android/app/src/main/res/values/themes.xml \
+            src-tauri/gen/android/app/src/main/res/values-night/themes.xml; do
+            if [ -f "$THEMES" ]; then
+              echo "=== Patching $THEMES ==="
+              python3 scripts/android-patch-themes.py "$THEMES"
+              cat "$THEMES"
+            fi
+          done
+
+      # 验证前两步的 patch 都生效：任何一步没写进去就 fail，方便 debug
+      - name: Verify Android patches applied
+        shell: bash
+        run: |
+          MAIN_ACTIVITY=$(find src-tauri/gen/android/app/src/main/java -name MainActivity.kt | head -1)
+          if grep -q 'enableEdgeToEdge' "$MAIN_ACTIVITY"; then
+            echo "::error::MainActivity.kt still contains enableEdgeToEdge()"
+            exit 1
+          fi
+          if ! grep -q 'setDecorFitsSystemWindows' "$MAIN_ACTIVITY"; then
+            echo "::error::MainActivity.kt missing setDecorFitsSystemWindows"
+            exit 1
+          fi
+          if ! grep -q 'windowOptOutEdgeToEdgeEnforcement' src-tauri/gen/android/app/src/main/res/values/themes.xml; then
+            echo "::error::themes.xml missing windowOptOutEdgeToEdgeEnforcement"
+            exit 1
+          fi
+          if ! grep -q 'targetSdk = 34' src-tauri/gen/android/app/build.gradle.kts; then
+            echo "::error::build.gradle.kts still has targetSdk != 34"
+            exit 1
+          fi
+          echo "✓ All Android edge-to-edge patches verified"
 
       # --debug 让 Gradle 用自动 debug keystore 出可安装 APK（省签名流程）；
       # 只打 arm64 + armv7 两个 ABI，覆盖新老设备，跳过模拟器专用的 x86
