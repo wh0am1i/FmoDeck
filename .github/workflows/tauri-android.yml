@@ -74,6 +74,47 @@ jobs:
           fi
           cat "$MANIFEST"
 
+      # Tauri 2 Android 默认 edge-to-edge（WebView 画到状态栏下方），
+      # 我们用纯 web 技术（sticky / fixed / env()）在 Tauri WebView 里
+      # 都没稳定的方法把状态栏区域保护住，干脆关掉 edge-to-edge：
+      # override onCreate 调用 WindowCompat.setDecorFitsSystemWindows(true)，
+      # WebView 自动从状态栏下方开始，系统帮我们留出 status bar 高度
+      - name: Disable edge-to-edge in MainActivity
+        run: |
+          MAIN_ACTIVITY=$(find src-tauri/gen/android/app/src/main/java -name MainActivity.kt | head -1)
+          if [ -z "$MAIN_ACTIVITY" ]; then
+            echo "::error::MainActivity.kt not found"
+            find src-tauri/gen/android -type f | head -30
+            exit 1
+          fi
+          echo "=== Original MainActivity.kt ==="
+          cat "$MAIN_ACTIVITY"
+
+          # 取 package 行（Tauri 生成的包名来自 tauri.conf.json 的 identifier）
+          PKG=$(head -1 "$MAIN_ACTIVITY")
+
+          cat > "$MAIN_ACTIVITY" <<EOF
+          $PKG
+
+          import android.os.Bundle
+          import androidx.core.view.WindowCompat
+
+          class MainActivity : TauriActivity() {
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+                  // 关掉 edge-to-edge：WebView 从状态栏下方渲染，
+                  // 避免内容被系统状态栏遮挡
+                  WindowCompat.setDecorFitsSystemWindows(window, true)
+              }
+          }
+          EOF
+
+          # 前置 4 个空格是 heredoc 为了可读性加的，去掉
+          sed -i 's/^          //' "$MAIN_ACTIVITY"
+
+          echo "=== Modified MainActivity.kt ==="
+          cat "$MAIN_ACTIVITY"
+
       # --debug 让 Gradle 用自动 debug keystore 出可安装 APK（省签名流程）；
       # 只打 arm64 + armv7 两个 ABI，覆盖新老设备，跳过模拟器专用的 x86
       - name: Build Android APK (debug signed, arm64 + armv7)
