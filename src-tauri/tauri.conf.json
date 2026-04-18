@@ -1,11 +1,11 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "FmoDeck",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "identifier": "com.wh0am1i.fmodeck",
   "build": {
-    "beforeDevCommand": "pnpm dev",
-    "beforeBuildCommand": "pnpm build",
+    "beforeDevCommand": "pnpm dev --mode tauri",
+    "beforeBuildCommand": "pnpm build --mode tauri",
     "devUrl": "http://localhost:5173",
     "frontendDist": "../dist"
   },

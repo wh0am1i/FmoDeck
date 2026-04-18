@@ -8,13 +8,15 @@ interface NavItem {
   labelKey: string
 }
 
+const ENABLE_APRS = import.meta.env.VITE_ENABLE_APRS !== 'false'
+
 const items: readonly NavItem[] = [
   { to: '/logs', labelKey: 'nav.logs' },
   { to: '/top20', labelKey: 'nav.top20' },
   { to: '/old-friends', labelKey: 'nav.oldFriends' },
   { to: '/messages', labelKey: 'nav.messages' },
   { to: '/control', labelKey: 'nav.control' },
-  { to: '/aprs', labelKey: 'nav.aprs' },
+  ...(ENABLE_APRS ? [{ to: '/aprs', labelKey: 'nav.aprs' }] : []),
   { to: '/settings', labelKey: 'nav.settings' }
 ]
 

@@ -6,6 +6,13 @@
 
 ## 更新记录
 
+### v0.1.4 (2026-04-18)
+
+- **APRS 远程控制按构建目标分流**：桌面版（Tauri）默认关闭并 tree-shake，
+  web 版保留；通过 `VITE_ENABLE_APRS` + `.env.tauri` 控制
+- **Windows 安装包图标修复**：重新生成 `icon.ico` 为 BMP 格式多尺寸条目
+  （16–256px），解决 NSIS 安装器不认 PNG 压缩 ICO 导致的空图标
+
 ### v0.1.3 (2026-04-18)
 
 **新增**
