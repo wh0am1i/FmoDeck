@@ -4,14 +4,53 @@
     "zhCN": "简体中文",
     "en": "English"
   },
+  "columns": {
+    "callsign": "CALLSIGN",
+    "grid": "GRID",
+    "time": "TIME",
+    "ago": "AGO",
+    "first": "FIRST",
+    "last": "LAST",
+    "count": "COUNT"
+  },
   "nav": {
     "logs": "LOGS",
     "top20": "TOP 20",
     "oldFriends": "OLD FRIENDS",
     "messages": "MSG",
+    "spectrum": "SPECTRUM",
     "control": "CONTROL",
     "aprs": "APRS",
     "settings": "SETTINGS"
+  },
+  "spectrum": {
+    "title": "[ SPECTRUM ]",
+    "live": "LIVE",
+    "buffering": "BUFFERING",
+    "idle": "IDLE",
+    "start": "Start listening",
+    "stop": "Stop listening",
+    "muted": "MUTED",
+    "hintStart": "Click 'Start listening' to enable audio — the spectrum follows the live downlink signal",
+    "hintOffline": "Configure FMO address in [ Settings ] and connect to a relay first",
+    "desc": "All panels sample the downlink PCM after HPF/LPF/EQ/compressor but before the volume stage; dimmed when muted or self-speaking",
+    "panelBars": "FREQUENCY · BARS",
+    "panelWave": "TIME · OSCILLOSCOPE",
+    "panelWaterfall": "SPECTROGRAM · WATERFALL",
+    "panelStats": "TELEMETRY",
+    "panelRoster": "ROSTER",
+    "rosterCurrent": "Current speaker",
+    "rosterEmpty": "[ No callsigns yet · waiting for relay push ]",
+    "statsRms": "RMS",
+    "statsPeakFreq": "Peak freq",
+    "statsPeakMag": "Peak magnitude"
+  },
+  "history": {
+    "title": "[ SPEAKING HISTORY ]",
+    "toggle": "HISTORY",
+    "count": "Last {{count}}",
+    "offline": "[ Connect to a relay — server pushes recent speaking history ]",
+    "listAria": "Speaking history list"
   },
   "header": {
     "appName": "FMODECK",

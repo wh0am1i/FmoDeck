@@ -34,6 +34,8 @@ jobs:
             bundles: ''
 
     runs-on: ${{ matrix.platform }}
+    env:
+      VITE_AMAP_KEY: ${{ secrets.AMAP_KEY }}
     steps:
       - uses: actions/checkout@v5
 

@@ -2,6 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_ENABLE_APRS?: string
+  readonly VITE_AMAP_KEY?: string
 }
 
 interface ImportMeta {

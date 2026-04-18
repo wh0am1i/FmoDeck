@@ -145,11 +145,11 @@ export function OldFriendsView() {
             <thead>
               <tr className="border-b border-border text-left text-xs text-muted-foreground">
                 <th className="px-3 py-2 w-8">#</th>
-                <th className="px-3 py-2">CALLSIGN</th>
-                <th className="px-3 py-2 hidden sm:table-cell">GRID</th>
-                <th className="px-3 py-2 hidden md:table-cell">FIRST</th>
-                <th className="px-3 py-2">LAST</th>
-                <th className="px-3 py-2 text-right">COUNT</th>
+                <th className="px-3 py-2">{t('columns.callsign')}</th>
+                <th className="px-3 py-2 hidden sm:table-cell">{t('columns.grid')}</th>
+                <th className="px-3 py-2 hidden md:table-cell">{t('columns.first')}</th>
+                <th className="px-3 py-2">{t('columns.last')}</th>
+                <th className="px-3 py-2 text-right">{t('columns.count')}</th>
               </tr>
             </thead>
             <tbody>

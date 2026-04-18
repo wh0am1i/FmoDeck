@@ -3,6 +3,7 @@ import { AudioEngine } from '@/lib/audio/engine'
 import { parseCallsignSsid } from '@/lib/utils/callsign'
 import { normalizeHost } from '@/lib/utils/url'
 import { audioStore } from '@/features/audio/store'
+import { engineRefStore } from '@/features/audio/engine-store'
 import { connectionStore } from '@/stores/connection'
 import { settingsStore } from '@/stores/settings'
 import { speakingStore } from '@/features/speaking/store'
@@ -45,6 +46,7 @@ export function useFmoAudio(): void {
         if (engineRef.current) {
           engineRef.current.stop()
           engineRef.current = null
+          engineRefStore.getState().setEngine(null)
           audioStore.getState().setStatus('idle')
         }
         return
@@ -61,7 +63,10 @@ export function useFmoAudio(): void {
       engineRef.current = engine
       engine.setVolume(volume)
       engine.setMuted(muted || isSelfSpeaking())
-      void engine.start()
+      void engine.start().then(() => {
+        // start() 里 ensureContext 后 analyser 才存在，推到共享 store
+        engineRefStore.getState().setEngine(engine)
+      })
     }
 
     const isSelfSpeaking = (): boolean => {
@@ -95,6 +100,7 @@ export function useFmoAudio(): void {
       ) {
         engineRef.current?.stop()
         engineRef.current = null
+        engineRefStore.getState().setEngine(null)
         audioStore.getState().setStatus('idle')
         sync()
       }
@@ -112,6 +118,7 @@ export function useFmoAudio(): void {
       unsubSpeaking()
       engineRef.current?.stop()
       engineRef.current = null
+      engineRefStore.getState().setEngine(null)
     }
   }, [])
 }

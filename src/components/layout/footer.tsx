@@ -16,7 +16,7 @@ function handleExternal(url: string) {
 export function Footer() {
   const { t } = useTranslation()
   return (
-    <footer className="border-t border-border/60 bg-card/30 px-4 py-4 text-xs text-muted-foreground">
+    <footer className="border-t border-border/60 bg-card/30 px-4 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] text-xs text-muted-foreground">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2">
         <span className="hud-mono">
           <Trans

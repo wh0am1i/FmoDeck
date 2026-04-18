@@ -4,10 +4,11 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { QsoService } from '@/lib/qso-service/client'
 import { connectionStore } from '@/stores/connection'
+import { HistoryTable } from '@/features/speaking/history-table'
 import { logsStore, selectFiltered, type DisplayRow } from './store'
 import { ImportAdifDialog } from './components/import-adif-dialog'
 import { LogDetailDialog } from './components/log-detail-dialog'
-import { LogsFilter } from './components/logs-filter'
+import { LogsFilter, type LogsViewMode } from './components/logs-filter'
 import { LogsPagination } from './components/logs-pagination'
 import { LogsTable } from './components/logs-table'
 import { downloadAdif } from './export'
@@ -27,6 +28,8 @@ export function LogsView() {
 
   const [detailRow, setDetailRow] = useState<DisplayRow | null>(null)
   const [didAutoLoad, setDidAutoLoad] = useState(false)
+  const [mode, setMode] = useState<LogsViewMode>('logs')
+  const isHistory = mode === 'history'
 
   const canLoadServer = connectionStatus === 'connected' && client !== null
 
@@ -108,7 +111,7 @@ export function LogsView() {
         </div>
       </div>
 
-      <LogsFilter />
+      <LogsFilter mode={mode} onModeChange={setMode} />
 
       {status === 'error' && error && (
         <div className="hud-mono text-sm text-destructive">
@@ -117,11 +120,16 @@ export function LogsView() {
         </div>
       )}
 
-      <LogsTable onRowClick={setDetailRow} />
-
-      <div className="flex justify-end">
-        <LogsPagination />
-      </div>
+      {isHistory ? (
+        <HistoryTable />
+      ) : (
+        <>
+          <LogsTable onRowClick={setDetailRow} />
+          <div className="flex justify-end">
+            <LogsPagination />
+          </div>
+        </>
+      )}
 
       <LogDetailDialog row={detailRow} onClose={() => setDetailRow(null)} />
     </section>

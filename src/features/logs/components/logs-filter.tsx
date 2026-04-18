@@ -12,10 +12,18 @@ const DATE_OPTIONS: { key: DateFilter; labelKey: string }[] = [
   { key: '30d', labelKey: 'logs.date30d' }
 ]
 
-export function LogsFilter() {
+export type LogsViewMode = 'logs' | 'history'
+
+interface Props {
+  mode: LogsViewMode
+  onModeChange: (mode: LogsViewMode) => void
+}
+
+export function LogsFilter({ mode, onModeChange }: Props) {
   const { t } = useTranslation()
   const filter = logsStore((s) => s.filter)
   const dateFilter = logsStore((s) => s.dateFilter)
+  const isHistory = mode === 'history'
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -42,15 +50,30 @@ export function LogsFilter() {
         aria-label={t('logs.dateFilterAria')}
         className="hud-mono flex items-center gap-0.5 rounded-sm border border-border p-0.5"
       >
+        <button
+          type="button"
+          role="radio"
+          aria-checked={isHistory}
+          onClick={() => onModeChange('history')}
+          className={cn(
+            'rounded-sm px-2 py-1 text-xs transition-colors',
+            isHistory ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-primary'
+          )}
+        >
+          {t('history.toggle')}
+        </button>
         {DATE_OPTIONS.map(({ key, labelKey }) => {
-          const active = dateFilter === key
+          const active = !isHistory && dateFilter === key
           return (
             <button
               key={key}
               type="button"
               role="radio"
               aria-checked={active}
-              onClick={() => logsStore.getState().setDateFilter(key)}
+              onClick={() => {
+                onModeChange('logs')
+                logsStore.getState().setDateFilter(key)
+              }}
               className={cn(
                 'rounded-sm px-2 py-1 text-xs transition-colors',
                 active ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-primary'

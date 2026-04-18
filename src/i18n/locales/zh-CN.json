@@ -4,14 +4,53 @@
     "zhCN": "简体中文",
     "en": "English"
   },
+  "columns": {
+    "callsign": "呼号",
+    "grid": "网格",
+    "time": "时间",
+    "ago": "距今",
+    "first": "首次",
+    "last": "最近",
+    "count": "次数"
+  },
   "nav": {
     "logs": "日志",
     "top20": "排行榜",
     "oldFriends": "老朋友",
     "messages": "消息",
+    "spectrum": "频谱",
     "control": "控制",
     "aprs": "APRS",
     "settings": "设置"
+  },
+  "spectrum": {
+    "title": "[ 频谱 ]",
+    "live": "实时",
+    "buffering": "缓冲中",
+    "idle": "未收听",
+    "start": "开始收听",
+    "stop": "停止收听",
+    "muted": "已静音",
+    "hintStart": "点击「开始收听」启用音频，频谱会随实时下行信号跳动",
+    "hintOffline": "先在 [ 设置 ] 里配好 FMO 地址并连上中继",
+    "desc": "所有面板数据来自 FMO 下行 PCM（HPF/LPF/EQ/压缩后、音量前）；静音 / 自语过滤时淡化显示",
+    "panelBars": "频域 · BARS",
+    "panelWave": "时域 · OSCILLOSCOPE",
+    "panelWaterfall": "瀑布图 · WATERFALL",
+    "panelStats": "数据 · TELEMETRY",
+    "panelRoster": "讲话名册 · ROSTER",
+    "rosterCurrent": "当前讲话者",
+    "rosterEmpty": "[ 暂无讲话记录 · 等待中继推送 ]",
+    "statsRms": "RMS",
+    "statsPeakFreq": "峰值频率",
+    "statsPeakMag": "峰值强度"
+  },
+  "history": {
+    "title": "[ 讲话历史 ]",
+    "toggle": "历史",
+    "count": "最近 {{count}} 位",
+    "offline": "[ 连上中继后，服务器推送最近讲话历史 ]",
+    "listAria": "讲话历史列表"
   },
   "header": {
     "appName": "FMODECK",

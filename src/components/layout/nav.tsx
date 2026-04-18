@@ -15,6 +15,7 @@ const items: readonly NavItem[] = [
   { to: '/top20', labelKey: 'nav.top20' },
   { to: '/old-friends', labelKey: 'nav.oldFriends' },
   { to: '/messages', labelKey: 'nav.messages' },
+  { to: '/spectrum', labelKey: 'nav.spectrum' },
   { to: '/control', labelKey: 'nav.control' },
   ...(ENABLE_APRS ? [{ to: '/aprs', labelKey: 'nav.aprs' }] : []),
   { to: '/settings', labelKey: 'nav.settings' }

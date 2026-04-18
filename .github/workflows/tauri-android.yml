@@ -12,6 +12,8 @@ permissions:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    env:
+      VITE_AMAP_KEY: ${{ secrets.AMAP_KEY }}
     steps:
       - uses: actions/checkout@v5
 

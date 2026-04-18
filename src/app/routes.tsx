@@ -6,6 +6,7 @@ import { Top20View } from '@/features/top20/top20-view'
 import { OldFriendsView } from '@/features/old-friends/old-friends-view'
 import { MessagesView } from '@/features/messages/messages-view'
 import { SettingsView } from '@/features/settings/settings-view'
+import { SpectrumView } from '@/features/spectrum/spectrum-view'
 
 const ENABLE_APRS = import.meta.env.VITE_ENABLE_APRS !== 'false'
 
@@ -21,6 +22,7 @@ export function AppRoutes() {
       <Route path="/top20" element={<Top20View />} />
       <Route path="/old-friends" element={<OldFriendsView />} />
       <Route path="/messages" element={<MessagesView />} />
+      <Route path="/spectrum" element={<SpectrumView />} />
       <Route path="/control" element={<ControlView />} />
       {AprsView && (
         <Route

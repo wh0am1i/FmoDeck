@@ -32,6 +32,7 @@ export class AudioEngine {
   private ctx: AudioContext | null = null
   private gain: GainNode | null = null
   private chainHead: AudioNode | null = null
+  private analyser: AnalyserNode | null = null
 
   private nextStartTime = 0
   private status: AudioEngineStatus = 'idle'
@@ -97,6 +98,11 @@ export class AudioEngine {
     return this.status
   }
 
+  /** 给 UI 画频谱用。engine 未 start 前为 null。 */
+  getAnalyser(): AnalyserNode | null {
+    return this.analyser
+  }
+
   private applyGain(): void {
     if (!this.gain) return
     this.gain.gain.value = this.suppressed ? 0 : this.userVolume
@@ -157,16 +163,24 @@ export class AudioEngine {
     const gain = this.ctx.createGain()
     gain.gain.value = this.suppressed ? 0 : this.userVolume
 
+    // 频谱分析器：并联挂在 compressor 后，不走 destination，纯采样
+    // 不受用户音量 / 静音影响（总是看得到原始信号能量）
+    const analyser = this.ctx.createAnalyser()
+    analyser.fftSize = 512
+    analyser.smoothingTimeConstant = 0.75
+
     hpf.connect(lpf)
     lpf.connect(eqLow)
     eqLow.connect(eqMid)
     eqMid.connect(eqHigh)
     eqHigh.connect(compressor)
     compressor.connect(gain)
+    compressor.connect(analyser)
     gain.connect(this.ctx.destination)
 
     this.chainHead = hpf
     this.gain = gain
+    this.analyser = analyser
 
     if (this.ctx.state === 'suspended') await this.ctx.resume()
   }
