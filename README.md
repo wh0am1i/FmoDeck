@@ -8,6 +8,38 @@
 
 ## 更新记录
 
+### v0.1.5 (2026-04-19)
+
+**新增**
+
+- **频谱页面**（`/spectrum`）：五面板组合 —— 柱状频谱、示波器、瀑布图、
+  实时遥测（RMS / 峰值频率 / 峰值强度）、讲话名册（滚动时粘顶）
+- **SpeakingBar 迷你频谱**：收听开启时实时显示
+- **日志页「历史」切换**：融合进日期过滤组，点击原地把下方表格切换为
+  讲话历史，再点任一日期切回日志
+- **Android 打包**：新增 GitHub Actions workflow，支持 aarch64 +
+  armv7 双 ABI，debug APK 约 60MB
+
+**改进**
+
+- **地名反查**：主链路换到高德 `regeo`（需 `VITE_AMAP_KEY`），格式
+  精简为「市 - 省」；没配 key 时 fallback 到 BigDataCloud
+- **SpeakingBar**：呼号和地名字号放大、地名改高亮色，移动端改两行
+  结构，HOST / 新朋友徽章不再被长地名挤下一行
+- **移动端排版**：日志 / 历史 / 老朋友表格在窄屏把 GRID 内联到呼号
+  下；日志头三个操作按钮只留图标；中文地名不再按字符断行
+- **APRS passcode 计算器**从 APRS 页挪到 `[ 设置 ]`
+- **Android 状态栏**不再遮挡内容（主动消费 systemBars insets）
+
+**部署 / 构建**
+
+- Docker 构建新增 `VITE_AMAP_KEY` 参数；CI workflow 注入 `AMAP_KEY`
+  GitHub secret
+
+**其他**
+
+- README 标注项目由 AI 辅助编码；git 提交去掉 `Co-Authored-By` 尾行
+
 ### v0.1.4 (2026-04-18)
 
 - **APRS 远程控制按构建目标分流**：桌面版（Tauri）默认关闭并 tree-shake，
