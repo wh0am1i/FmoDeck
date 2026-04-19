@@ -14,6 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VITE_AMAP_KEY: ${{ secrets.AMAP_KEY }}
+      VITE_UPDATE_BASE_URL: ${{ secrets.VITE_UPDATE_BASE_URL }}
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v5
 
@@ -64,6 +69,12 @@ jobs:
       - name: Init Tauri Android scaffold
         run: pnpm tauri android init
 
+      - name: Restore release keystore
+        run: ./scripts/android-signing-setup.sh
+
+      - name: Inject gradle signingConfig
+        run: ./scripts/android-signing-inject.sh
+
       # FMO 设备走 ws://fmo.local 明文连接，Android 9+ 默认拦截，
       # 必须在 <application> 上加 usesCleartextTraffic="true"
       - name: Allow cleartext traffic for ws://fmo.local
@@ -112,8 +123,8 @@ jobs:
 
       # --debug 让 Gradle 用自动 debug keystore 出可安装 APK（省签名流程）；
       # 只打 arm64 + armv7 两个 ABI，覆盖新老设备，跳过模拟器专用的 x86
-      - name: Build Android APK (debug signed, arm64 + armv7)
-        run: pnpm tauri android build --apk --debug --target aarch64 --target armv7
+      - name: Build Android APK (release signed, arm64 + armv7)
+        run: pnpm tauri android build --apk --target aarch64 --target armv7
 
       - name: Locate and rename APK
         shell: bash
