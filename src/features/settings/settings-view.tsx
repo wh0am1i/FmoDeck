@@ -12,7 +12,6 @@ import { FmoAddressDialog } from './components/fmo-address-dialog'
 import { FmoAddressList } from './components/fmo-address-list'
 import { HudIntensityField } from './components/hud-intensity-field'
 import { NotificationsField } from './components/notifications-field'
-import { PasscodeCalculator } from './components/passcode-calculator'
 import { UpdateSection } from './sections/update-section'
 
 export function SettingsView() {
@@ -64,7 +63,6 @@ export function SettingsView() {
       </section>
 
       <UpdateSection />
-      <PasscodeCalculator />
     </div>
   )
 }
