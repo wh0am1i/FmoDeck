@@ -15,8 +15,9 @@ if grep -q 'FMODECK_SIGNING_INJECTED' "$BUILD_GRADLE"; then
   exit 0
 fi
 
-# 1) 顶部 import + keystoreProperties 读取
-#    插到现有最后一个 import 之后
+# 1) 顶部 keystoreProperties 读取。用全限定名 java.util.Properties /
+#    java.io.FileInputStream,避免和 Tauri 生成的 build.gradle.kts 里
+#    已有的 import java.util.Properties 冲突(Kotlin 重复 import 会编译失败)。
 python3 - "$BUILD_GRADLE" <<'PY'
 import re, sys
 p = sys.argv[1]
@@ -24,13 +25,10 @@ src = open(p).read()
 
 header = '''
 // FMODECK_SIGNING_INJECTED
-import java.util.Properties
-import java.io.FileInputStream
-
 val fmodeckKeystoreFile = rootProject.file("keystore.properties")
-val fmodeckKeystoreProps = Properties().apply {
+val fmodeckKeystoreProps = java.util.Properties().apply {
     if (fmodeckKeystoreFile.exists()) {
-        load(FileInputStream(fmodeckKeystoreFile))
+        load(java.io.FileInputStream(fmodeckKeystoreFile))
     }
 }
 '''
