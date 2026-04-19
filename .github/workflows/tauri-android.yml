@@ -142,6 +142,10 @@ jobs:
             echo "::error::MainActivity.kt missing setOnApplyWindowInsetsListener"
             exit 1
           fi
+          if ! grep -q 'fun installApk' "$MAIN_ACTIVITY"; then
+            echo "::error::MainActivity.kt missing installApk companion method"
+            exit 1
+          fi
           echo "✓ Android MainActivity patches verified"
 
       # keystore 在前面两步（Restore release keystore / Inject gradle signingConfig）
