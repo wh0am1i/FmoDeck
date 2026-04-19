@@ -8,9 +8,7 @@
  * 所以链接要走 onClick → openExternal。
  */
 
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
+import { isTauri } from './platform'
 
 export async function openExternal(url: string): Promise<void> {
   if (isTauri()) {

@@ -14,6 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VITE_AMAP_KEY: ${{ secrets.AMAP_KEY }}
+      VITE_UPDATE_BASE_URL: ${{ secrets.VITE_UPDATE_BASE_URL }}
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v5
 
@@ -64,15 +69,44 @@ jobs:
       - name: Init Tauri Android scaffold
         run: pnpm tauri android init
 
+      - name: Restore release keystore
+        run: ./scripts/android-signing-setup.sh
+
+      - name: Inject gradle signingConfig
+        run: ./scripts/android-signing-inject.sh
+
       # FMO 设备走 ws://fmo.local 明文连接，Android 9+ 默认拦截，
-      # 必须在 <application> 上加 usesCleartextTraffic="true"
+      # 必须在 <application> 上强制 usesCleartextTraffic="true"。
+      # Tauri 2.10+ 生成的 manifest 自带 usesCleartextTraffic="false"，
+      # 所以不能"没找到才加"——要无条件覆盖。
       - name: Allow cleartext traffic for ws://fmo.local
+        shell: bash
         run: |
           MANIFEST=src-tauri/gen/android/app/src/main/AndroidManifest.xml
-          if ! grep -q 'usesCleartextTraffic' "$MANIFEST"; then
-            sed -i 's|<application |<application android:usesCleartextTraffic="true" |' "$MANIFEST"
-          fi
+          python3 - "$MANIFEST" <<'PY'
+          import re, sys
+          p = sys.argv[1]
+          s = open(p).read()
+          if 'usesCleartextTraffic' in s:
+              s = re.sub(
+                  r'android:usesCleartextTraffic="[^"]*"',
+                  'android:usesCleartextTraffic="true"',
+                  s,
+              )
+          else:
+              s = re.sub(
+                  r'(<application\b)',
+                  r'\1 android:usesCleartextTraffic="true"',
+                  s,
+                  count=1,
+              )
+          open(p, 'w').write(s)
+          print("✓ usesCleartextTraffic forced to true")
+          PY
           cat "$MANIFEST"
+
+      - name: Patch AndroidManifest (REQUEST_INSTALL_PACKAGES + FileProvider)
+        run: ./scripts/android-manifest-patch.sh
 
       # Tauri 2 默认生成的 MainActivity.kt 调 enableEdgeToEdge() 把 app
       # 切到边到边模式（WebView 画到状态栏下方 → 内容和状态栏重叠）。
@@ -108,12 +142,17 @@ jobs:
             echo "::error::MainActivity.kt missing setOnApplyWindowInsetsListener"
             exit 1
           fi
+          if ! grep -q 'fun installApk' "$MAIN_ACTIVITY"; then
+            echo "::error::MainActivity.kt missing installApk companion method"
+            exit 1
+          fi
           echo "✓ Android MainActivity patches verified"
 
-      # --debug 让 Gradle 用自动 debug keystore 出可安装 APK（省签名流程）；
-      # 只打 arm64 + armv7 两个 ABI，覆盖新老设备，跳过模拟器专用的 x86
-      - name: Build Android APK (debug signed, arm64 + armv7)
-        run: pnpm tauri android build --apk --debug --target aarch64 --target armv7
+      # keystore 在前面两步（Restore release keystore / Inject gradle signingConfig）
+      # 里注入，此处直接出 release 签名 APK；只打 arm64 + armv7 两个 ABI，
+      # 覆盖新老设备，跳过模拟器专用的 x86
+      - name: Build Android APK (release signed, arm64 + armv7)
+        run: pnpm tauri android build --apk --target aarch64 --target armv7
 
       - name: Locate and rename APK
         shell: bash
@@ -125,8 +164,30 @@ jobs:
             exit 1
           fi
           echo "Found APK at: $APK"
-          cp "$APK" "FmoDeck_${GITHUB_REF_NAME#v}_android.apk"
+          # tag 推送走 tag (v0.1.6 → 0.1.6);workflow_dispatch 跑分支时
+          # GITHUB_REF_NAME 含 `/`,退化读 package.json 拿版本号
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION=${GITHUB_REF_NAME#v}
+          else
+            VERSION=$(node -p "require('./package.json').version")
+          fi
+          cp "$APK" "FmoDeck_${VERSION}_android.apk"
           ls -lh FmoDeck_*_android.apk
+
+      - name: Build latest.json
+        shell: bash
+        env:
+          UPDATE_BASE_URL: ${{ secrets.VITE_UPDATE_BASE_URL }}
+          CHANGELOG_BODY: ${{ steps.changelog.outputs.body }}
+        run: |
+          APK_PATH=$(ls FmoDeck_*_android.apk | head -1)
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION=${GITHUB_REF_NAME#v}
+          else
+            VERSION=$(node -p "require('./package.json').version")
+          fi
+          APK_PATH="$APK_PATH" VERSION="$VERSION" UPDATE_BASE_URL="$UPDATE_BASE_URL" CHANGELOG_BODY="$CHANGELOG_BODY" \
+            ./scripts/build-latest-json.sh
 
       - name: Upload APK to release
         if: startsWith(github.ref, 'refs/tags/v')
@@ -136,7 +197,9 @@ jobs:
           name: FmoDeck ${{ github.ref_name }}
           body: ${{ steps.changelog.outputs.body }}
           draft: true
-          files: FmoDeck_*_android.apk
+          files: |
+            FmoDeck_*_android.apk
+            latest.json
 
       # workflow_dispatch 时没 tag，改成上传为 artifact 方便直接下载
       - name: Upload APK as artifact
@@ -144,4 +207,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: FmoDeck-android-apk
-          path: FmoDeck_*_android.apk
+          path: |
+            FmoDeck_*_android.apk
+            latest.json

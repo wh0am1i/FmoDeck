@@ -66,3 +66,8 @@ src-tauri/Cargo.lock.bak
 # ---- Docker 运行时残留（如果本地试过 compose 之外的卷挂载）----
 # 容器内产物不该出现在仓库，但留个兜底
 .docker-compose.override.yml
+
+# Android signing — 双保险(gen/ 已忽略,但任何意外路径也拒)
+**/*.jks
+**/*.keystore
+**/keystore.properties

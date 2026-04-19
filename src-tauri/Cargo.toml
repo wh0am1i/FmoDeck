@@ -1,6 +1,6 @@
 [package]
 name = "fmodeck"
-version = "0.1.5"
+version = "0.1.7"
 description = "FmoDeck desktop app — amateur radio FMO console"
 authors = ["wh0am1i"]
 license = "MIT"
@@ -20,8 +20,13 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
+tauri-plugin-fs = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.21"
+ndk-context = "0.1"
 
 # Release：体积优先（desktop / Android release 都走这个 profile）
 [profile.release]

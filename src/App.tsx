@@ -12,6 +12,8 @@ import { useSpeakingEvents } from '@/hooks/useSpeakingEvents'
 import { useStationPolling } from '@/hooks/useStationPolling'
 import { useStationSync } from '@/hooks/useStationSync'
 import { useSyncPolicy } from '@/hooks/useSyncPolicy'
+import { UpdateDialog } from '@/features/updater/update-dialog'
+import { useUpdateCheck } from '@/hooks/useUpdateCheck'
 
 export function App() {
   useFmoSync()
@@ -21,6 +23,7 @@ export function App() {
   useStationPolling()
   useFmoAudio()
   useHudStyles()
+  useUpdateCheck()
 
   // 启动时从 IndexedDB 读入本地 ADIF 导入的 QSO（任何视图都能马上看到）
   useEffect(() => {
@@ -33,6 +36,7 @@ export function App() {
         <AppShell>
           <AppRoutes />
         </AppShell>
+        <UpdateDialog />
         <Toaster richColors position="top-right" />
       </BrowserRouter>
     </ThemeProvider>

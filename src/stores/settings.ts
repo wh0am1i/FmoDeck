@@ -32,6 +32,10 @@ export interface SettingsState {
   notificationsEnabled: boolean
   /** 字号缩放。normal = 16px / large = 18px（驱动根 font-size）。 */
   fontSize: 'normal' | 'large'
+  /** 是否在启动时自动检查更新。 */
+  autoUpdateCheck: boolean
+  /** 上次检查更新的 Unix 时间戳（ms），未检查过时为 null。 */
+  lastUpdateCheckAt: number | null
 
   addAddress: (addr: FmoAddress) => void
   updateAddress: (id: string, patch: Partial<Omit<FmoAddress, 'id'>>) => void
@@ -43,6 +47,8 @@ export interface SettingsState {
   setHudScanlineOpacity: (v: number) => void
   setNotificationsEnabled: (v: boolean) => void
   setFontSize: (v: 'normal' | 'large') => void
+  setAutoUpdateCheck: (v: boolean) => void
+  setLastUpdateCheckAt: (v: number | null) => void
 }
 
 type PersistedFields = Pick<
@@ -55,6 +61,8 @@ type PersistedFields = Pick<
   | 'hudScanlineOpacity'
   | 'notificationsEnabled'
   | 'fontSize'
+  | 'autoUpdateCheck'
+  | 'lastUpdateCheckAt'
 >
 
 const INITIAL: PersistedFields = {
@@ -65,7 +73,9 @@ const INITIAL: PersistedFields = {
   hudIntensity: 0.15,
   hudScanlineOpacity: 0.05,
   notificationsEnabled: false,
-  fontSize: 'normal'
+  fontSize: 'normal',
+  autoUpdateCheck: true,
+  lastUpdateCheckAt: null
 }
 
 function clamp(v: number, min: number, max: number): number {
@@ -108,7 +118,11 @@ export const settingsStore = create<SettingsState>()(
 
       setNotificationsEnabled: (v) => set({ notificationsEnabled: v }),
 
-      setFontSize: (v) => set({ fontSize: v })
+      setFontSize: (v) => set({ fontSize: v }),
+
+      setAutoUpdateCheck: (v) => set({ autoUpdateCheck: v }),
+
+      setLastUpdateCheckAt: (v) => set({ lastUpdateCheckAt: v })
     }),
     {
       name: 'fmodeck-settings',
@@ -120,7 +134,9 @@ export const settingsStore = create<SettingsState>()(
         hudIntensity: s.hudIntensity,
         hudScanlineOpacity: s.hudScanlineOpacity,
         notificationsEnabled: s.notificationsEnabled,
-        fontSize: s.fontSize
+        fontSize: s.fontSize,
+        autoUpdateCheck: s.autoUpdateCheck,
+        lastUpdateCheckAt: s.lastUpdateCheckAt
       })
     }
   )
