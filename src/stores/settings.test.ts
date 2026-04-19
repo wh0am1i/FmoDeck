@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { resetSettingsForTest, selectActiveSyncMode, settingsStore } from './settings'
 
 afterEach(() => {
@@ -110,5 +110,24 @@ describe('settings 持久化', () => {
     }
     expect(parsed.state.currentCallsign).toBe('BA0AX')
     expect(parsed.state.activeAddressId).toBe('a')
+  })
+})
+
+describe('updater fields', () => {
+  beforeEach(() => {
+    resetSettingsForTest()
+  })
+
+  it('has defaults', () => {
+    const s = settingsStore.getState()
+    expect(s.autoUpdateCheck).toBe(true)
+    expect(s.lastUpdateCheckAt).toBe(null)
+  })
+
+  it('setters update state', () => {
+    settingsStore.getState().setAutoUpdateCheck(false)
+    expect(settingsStore.getState().autoUpdateCheck).toBe(false)
+    settingsStore.getState().setLastUpdateCheckAt(1234567890)
+    expect(settingsStore.getState().lastUpdateCheckAt).toBe(1234567890)
   })
 })
