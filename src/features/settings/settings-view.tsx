@@ -13,6 +13,7 @@ import { FmoAddressList } from './components/fmo-address-list'
 import { HudIntensityField } from './components/hud-intensity-field'
 import { NotificationsField } from './components/notifications-field'
 import { PasscodeCalculator } from './components/passcode-calculator'
+import { UpdateSection } from './sections/update-section'
 
 export function SettingsView() {
   const { t } = useTranslation()
@@ -62,6 +63,7 @@ export function SettingsView() {
         <NotificationsField />
       </section>
 
+      <UpdateSection />
       <PasscodeCalculator />
     </div>
   )
