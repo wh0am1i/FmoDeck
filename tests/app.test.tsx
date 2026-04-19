@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { App } from '@/App'
+import { APP_VERSION } from '@/lib/utils/app-version'
 
 describe('App 烟雾测试', () => {
   it('默认渲染 LOGS 视图', () => {
@@ -12,7 +13,7 @@ describe('App 烟雾测试', () => {
   it('Header 显示应用标识和版本', () => {
     render(<App />)
     expect(screen.getByText('[ FMODECK ]')).toBeInTheDocument()
-    expect(screen.getByText('v0.1.5')).toBeInTheDocument()
+    expect(screen.getByText(`v${APP_VERSION}`)).toBeInTheDocument()
   })
 
   it('Nav 包含各路由 tab（zh-CN 标签）', () => {
