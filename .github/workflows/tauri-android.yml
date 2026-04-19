@@ -76,13 +76,33 @@ jobs:
         run: ./scripts/android-signing-inject.sh
 
       # FMO 设备走 ws://fmo.local 明文连接，Android 9+ 默认拦截，
-      # 必须在 <application> 上加 usesCleartextTraffic="true"
+      # 必须在 <application> 上强制 usesCleartextTraffic="true"。
+      # Tauri 2.10+ 生成的 manifest 自带 usesCleartextTraffic="false"，
+      # 所以不能"没找到才加"——要无条件覆盖。
       - name: Allow cleartext traffic for ws://fmo.local
+        shell: bash
         run: |
           MANIFEST=src-tauri/gen/android/app/src/main/AndroidManifest.xml
-          if ! grep -q 'usesCleartextTraffic' "$MANIFEST"; then
-            sed -i 's|<application |<application android:usesCleartextTraffic="true" |' "$MANIFEST"
-          fi
+          python3 - "$MANIFEST" <<'PY'
+          import re, sys
+          p = sys.argv[1]
+          s = open(p).read()
+          if 'usesCleartextTraffic' in s:
+              s = re.sub(
+                  r'android:usesCleartextTraffic="[^"]*"',
+                  'android:usesCleartextTraffic="true"',
+                  s,
+              )
+          else:
+              s = re.sub(
+                  r'(<application\b)',
+                  r'\1 android:usesCleartextTraffic="true"',
+                  s,
+                  count=1,
+              )
+          open(p, 'w').write(s)
+          print("✓ usesCleartextTraffic forced to true")
+          PY
           cat "$MANIFEST"
 
       # Tauri 2 默认生成的 MainActivity.kt 调 enableEdgeToEdge() 把 app
