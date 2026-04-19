@@ -47,7 +47,7 @@ export const updaterStore = create<UpdaterStore>((set, get) => ({
       const url = `${baseUrl.replace(/\/$/, '')}/fmodeck/android/latest.json`
       const resp = await fetch(url, { cache: 'no-store' })
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-      const json = await resp.json()
+      const json: unknown = await resp.json()
       const parsed = parseManifest(json)
       if (!parsed.ok) {
         console.warn('[updater] manifest rejected:', parsed.reason)

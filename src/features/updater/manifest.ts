@@ -14,9 +14,9 @@ export function parseManifest(input: unknown): ParseResult {
   }
   const o = input as Record<string, unknown>
 
-  const str = (k: string): string | null => (typeof o[k] === 'string' ? (o[k] as string) : null)
+  const str = (k: string): string | null => (typeof o[k] === 'string' ? o[k] : null)
   const num = (k: string): number | null =>
-    typeof o[k] === 'number' && Number.isFinite(o[k]) ? (o[k] as number) : null
+    typeof o[k] === 'number' && Number.isFinite(o[k]) ? o[k] : null
 
   const version = str('version')
   if (!version) return { ok: false, reason: 'version missing or not string' }

@@ -36,8 +36,8 @@ export async function hashSha256(data: Uint8Array): Promise<string> {
 
 export function bufferToHex(bytes: Uint8Array): string {
   let s = ''
-  for (let i = 0; i < bytes.length; i++) {
-    s += bytes[i]!.toString(16).padStart(2, '0')
+  for (const byte of bytes) {
+    s += byte.toString(16).padStart(2, '0')
   }
   return s
 }

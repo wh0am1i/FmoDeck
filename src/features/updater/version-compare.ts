@@ -20,7 +20,7 @@ export function compareVersion(a: string, b: string): number {
 }
 
 function parse(v: string): [number, number, number] | null {
-  const m = v.trim().replace(/^v/i, '').match(/^(\d+)\.(\d+)\.(\d+)$/)
+  const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(v.trim().replace(/^v/i, ''))
   if (!m) return null
   return [Number(m[1]), Number(m[2]), Number(m[3])]
 }

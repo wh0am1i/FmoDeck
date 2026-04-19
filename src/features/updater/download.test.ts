@@ -34,19 +34,20 @@ describe('downloadWithProgress', () => {
     const reader = makeFakeReader(chunks)
     const ctl = new AbortController()
     ctl.abort()
-    await expect(downloadWithProgress(reader, 3, () => {}, ctl.signal)).rejects.toThrow(/abort/i)
+    const noop = (_ratio: number): void => { /* progress ignored in abort test */ }
+    await expect(downloadWithProgress(reader, 3, noop, ctl.signal)).rejects.toThrow(/abort/i)
   })
 })
 
 function makeFakeReader(chunks: Uint8Array[]): ReadableStreamDefaultReader<Uint8Array> {
   let i = 0
   return {
-    async read() {
-      if (i >= chunks.length) return { done: true, value: undefined as unknown as Uint8Array }
-      return { done: false, value: chunks[i++] }
+    read() {
+      if (i >= chunks.length) return Promise.resolve({ done: true as const, value: undefined as unknown as Uint8Array })
+      return Promise.resolve({ done: false as const, value: chunks[i++]! })
     },
-    releaseLock() {},
-    cancel: async () => {},
+    releaseLock() { /* test stub — no lock to release */ },
+    cancel(): Promise<void> { return Promise.resolve() },
     closed: Promise.resolve(undefined)
   } as unknown as ReadableStreamDefaultReader<Uint8Array>
 }

@@ -20,7 +20,7 @@ describe('updaterStore', () => {
   it('idle → checking → available when fresher version', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => VALID_MANIFEST
+      json: () => Promise.resolve(VALID_MANIFEST)
     }))
     await updaterStore.getState().check('https://x', '0.1.5')
     const s = updaterStore.getState()
@@ -31,7 +31,7 @@ describe('updaterStore', () => {
   it('idle when local >= remote', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => VALID_MANIFEST
+      json: () => Promise.resolve(VALID_MANIFEST)
     }))
     await updaterStore.getState().check('https://x', '0.1.6')
     expect(updaterStore.getState().state).toBe('idle')
@@ -46,7 +46,7 @@ describe('updaterStore', () => {
   it('idle when manifest malformed', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ version: '0.1.6' })
+      json: () => Promise.resolve({ version: '0.1.6' })
     }))
     await updaterStore.getState().check('https://x', '0.1.5')
     expect(updaterStore.getState().state).toBe('idle')
