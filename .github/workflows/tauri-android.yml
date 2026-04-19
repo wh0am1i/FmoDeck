@@ -137,7 +137,14 @@ jobs:
             exit 1
           fi
           echo "Found APK at: $APK"
-          cp "$APK" "FmoDeck_${GITHUB_REF_NAME#v}_android.apk"
+          # tag 推送走 tag (v0.1.6 → 0.1.6);workflow_dispatch 跑分支时
+          # GITHUB_REF_NAME 含 `/`,退化读 package.json 拿版本号
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION=${GITHUB_REF_NAME#v}
+          else
+            VERSION=$(node -p "require('./package.json').version")
+          fi
+          cp "$APK" "FmoDeck_${VERSION}_android.apk"
           ls -lh FmoDeck_*_android.apk
 
       - name: Upload APK to release
