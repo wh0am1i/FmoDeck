@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.ViewGroup
 import android.webkit.WebView
+import androidx.annotation.Keep
 import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -58,8 +59,13 @@ class MainActivity : TauriActivity() {
          * 路径必须在 app cache 目录下，通过 FileProvider 授权读。
          * 首次调用时系统会弹"允许此应用安装未知应用"设置页，用户授权
          * 后重新点安装即可走到包安装器 UI。
+         *
+         * @Keep 告诉 R8 / ProGuard 不要 strip 这个方法。release 构建
+         * 默认开启代码裁剪，R8 看不到任何 Java/Kotlin 代码调用它
+         * （仅 Rust JNI 反射），如无 @Keep 会被当死代码删掉。
          */
         @JvmStatic
+        @Keep
         fun installApk(context: Context, filePath: String) {
             val file = File(filePath)
             val authority = "${context.packageName}.fileprovider"
