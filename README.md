@@ -8,6 +8,39 @@
 
 ## 更新记录
 
+### v0.1.7 (2026-04-19)
+
+**新增**
+
+- **Android release 签名**:APK 改走正式 release keystore(原 debug 随机 key),
+  后续版本可以覆盖升级保留本地数据(IndexedDB 日志 / FMO 地址 / HUD 设置等)。
+  签名指纹固定 = 所有后续版本通行证
+- **应用内升级**(仅 Android):启动自动检查 + Settings `[ 更新 ]` 手动触发 +
+  HUD 风 Dialog(发现新版 → 下载进度 → sha256 校验 → 调起系统包安装器);
+  24h 去重、`cache: no-store` 防 WebView 缓存、`@Keep` 防 R8 strip
+- **自建升级服务器契约**:纯静态 nginx,manifest 走 `<host>/fmodeck/android/latest.json`,
+  不依赖 GitHub API(国内可达性友好);通过 `VITE_UPDATE_BASE_URL` 构建时注入
+- **Android 原生**:`REQUEST_INSTALL_PACKAGES` 权限 + `FileProvider` + Kotlin
+  `installApk` companion + Rust `install_apk` JNI 命令
+
+**改进**
+
+- **Passcode 计算器**从 Settings 再挪回 APRS 菜单(v0.1.5 反向挪回来,按功能归属)
+- **WebView 远程调试**:release APK 也强制 `setWebContentsDebuggingEnabled(true)`,
+  可通过 `chrome://inspect` 看 Console
+- **cleartext 配置**:Tauri 2.10+ 默认 `usesCleartextTraffic="false"`,改为无条件覆盖
+  为 `true`,保证 FMO `ws://` 明文连接在 release 构建下不被拦
+- **Vite 环境变量注入**:CI 新增 `VITE_UPDATE_BASE_URL` Secret
+
+**升级说明 · 从 v0.1.5 Android 版升级时必读**
+
+- 本版本起 APK 签名从 debug 切到 release,**签名指纹不同** → 直接覆盖安装会被
+  Android 系统拒绝(`INSTALL_FAILED_UPDATE_INCOMPATIBLE`)
+- **老用户必须先卸载 v0.1.5**,再全新安装 v0.1.7(本地 QSO 日志请先导出 ADIF 备份)
+- v0.1.7 之后的所有升级可以正常覆盖,不再需要卸载
+- 首次点应用内"立即安装"会弹"允许此应用安装未知应用"系统设置页,授权后回到应用
+  再点一次即可走到系统包安装器
+
 ### v0.1.5 (2026-04-19)
 
 **新增**
