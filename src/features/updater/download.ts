@@ -66,7 +66,12 @@ export async function downloadApkToCache(
   }
   const target = await join(cacheDir, 'fmodeck-update.apk')
 
-  const resp = await fetch(url, abortSignal ? { signal: abortSignal } : undefined)
+  // cache: 'no-store' 避开 WebView HTTP 缓存——同一 URL 在不同 workflow
+  // 构建之间字节会变(R8 + 重签),缓存会让我们拿到旧字节,sha256 对不上。
+  const resp = await fetch(url, {
+    cache: 'no-store',
+    ...(abortSignal ? { signal: abortSignal } : {})
+  })
   if (!resp.ok || !resp.body) {
     throw new Error(`download HTTP ${resp.status}`)
   }
