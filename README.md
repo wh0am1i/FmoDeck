@@ -41,6 +41,12 @@
 - 首次点应用内"立即安装"会弹"允许此应用安装未知应用"系统设置页,授权后回到应用
   再点一次即可走到系统包安装器
 
+**工程**
+
+- 跳过 v0.1.6 版本号(升级链路端到端调试用的过渡版本)
+- updater feature 346 个单测全绿:version-compare / manifest / download-sha256 / 状态机
+- prettier 统一 format,ESLint warnings 清零
+
 ### v0.1.5 (2026-04-19)
 
 **新增**
