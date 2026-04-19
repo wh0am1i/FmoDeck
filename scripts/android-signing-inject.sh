@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # 往 src-tauri/gen/android/app/build.gradle.kts 注入 release signingConfig。
-# 读取同目录之上的 keystore.properties(由 android-signing-setup.sh 生成)。
+# 签名四项(storePassword / keyAlias / keyPassword / keystore 路径)全部
+# 通过 Kotlin System.getenv 从环境变量读取,避开:
+#   1) Java Properties 对 `\` 的转义解析(密码里含反斜杠会被吃掉)
+#   2) Gradle Kotlin DSL top-level 的 `java` 被 JavaPluginExtension 抢走
+#      导致 `java.util.Properties` 写法解析失败
 # 幂等:检测到已注入就跳过。
 set -euo pipefail
 
@@ -15,46 +19,29 @@ if grep -q 'FMODECK_SIGNING_INJECTED' "$BUILD_GRADLE"; then
   exit 0
 fi
 
-# 1) 顶部 keystoreProperties 读取。用全限定名 java.util.Properties /
-#    java.io.FileInputStream,避免和 Tauri 生成的 build.gradle.kts 里
-#    已有的 import java.util.Properties 冲突(Kotlin 重复 import 会编译失败)。
+# 在 android { ... } 块内开头插入 signingConfigs + buildTypes.release.signingConfig。
+# 注入块全部用 System.getenv 读,keystore 文件名硬编码 fmodeck-release.jks
+# (与 android-signing-setup.sh 写出的路径对齐)。
 python3 - "$BUILD_GRADLE" <<'PY'
 import re, sys
 p = sys.argv[1]
 src = open(p).read()
 
-header = '''
-// FMODECK_SIGNING_INJECTED
-val fmodeckKeystoreFile = rootProject.file("keystore.properties")
-val fmodeckKeystoreProps = java.util.Properties().apply {
-    if (fmodeckKeystoreFile.exists()) {
-        load(java.io.FileInputStream(fmodeckKeystoreFile))
-    }
-}
-'''
-
-# 插入到最后一行 import 之后(如果没有 import,就插入文件开头)
-last_import = 0
-for m in re.finditer(r'^import [^\n]+\n', src, re.MULTILINE):
-    last_import = m.end()
-src = src[:last_import] + header + src[last_import:]
-
-# 2) 在 android { ... } 块内,开头插入 signingConfigs + buildTypes.release.signingConfig
-#    android { 之后换行,再插入我们的块
 inject = '''
+    // FMODECK_SIGNING_INJECTED
     signingConfigs {
-        if (fmodeckKeystoreFile.exists()) {
+        if (System.getenv("ANDROID_KEYSTORE_PASSWORD") != null) {
             create("release") {
-                storeFile = file(fmodeckKeystoreProps["storeFile"] as String)
-                storePassword = fmodeckKeystoreProps["storePassword"] as String
-                keyAlias = fmodeckKeystoreProps["keyAlias"] as String
-                keyPassword = fmodeckKeystoreProps["keyPassword"] as String
+                storeFile = file("fmodeck-release.jks")
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
             }
         }
     }
     buildTypes {
         getByName("release") {
-            if (fmodeckKeystoreFile.exists()) {
+            if (System.getenv("ANDROID_KEYSTORE_PASSWORD") != null) {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
@@ -66,5 +53,5 @@ if src2 == src:
     sys.exit("ERROR: android { block not found in build.gradle.kts")
 
 open(p, 'w').write(src2)
-print(f"✓ injected signingConfig into {p}")
+print(f"\u2713 injected signingConfig into {p}")
 PY
