@@ -121,8 +121,9 @@ jobs:
           fi
           echo "✓ Android MainActivity patches verified"
 
-      # --debug 让 Gradle 用自动 debug keystore 出可安装 APK（省签名流程）；
-      # 只打 arm64 + armv7 两个 ABI，覆盖新老设备，跳过模拟器专用的 x86
+      # keystore 在前面两步（Restore release keystore / Inject gradle signingConfig）
+      # 里注入，此处直接出 release 签名 APK；只打 arm64 + armv7 两个 ABI，
+      # 覆盖新老设备，跳过模拟器专用的 x86
       - name: Build Android APK (release signed, arm64 + armv7)
         run: pnpm tauri android build --apk --target aarch64 --target armv7
 
