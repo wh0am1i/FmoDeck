@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FileProvider 暴露给系统包安装器的路径白名单。
+     只暴露 app 私有 cache 目录,且只读。 -->
+<paths>
+    <cache-path name="cache" path="."/>
+    <external-cache-path name="external_cache" path="."/>
+</paths>
