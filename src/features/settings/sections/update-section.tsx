@@ -44,20 +44,20 @@ export function UpdateSection(): React.JSX.Element | null {
           </div>
         )}
         <div>
-          {t('updater.lastCheckedLabel')}:{' '}
-          {formatDate(lastChecked, t('updater.lastCheckedNever'))}
+          {t('updater.lastCheckedLabel')}: {formatDate(lastChecked, t('updater.lastCheckedNever'))}
         </div>
       </div>
       <label className="hud-mono text-xs inline-flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={autoCheck}
-          onChange={(e) => setAuto(e.target.checked)}
-        />
+        <input type="checkbox" checked={autoCheck} onChange={(e) => setAuto(e.target.checked)} />
         {t('updater.autoCheckLabel')}
       </label>
       <div>
-        <Button onClick={() => { void onManualCheck() }} disabled={!canCheck}>
+        <Button
+          onClick={() => {
+            void onManualCheck()
+          }}
+          disabled={!canCheck}
+        >
           {state === 'checking' ? t('updater.checking') : t('updater.manualCheckBtn')}
         </Button>
       </div>

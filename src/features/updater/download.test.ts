@@ -26,7 +26,7 @@ describe('downloadWithProgress', () => {
     const out = await downloadWithProgress(reader, total, progress)
     expect(out).toEqual(new Uint8Array([1, 2, 3, 4, 5]))
     expect(progress).toHaveBeenCalledWith(0.4) // 2/5
-    expect(progress).toHaveBeenCalledWith(1)   // 5/5
+    expect(progress).toHaveBeenCalledWith(1) // 5/5
   })
 
   it('supports abort', async () => {
@@ -34,7 +34,9 @@ describe('downloadWithProgress', () => {
     const reader = makeFakeReader(chunks)
     const ctl = new AbortController()
     ctl.abort()
-    const noop = (_ratio: number): void => { /* progress ignored in abort test */ }
+    const noop = (_ratio: number): void => {
+      /* progress ignored in abort test */
+    }
     await expect(downloadWithProgress(reader, 3, noop, ctl.signal)).rejects.toThrow(/abort/i)
   })
 })
@@ -43,11 +45,16 @@ function makeFakeReader(chunks: Uint8Array[]): ReadableStreamDefaultReader<Uint8
   let i = 0
   return {
     read() {
-      if (i >= chunks.length) return Promise.resolve({ done: true as const, value: undefined as unknown as Uint8Array })
+      if (i >= chunks.length)
+        return Promise.resolve({ done: true as const, value: undefined as unknown as Uint8Array })
       return Promise.resolve({ done: false as const, value: chunks[i++]! })
     },
-    releaseLock() { /* test stub — no lock to release */ },
-    cancel(): Promise<void> { return Promise.resolve() },
+    releaseLock() {
+      /* test stub — no lock to release */
+    },
+    cancel(): Promise<void> {
+      return Promise.resolve()
+    },
     closed: Promise.resolve(undefined)
   } as unknown as ReadableStreamDefaultReader<Uint8Array>
 }

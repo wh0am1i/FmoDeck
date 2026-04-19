@@ -31,10 +31,7 @@ export function UpdateDialog(): React.JSX.Element | null {
   }, [])
 
   const open =
-    state === 'available' ||
-    state === 'downloading' ||
-    state === 'ready' ||
-    state === 'error'
+    state === 'available' || state === 'downloading' || state === 'ready' || state === 'error'
   if (!open) return null
 
   const title =
@@ -86,21 +83,15 @@ export function UpdateDialog(): React.JSX.Element | null {
                 style={{ width: `${Math.round(progress * 100)}%` }}
               />
             </div>
-            <div className="mt-1 text-muted-foreground">
-              {Math.round(progress * 100)}%
-            </div>
+            <div className="mt-1 text-muted-foreground">{Math.round(progress * 100)}%</div>
           </div>
         )}
 
         {state === 'ready' && (
-          <div className="hud-mono text-xs text-muted-foreground">
-            {t('updater.btnInstall')} ↓
-          </div>
+          <div className="hud-mono text-xs text-muted-foreground">{t('updater.btnInstall')} ↓</div>
         )}
 
-        {state === 'error' && (
-          <div className="hud-mono text-xs text-destructive">{error}</div>
-        )}
+        {state === 'error' && <div className="hud-mono text-xs text-destructive">{error}</div>}
 
         <DialogFooter>
           {state === 'available' && manifest && (

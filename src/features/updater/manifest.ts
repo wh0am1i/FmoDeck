@@ -1,8 +1,6 @@
 import type { LatestManifest } from './types'
 
-export type ParseResult =
-  | { ok: true; manifest: LatestManifest }
-  | { ok: false; reason: string }
+export type ParseResult = { ok: true; manifest: LatestManifest } | { ok: false; reason: string }
 
 /**
  * 严格解析。任何缺字段 / 类型错都拒。

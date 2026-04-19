@@ -16,8 +16,7 @@ export function useUpdateCheck(): void {
     if (!isAndroid()) return
     const baseUrl = import.meta.env.VITE_UPDATE_BASE_URL as string | undefined
     if (!baseUrl) return
-    const { autoUpdateCheck, lastUpdateCheckAt, setLastUpdateCheckAt } =
-      settingsStore.getState()
+    const { autoUpdateCheck, lastUpdateCheckAt, setLastUpdateCheckAt } = settingsStore.getState()
     if (!autoUpdateCheck) return
     if (lastUpdateCheckAt && Date.now() - lastUpdateCheckAt < DAY) return
 
