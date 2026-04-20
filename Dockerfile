@@ -6,12 +6,9 @@
 # BASE_PATH       静态资源部署路径，根域用 "/"，子路径用 "/fmodeck/"
 # LISTEN_PORT     容器内 nginx 监听端口；宿主机映射端口另行在
 #                 docker-compose.yml 或 `docker run -p` 指定
-# VITE_AMAP_KEY   高德 Web 服务 key（可选）；没配则 fallback 到
-#                 BigDataCloud 免 key 方案
 # =============================================================
 ARG BASE_PATH=/
 ARG LISTEN_PORT=80
-ARG VITE_AMAP_KEY=
 ARG NODE_VERSION=20
 ARG NGINX_VERSION=1.27
 
@@ -30,10 +27,7 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
 COPY . .
 
 ARG BASE_PATH
-ARG VITE_AMAP_KEY
-# Vite 在 build 阶段会把 import.meta.env.VITE_* 内联进产物 JS，
-# 所以必须在 RUN 命令里把它放进 env
-RUN VITE_AMAP_KEY="${VITE_AMAP_KEY}" pnpm exec vite build --base="${BASE_PATH}"
+RUN pnpm exec vite build --base="${BASE_PATH}"
 
 # -------------------------------------------------------------
 # Stage 2: nginx 托管静态文件

@@ -16,7 +16,7 @@ interface Props {
  * 把 Maidenhead 网格渲染成 "网格码 · 地名" 的可点击链接。
  * 点击打开 OpenStreetMap 对应位置。
  *
- * 地名由 Nominatim 反查并缓存到 localStorage；查询未完成时先显示
+ * 地名由 maidenmap 服务反查并缓存到 localStorage；查询未完成时先显示
  * 经纬度作为占位，查到后替换为地名。
  */
 export function GridLocation({ grid, className, emphasized = false }: Props) {

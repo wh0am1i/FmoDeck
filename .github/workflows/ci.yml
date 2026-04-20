@@ -10,8 +10,6 @@ jobs:
   check:
     name: Lint · Typecheck · Test · Build
     runs-on: ubuntu-latest
-    env:
-      VITE_AMAP_KEY: ${{ secrets.AMAP_KEY }}
     steps:
       - uses: actions/checkout@v5
 

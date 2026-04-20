@@ -13,7 +13,6 @@ jobs:
   build-android:
     runs-on: ubuntu-latest
     env:
-      VITE_AMAP_KEY: ${{ secrets.AMAP_KEY }}
       VITE_UPDATE_BASE_URL: ${{ secrets.VITE_UPDATE_BASE_URL }}
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
