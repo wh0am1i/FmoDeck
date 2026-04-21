@@ -1,8 +1,15 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { Star } from 'lucide-react'
 import { GridLocation } from '@/components/shared/grid-location'
-import { logsStore, selectMergedRows, type DisplayRow } from '@/features/logs/store'
+import {
+  logsStore,
+  selectMergedRows,
+  selectTodaysContactedBaseCalls,
+  type DisplayRow
+} from '@/features/logs/store'
+import { parseCallsignSsid } from '@/lib/utils/callsign'
 import { connectionStore } from '@/stores/connection'
 
 interface Top20Item {
@@ -55,6 +62,17 @@ export function Top20View() {
   const top20 = useMemo(() => aggregateTop20(merged), [merged])
   const total = merged.length
   const rawTotal = all.length + local.length
+  const todaysSet = useMemo(
+    () => selectTodaysContactedBaseCalls({ ...logsStore.getState(), all, local }),
+    [all, local]
+  )
+  const isContactedToday = (cs: string): boolean => {
+    try {
+      return todaysSet.has(parseCallsignSsid(cs).call.toUpperCase())
+    } catch {
+      return false
+    }
+  }
   const connectionStatus = connectionStore((s) => s.status)
   const navigate = useNavigate()
 
@@ -120,7 +138,15 @@ export function Top20View() {
                 <span className="w-8 flex-none text-right text-xs text-muted-foreground tabular-nums">
                   {String(i + 1).padStart(2, '0')}
                 </span>
-                <span className="flex-1 truncate text-sm text-primary">{item.callsign}</span>
+                <span className="flex flex-1 items-center gap-1.5 truncate text-sm text-primary">
+                  {item.callsign}
+                  {isContactedToday(item.callsign) && (
+                    <Star
+                      className="h-3 w-3 flex-none fill-yellow-400 text-yellow-400"
+                      aria-label={t('common.contactedToday', { defaultValue: '今日已联' })}
+                    />
+                  )}
+                </span>
                 <span className="flex flex-none items-baseline gap-1 text-sm text-primary">
                   <span className="tabular-nums">{item.count}</span>
                   <span className="text-xs text-muted-foreground">{t('top20.timesUnit')}</span>

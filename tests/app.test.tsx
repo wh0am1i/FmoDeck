@@ -34,6 +34,25 @@ describe('App 烟雾测试', () => {
     expect(screen.getByText(/排行榜 TOP 20/)).toBeInTheDocument()
   })
 
+  it('Nav 包含 SSTV tab', () => {
+    render(<App />)
+    const nav = screen.getByRole('navigation', { name: '主导航' })
+    expect(nav).toHaveTextContent('SSTV')
+  })
+
+  it('点击 SSTV tab 切换到 SSTV 视图', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('link', { name: 'SSTV' }))
+    // SSTV 视图标题 (<h2>)
+    expect(screen.getByRole('heading', { name: 'SSTV' })).toBeInTheDocument()
+    // 测试环境无 FMO 连接 / 无音频,应显示 offline 提示之一
+    // 使用 regex 匹配任一可能文案
+    expect(
+      screen.getByText(/未连接 FMO|音频未开启|音频连接中/)
+    ).toBeInTheDocument()
+  })
+
   it('SpeakingBar 占位渲染', () => {
     render(<App />)
     expect(screen.getByLabelText('讲话状态栏')).toBeInTheDocument()

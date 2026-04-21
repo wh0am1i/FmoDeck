@@ -30,6 +30,35 @@ function isSameOperator(a: string, b: string): boolean {
   }
 }
 
+/**
+ * 浏览器策略:AudioContext 必须在用户手势回调里才能从 'suspended' 变为 'running'。
+ * 页面刷新时 audio.enabled 持久化 true 会触发自动 engine.start(),但没有用户手势,
+ * ctx 会停在 suspended 状态,audio 永远不会真正播放。
+ *
+ * 解法:在 useFmoAudio 生命周期内持续监听任意用户交互,每次交互动态查找当前
+ * engine 的 ctx 并调用 resume()。不依赖 engine.start() resolve,因为某些边缘
+ * 情况下 ctx.resume() 的 promise 可能不 resolve(老浏览器策略)。
+ *
+ * 返回 cleanup 函数,hook 卸载时调用。
+ */
+function installGlobalAudioResumeListener(): () => void {
+  const events: (keyof DocumentEventMap)[] = ['click', 'keydown', 'touchstart', 'pointerdown']
+  const tryResume = () => {
+    const engine = engineRefStore.getState().engine
+    const ctx = engine?.getAnalyser()?.context as AudioContext | undefined
+    if (ctx?.state !== 'suspended') return
+    void ctx.resume().catch(() => {
+      // 忽略,下次交互再试
+    })
+  }
+  for (const e of events) {
+    document.addEventListener(e, tryResume, { passive: true })
+  }
+  return () => {
+    for (const e of events) document.removeEventListener(e, tryResume)
+  }
+}
+
 export function useFmoAudio(): void {
   const engineRef = useRef<AudioEngine | null>(null)
 
@@ -61,12 +90,16 @@ export function useFmoAudio(): void {
         }
       })
       engineRef.current = engine
+      // 立即注册到共享 store,不等 start() resolve。
+      // 理由:如果 ctx.resume() 在 suspended 状态卡住(浏览器自动播放策略),
+      // start() 的 promise 可能一直 pending,那时 setEngine 在 .then() 里
+      // 永远不执行,auto-resume 监听(位于 installGlobalAudioResumeListener)
+      // 就找不到 engine,用户点击也没用。提前注册让监听能立即看到 engine。
+      // engine.getAnalyser() 在 ensureContext 完成前会返回 null,消费方已有守卫。
+      engineRefStore.getState().setEngine(engine)
       engine.setVolume(volume)
       engine.setMuted(muted || isSelfSpeaking())
-      void engine.start().then(() => {
-        // start() 里 ensureContext 后 analyser 才存在，推到共享 store
-        engineRefStore.getState().setEngine(engine)
-      })
+      engine.start() // 同步:ensureContext + connect。AudioContext 可能仍 suspended,listener 会兜底 resume
     }
 
     const isSelfSpeaking = (): boolean => {
@@ -79,6 +112,10 @@ export function useFmoAudio(): void {
       const userMuted = audioStore.getState().muted
       engineRef.current?.setMuted(userMuted || isSelfSpeaking())
     }
+
+    // 全局 user-gesture 监听,hook 挂载期间始终在。不依赖 engine.start() resolve,
+    // 因为某些情况下(浏览器策略)ctx.resume() promise 可能一直 pending。
+    const uninstallResumeListener = installGlobalAudioResumeListener()
 
     sync()
 
@@ -116,6 +153,7 @@ export function useFmoAudio(): void {
       unsubConn()
       unsubSettings()
       unsubSpeaking()
+      uninstallResumeListener()
       engineRef.current?.stop()
       engineRef.current = null
       engineRefStore.getState().setEngine(null)

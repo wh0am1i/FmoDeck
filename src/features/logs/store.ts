@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { parseAdif } from '@/lib/adif/parser'
 import { adifRecordsToLocal } from '@/lib/adif/import'
 import { clearAllLocalQsos, insertLocalQsos, loadAllLocalQsos } from '@/lib/db/qso-repo'
+import { parseCallsignSsid } from '@/lib/utils/callsign'
 import type { QsoService } from '@/lib/qso-service/client'
 import type { SyncMode } from '@/stores/settings'
 import type { LocalQso, QsoSummary } from '@/types/qso'
@@ -178,6 +179,29 @@ export function selectMergedRows(s: LogsState): DisplayRow[] {
     })
   }
   return rows.sort((a, b) => b.timestamp - a.timestamp)
+}
+
+/**
+ * 本地时区今天(00:00 起)通联过的**基号**集合(去 SSID,大写)。
+ * 合并 server (s.all) 和 local ADIF 导入两路数据;
+ * 供 UI 给呼号加"今日已联"标记(⭐)。
+ */
+export function selectTodaysContactedBaseCalls(s: LogsState): Set<string> {
+  const cutoff = startOfLocalToday()
+  const out = new Set<string>()
+  const add = (callsign: string, ts: number): void => {
+    if (ts < cutoff) return
+    if (!callsign) return
+    try {
+      const base = parseCallsignSsid(callsign).call.toUpperCase()
+      if (base) out.add(base)
+    } catch {
+      // 无效呼号,忽略
+    }
+  }
+  for (const q of s.all) add(q.toCallsign, q.timestamp)
+  for (const q of s.local) add(q.toCallsign, q.timestamp)
+  return out
 }
 
 /**

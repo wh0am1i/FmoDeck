@@ -14,6 +14,7 @@ import { useStationSync } from '@/hooks/useStationSync'
 import { useSyncPolicy } from '@/hooks/useSyncPolicy'
 import { UpdateDialog } from '@/features/updater/update-dialog'
 import { useUpdateCheck } from '@/hooks/useUpdateCheck'
+import { SstvSessionRunner } from '@/features/sstv/session-runner'
 
 export function App() {
   useFmoSync()
@@ -33,6 +34,7 @@ export function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
+        <SstvSessionRunner />
         <AppShell>
           <AppRoutes />
         </AppShell>

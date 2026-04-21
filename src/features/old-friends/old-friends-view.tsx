@@ -4,9 +4,15 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { GridLocation } from '@/components/shared/grid-location'
-import { logsStore, selectMergedRows, type DisplayRow } from '@/features/logs/store'
+import {
+  logsStore,
+  selectMergedRows,
+  selectTodaysContactedBaseCalls,
+  type DisplayRow
+} from '@/features/logs/store'
+import { parseCallsignSsid } from '@/lib/utils/callsign'
 import { connectionStore } from '@/stores/connection'
-import { ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star, X } from 'lucide-react'
 
 interface FriendRow {
   callsign: string
@@ -73,6 +79,17 @@ export function OldFriendsView() {
     if (!q) return friends
     return friends.filter((f) => f.callsign.toUpperCase().includes(q))
   }, [friends, filter])
+  const todaysSet = useMemo(
+    () => selectTodaysContactedBaseCalls({ ...logsStore.getState(), all, local }),
+    [all, local]
+  )
+  const isContactedToday = (cs: string): boolean => {
+    try {
+      return todaysSet.has(parseCallsignSsid(cs).call.toUpperCase())
+    } catch {
+      return false
+    }
+  }
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages - 1)
@@ -163,7 +180,15 @@ export function OldFriendsView() {
                     {currentPage * PAGE_SIZE + i + 1}
                   </td>
                   <td className="px-3 py-2 text-primary">
-                    <span>{f.callsign}</span>
+                    <span className="inline-flex items-center gap-1.5">
+                      {f.callsign}
+                      {isContactedToday(f.callsign) && (
+                        <Star
+                          className="h-3 w-3 fill-yellow-400 text-yellow-400"
+                          aria-label={t('common.contactedToday', { defaultValue: '今日已联' })}
+                        />
+                      )}
+                    </span>
                     {f.grid && (
                       <div className="mt-0.5 text-xs text-muted-foreground sm:hidden">
                         <GridLocation grid={f.grid} />
