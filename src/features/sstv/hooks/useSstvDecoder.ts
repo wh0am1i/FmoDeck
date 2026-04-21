@@ -5,20 +5,22 @@ import { PcmTap } from '@/lib/sstv/pcm-tap'
 import { engineRefStore } from '@/features/audio/engine-store'
 import { sstvStore } from '../store'
 import { sstvRepo } from '@/lib/db/sstv-repo'
+import { settingsStore } from '@/stores/settings'
+import { notify, notificationsSupported } from '@/lib/notifications'
+import { toast } from 'sonner'
 import type { Mode } from '@/lib/sstv/modes/types'
 
-export interface UseSstvDecoderOptions {
-  canvasRef: React.RefObject<HTMLCanvasElement | null>
-}
-
 /**
- * 驱动 SstvDecoder:
- * - mount 时轮询 engineRefStore.engine?.getAnalyser(),就绪后挂 tap + rAF
- * - onRow → ctx.putImageData 渐进画 canvas
- * - onDone → canvas.toBlob + 缩略图 → sstvRepo.add
- * - unmount 时 cancelAnimationFrame,decoder.reset,store.reset
+ * SSTV 解码 session。无参数;驱动 analyser → PcmTap → SstvDecoder → sstvStore + IDB。
+ *
+ * 完成时:
+ *  - toast 提示(应用内)
+ *  - 如果 settings.notificationsEnabled 则 desktop Notification
+ *  - sstvStore.unreadCount++
+ *
+ * 调用方负责控制 mount/unmount 生命周期(见 <SstvSessionRunner />)。
  */
-export function useSstvDecoder({ canvasRef }: UseSstvDecoderOptions): void {
+export function useSstvDecoder(): void {
   const decoderRef = useRef<SstvDecoder | null>(null)
   const tapRef = useRef<PcmTap | null>(null)
 
@@ -32,33 +34,19 @@ export function useSstvDecoder({ canvasRef }: UseSstvDecoderOptions): void {
       const analyser = engine?.getAnalyser()
       if (!analyser || !engine) return false
 
-      const ctx = canvasRef.current?.getContext('2d')
-      if (!ctx) return false
-
       const sampleRate = (analyser.context as AudioContext).sampleRate
       tapRef.current = new PcmTap(Math.round(sampleRate * 3))
       decoderRef.current = new SstvDecoder(sampleRate, {
         onStart: (mode) => {
-          if (!canvasRef.current) return
-          resizeCanvas(canvasRef.current, mode)
-          ctx.fillStyle = '#000'
-          ctx.fillRect(0, 0, mode.width, mode.height)
-          sstvStore.getState().setStatus('decoding')
-          sstvStore.getState().setActiveMode(mode.name)
-          sstvStore.getState().setProgress(0)
+          sstvStore.getState().onDecoderStart(mode)
         },
         onRow: (row, rgba, mode) => {
-          const imgData = new ImageData(rgba, mode.width, 1)
-          ctx.putImageData(imgData, 0, row)
-          sstvStore.getState().setProgress((row + 1) / mode.height)
+          sstvStore.getState().onDecoderRow(row, rgba, mode)
         },
-        onDone: async ({ mode }) => {
-          sstvStore.getState().setStatus('done')
-          sstvStore.getState().setProgress(1)
+        onDone: async ({ mode, rgba }) => {
+          sstvStore.getState().onDecoderDone(mode)
           try {
-            const canvas = canvasRef.current
-            if (!canvas) return
-            const { imageBlob, thumbnailBlob } = await canvasToBlobs(canvas, mode)
+            const { imageBlob, thumbnailBlob } = await rgbaToBlobs(rgba, mode)
             await sstvRepo.add({
               mode: mode.name,
               width: mode.width,
@@ -66,30 +54,24 @@ export function useSstvDecoder({ canvasRef }: UseSstvDecoderOptions): void {
               imageBlob,
               thumbnailBlob
             })
+            sstvStore.getState().incrementUnread()
+            toast.success(`SSTV 接收完成:${mode.displayName}`, {
+              description: '已存入历史'
+            })
+            const settings = settingsStore.getState()
+            if (settings.notificationsEnabled && notificationsSupported()) {
+              notify('SSTV 图像已接收', `${mode.displayName}`)
+            }
           } catch (err) {
             sstvStore.getState().setError(err instanceof Error ? err.message : String(err))
           }
-          setTimeout(() => {
-            if (!stopped) {
-              sstvStore.getState().setStatus('idle')
-              sstvStore.getState().setActiveMode(null)
-              sstvStore.getState().setProgress(0)
-            }
-          }, 2000)
         },
         onTimeout: () => {
-          sstvStore.getState().setStatus('timeout')
-          setTimeout(() => {
-            if (!stopped) {
-              sstvStore.getState().setStatus('idle')
-              sstvStore.getState().setActiveMode(null)
-              sstvStore.getState().setProgress(0)
-            }
-          }, 1500)
+          sstvStore.getState().onDecoderTimeout()
         }
       })
 
-      sstvStore.getState().setStatus('waiting')
+      sstvStore.getState().setWaiting()
 
       const loop = () => {
         if (stopped) return
@@ -120,20 +102,24 @@ export function useSstvDecoder({ canvasRef }: UseSstvDecoderOptions): void {
       decoderRef.current?.reset()
       decoderRef.current = null
       tapRef.current = null
-      sstvStore.getState().reset()
+      sstvStore.getState().setIdle()
     }
-  }, [canvasRef])
+  }, [])
 }
 
-function resizeCanvas(canvas: HTMLCanvasElement, mode: Mode) {
-  canvas.width = mode.width
-  canvas.height = mode.height
-}
-
-async function canvasToBlobs(
-  canvas: HTMLCanvasElement,
+async function rgbaToBlobs(
+  rgba: Uint8ClampedArray,
   mode: Mode
 ): Promise<{ imageBlob: Blob; thumbnailBlob: Blob }> {
+  // rgba → offscreen canvas → png blob
+  const canvas = document.createElement('canvas')
+  canvas.width = mode.width
+  canvas.height = mode.height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('2D context unavailable')
+  const imageData = new ImageData(rgba, mode.width, mode.height)
+  ctx.putImageData(imageData, 0, 0)
+
   const imageBlob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob null'))), 'image/png')
   })
@@ -144,9 +130,7 @@ async function canvasToBlobs(
   off.width = thumbW
   off.height = thumbH
   const octx = off.getContext('2d')
-  if (!octx) {
-    return { imageBlob, thumbnailBlob: imageBlob }
-  }
+  if (!octx) return { imageBlob, thumbnailBlob: imageBlob }
   octx.imageSmoothingEnabled = true
   octx.drawImage(canvas, 0, 0, thumbW, thumbH)
   const thumbnailBlob = await new Promise<Blob>((resolve) => {

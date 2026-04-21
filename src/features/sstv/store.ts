@@ -1,33 +1,111 @@
 // src/features/sstv/store.ts
 import { create } from 'zustand'
 import type { SstvMode } from '@/types/sstv'
+import type { Mode } from '@/lib/sstv/modes/types'
 
 type SstvStatus = 'idle' | 'waiting' | 'decoding' | 'done' | 'timeout'
 
 export interface SstvState {
   status: SstvStatus
-  /** 当前正在解码的模式;仅 status='decoding' 有效。 */
   activeMode: SstvMode | null
   /** 解码进度 0..1;仅 decoding 有效。 */
   progress: number
-  /** 最近一次非致命错误(IDB 写失败等),给 UI 提示用。 */
+  /** 当前帧 rgba 缓冲;decoding/done 时有效,否则 null。SstvCanvas 订阅此来画图。 */
+  currentRgba: Uint8ClampedArray | null
+  /** 当前帧的宽/高。 */
+  currentWidth: number
+  currentHeight: number
+  /** 当前已解到第几行;-1 表示还没开始或已清空(SstvCanvas 判断增量画)。 */
+  lastRow: number
+  /** 最近一次完整解码的时间戳(ms)。 */
+  lastDoneAt: number | null
+  /** 后台模式下产生的未读图数量。 */
+  unreadCount: number
   lastError: string | null
 
-  setStatus: (s: SstvStatus) => void
-  setActiveMode: (m: SstvMode | null) => void
-  setProgress: (p: number) => void
+  /** 内部方法,decoder session 调用 */
+  onDecoderStart: (mode: Mode) => void
+  onDecoderRow: (row: number, rgba: Uint8ClampedArray, mode: Mode) => void
+  onDecoderDone: (mode: Mode) => void
+  onDecoderTimeout: () => void
+  setWaiting: () => void
+  setIdle: () => void
   setError: (e: string | null) => void
-  reset: () => void
+
+  /** 公开方法 */
+  incrementUnread: () => void
+  markAllRead: () => void
 }
 
-export const sstvStore = create<SstvState>((set) => ({
+export const sstvStore = create<SstvState>((set, get) => ({
   status: 'idle',
   activeMode: null,
   progress: 0,
+  currentRgba: null,
+  currentWidth: 0,
+  currentHeight: 0,
+  lastRow: -1,
+  lastDoneAt: null,
+  unreadCount: 0,
   lastError: null,
-  setStatus: (status) => set({ status }),
-  setActiveMode: (activeMode) => set({ activeMode }),
-  setProgress: (progress) => set({ progress }),
+
+  onDecoderStart: (mode) => {
+    // 分配新的 rgba buffer
+    const buf = new Uint8ClampedArray(mode.width * mode.height * 4)
+    set({
+      status: 'decoding',
+      activeMode: mode.name,
+      progress: 0,
+      currentRgba: buf,
+      currentWidth: mode.width,
+      currentHeight: mode.height,
+      lastRow: -1
+    })
+  },
+  onDecoderRow: (row, rgba, mode) => {
+    const buf = get().currentRgba
+    if (!buf || buf.length !== mode.width * mode.height * 4) return
+    // 写入对应行
+    buf.set(rgba, row * mode.width * 4)
+    set({
+      progress: (row + 1) / mode.height,
+      lastRow: row
+    })
+  },
+  onDecoderDone: (mode) => {
+    set({
+      status: 'done',
+      progress: 1,
+      lastDoneAt: Date.now(),
+      activeMode: mode.name
+    })
+    // 注意:currentRgba 保留不清空,canvas 需要
+  },
+  onDecoderTimeout: () => {
+    set({
+      status: 'timeout',
+      currentRgba: null,
+      lastRow: -1
+    })
+    // 1.5s 后自动回 waiting(如果 decoder 还在监听)
+    setTimeout(() => {
+      const st = get()
+      if (st.status === 'timeout') {
+        set({ status: 'waiting', activeMode: null, progress: 0 })
+      }
+    }, 1500)
+  },
+  setWaiting: () => set({ status: 'waiting' }),
+  setIdle: () =>
+    set({
+      status: 'idle',
+      activeMode: null,
+      progress: 0,
+      currentRgba: null,
+      lastRow: -1
+    }),
   setError: (lastError) => set({ lastError }),
-  reset: () => set({ status: 'idle', activeMode: null, progress: 0, lastError: null })
+
+  incrementUnread: () => set((s) => ({ unreadCount: s.unreadCount + 1 })),
+  markAllRead: () => set({ unreadCount: 0 })
 }))

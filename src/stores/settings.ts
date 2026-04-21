@@ -30,6 +30,8 @@ export interface SettingsState {
   hudScanlineOpacity: number
   /** 桌面通知总开关（除此之外还要浏览器授权）。 */
   notificationsEnabled: boolean
+  /** SSTV 后台监听：离开 /sstv tab 时也继续解码。 */
+  backgroundSstv: boolean
   /** 字号缩放。normal = 16px / large = 18px（驱动根 font-size）。 */
   fontSize: 'normal' | 'large'
   /** 是否在启动时自动检查更新。 */
@@ -46,6 +48,7 @@ export interface SettingsState {
   setHudIntensity: (v: number) => void
   setHudScanlineOpacity: (v: number) => void
   setNotificationsEnabled: (v: boolean) => void
+  setBackgroundSstv: (v: boolean) => void
   setFontSize: (v: 'normal' | 'large') => void
   setAutoUpdateCheck: (v: boolean) => void
   setLastUpdateCheckAt: (v: number | null) => void
@@ -60,6 +63,7 @@ type PersistedFields = Pick<
   | 'hudIntensity'
   | 'hudScanlineOpacity'
   | 'notificationsEnabled'
+  | 'backgroundSstv'
   | 'fontSize'
   | 'autoUpdateCheck'
   | 'lastUpdateCheckAt'
@@ -73,6 +77,7 @@ const INITIAL: PersistedFields = {
   hudIntensity: 0.15,
   hudScanlineOpacity: 0.05,
   notificationsEnabled: false,
+  backgroundSstv: false,
   fontSize: 'normal',
   autoUpdateCheck: true,
   lastUpdateCheckAt: null
@@ -118,6 +123,8 @@ export const settingsStore = create<SettingsState>()(
 
       setNotificationsEnabled: (v) => set({ notificationsEnabled: v }),
 
+      setBackgroundSstv: (v) => set({ backgroundSstv: v }),
+
       setFontSize: (v) => set({ fontSize: v }),
 
       setAutoUpdateCheck: (v) => set({ autoUpdateCheck: v }),
@@ -134,6 +141,7 @@ export const settingsStore = create<SettingsState>()(
         hudIntensity: s.hudIntensity,
         hudScanlineOpacity: s.hudScanlineOpacity,
         notificationsEnabled: s.notificationsEnabled,
+        backgroundSstv: s.backgroundSstv,
         fontSize: s.fontSize,
         autoUpdateCheck: s.autoUpdateCheck,
         lastUpdateCheckAt: s.lastUpdateCheckAt
