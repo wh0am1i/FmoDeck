@@ -31,7 +31,7 @@ export function SstvHistory() {
   const [deleteSelOpen, setDeleteSelOpen] = useState(false)
   const [deletingSel, setDeletingSel] = useState(false)
   const [totalCount, setTotalCount] = useState(0)
-  const status = sstvStore((s) => s.status)
+  const savedCount = sstvStore((s) => s.savedCount)
 
   const loadFirst = useCallback(async () => {
     setLoading(true)
@@ -64,8 +64,8 @@ export function SstvHistory() {
   }, [loadFirst])
 
   useEffect(() => {
-    if (status === 'done') void loadFirst()
-  }, [status, loadFirst])
+    void loadFirst()
+  }, [savedCount, loadFirst])
 
   const filtered = filter === 'all' ? images : images.filter((img) => img.mode === filter)
 

@@ -44,6 +44,10 @@ export interface SstvState {
   setIdle: () => void
   setError: (e: string | null) => void
 
+  /** 每次成功写 IDB 后 +1,history 监听此字段重新加载 */
+  savedCount: number
+  incrementSavedCount: () => void
+
   /** 公开方法 */
   incrementUnread: () => void
   markAllRead: () => void
@@ -59,6 +63,7 @@ export const sstvStore = create<SstvState>((set, get) => ({
   lastRow: -1,
   lastDoneAt: null,
   unreadCount: 0,
+  savedCount: 0,
   lastError: null,
   recentDecodes: [],
 
@@ -135,6 +140,7 @@ export const sstvStore = create<SstvState>((set, get) => ({
     }),
   setError: (lastError) => set({ lastError }),
 
+  incrementSavedCount: () => set((s) => ({ savedCount: s.savedCount + 1 })),
   incrementUnread: () => set((s) => ({ unreadCount: s.unreadCount + 1 })),
   markAllRead: () => set({ unreadCount: 0 })
 }))

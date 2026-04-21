@@ -54,6 +54,7 @@ export function useSstvDecoder(): void {
               imageBlob,
               thumbnailBlob
             })
+            sstvStore.getState().incrementSavedCount()
             sstvStore.getState().incrementUnread()
             toast.success(`SSTV 接收完成:${mode.displayName}`, {
               description: '已存入历史'
