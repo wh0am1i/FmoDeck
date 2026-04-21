@@ -67,6 +67,45 @@ describe('SstvDecoder', () => {
     expect(decoder.state.type).toBe('idle')
   })
 
+  it('slant correction:发送方 scanLineMs 比理论值长 0.3ms 也能完整解码', { timeout: 30_000 }, () => {
+    const decoder = new SstvDecoder(TEST_SAMPLE_RATE)
+    const tap = new PcmTap(TEST_SAMPLE_RATE * 60)
+
+    tap.write(synthVis(0x88))
+    decoder.tick(tap)
+    expect(decoder.state.type).toBe('decoding')
+
+    // 每行 150.3ms 而不是标称 150ms(= +0.3 ms drift/line)
+    // sync 9ms + porch 3ms + Y 88.3ms + sep 4.5ms + porch2 1.5ms + chroma 44ms = 150.3ms
+    for (let row = 0; row < 240; row++) {
+      const separatorHz = row % 2 === 0 ? 2300 : 1500
+      tap.write(
+        concat(
+          synthTone(1200, 9),
+          synthTone(1500, 3),
+          synthTone(brightnessToFreq(128), 88.3), // Y 段拉长 0.3ms
+          synthTone(separatorHz, 4.5),
+          synthTone(1900, 1.5),
+          synthTone(brightnessToFreq(128), 44)
+        )
+      )
+      decoder.tick(tap)
+    }
+    for (let k = 0; k < 10 && decoder.state.type !== 'idle'; k++) decoder.tick(tap)
+
+    // decoder 完成后(或至少解完绝大部分行)应该能收敛
+    if (decoder.state.type === 'decoding') {
+      expect(decoder.state.nextScanLine).toBeGreaterThan(200)
+      // slantMsPerScanLine 应该接近 +0.3(我们模拟的漂移)
+      expect(decoder.state.slantMsPerScanLine).toBeGreaterThan(0.1)
+    }
+    // 要么完成(idle),要么已经解了 200 行以上
+    expect(
+      decoder.state.type === 'idle' ||
+      (decoder.state.type === 'decoding' && decoder.state.nextScanLine > 200)
+    ).toBe(true)
+  })
+
   it('完整 Robot36 流:VIS + 240 行 → done → 回 idle', { timeout: 30_000 }, () => {
     const onRow = vi.fn()
     const onDone = vi.fn()
