@@ -17,7 +17,7 @@ const CHROMA_WIDTH = 160 // 4:2:0 色差宽度减半
 /**
  * 在 [startMs, endMs] 时间窗内取 `count` 个等间距像素的频率,再映射到亮度。
  *
- * 窗口策略:每像素的 Goertzel 窗口取 2× 像素宽度并保底 96 样本,
+ * 窗口策略:每像素的 Goertzel 窗口取 2× 像素宽度并保底 48 样本,
  * 相邻像素有 50% 重叠,抑制短窗能量估计噪声;在纯色 patch 测试的容差(±20)里完全吃得下。
  */
 function sampleSection(
@@ -29,10 +29,10 @@ function sampleSection(
 ): Uint8ClampedArray {
   const out = new Uint8ClampedArray(count)
   const perPixelMs = (endMs - startMs) / count
-  // 窗口保底 96 样本(覆盖 ~3 个 1500Hz 周期,避免短窗 Goertzel 泄漏)
-  // 代价:相邻像素 overlap 增大,轻微模糊;对文字/logo 类公告图可接受
+  // 窗口保底 48 样本(覆盖 ~1.5 个 1500Hz 周期)。Robot36 每像素 ~13 样本,
+  // 窗口覆盖 ~3-4 个邻居,平衡短窗能量泄漏和横向边缘平滑。
   const windowSamples = Math.max(
-    96,
+    48,
     Math.round((perPixelMs * 2 * sampleRate) / 1000)
   )
   for (let i = 0; i < count; i++) {
