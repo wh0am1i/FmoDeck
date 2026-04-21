@@ -90,52 +90,50 @@ export function SstvCanvas({ className }: { className?: string }) {
   const stackBelow = status === 'done' ? recentDecodes.slice(1) : recentDecodes
 
   return (
-    <div className={cn('flex flex-col gap-3', className)}>
-      <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto pr-1">
-        {/* Live canvas */}
-        <div className="flex flex-col items-center gap-2">
-          <canvas
-            ref={canvasRef}
-            width={320}
-            height={240}
-            style={{
-              imageRendering: 'pixelated',
-              width: '100%',
-              maxWidth: 640,
-              height: 'auto'
-            }}
-            className="rounded-sm border border-primary/30 bg-black"
-          />
-          <div className="hud-mono text-xs text-muted-foreground">
-            {status === 'idle' && '等待音频连接…'}
-            {status === 'waiting' && '监听中'}
-            {status === 'decoding' && activeDisplay && (
-              <span>
-                {activeDisplay} · {Math.round(progress * 100)}%
-              </span>
-            )}
-            {status === 'done' && activeDisplay && lastDoneAt !== null && (
-              <span>
-                最近接收:{activeDisplay} · {relativeTime(lastDoneAt)}
-              </span>
-            )}
-            {status === 'timeout' && '超时,已丢弃'}
-          </div>
-          {(status === 'waiting' || status === 'idle') && (
-            <div className="w-full max-w-[240px]">
-              <SpectrumWaveform height={32} />
-            </div>
+    <div className={cn('flex flex-col gap-4', className)}>
+      {/* Live canvas */}
+      <div className="flex flex-col items-center gap-2">
+        <canvas
+          ref={canvasRef}
+          width={320}
+          height={240}
+          style={{
+            imageRendering: 'pixelated',
+            width: '100%',
+            maxWidth: 640,
+            height: 'auto'
+          }}
+          className="rounded-sm border border-primary/30 bg-black"
+        />
+        <div className="hud-mono text-xs text-muted-foreground">
+          {status === 'idle' && '等待音频连接…'}
+          {status === 'waiting' && '监听中'}
+          {status === 'decoding' && activeDisplay && (
+            <span>
+              {activeDisplay} · {Math.round(progress * 100)}%
+            </span>
           )}
-          {lastError && (
-            <div className="hud-mono text-xs text-destructive">存档失败:{lastError}</div>
+          {status === 'done' && activeDisplay && lastDoneAt !== null && (
+            <span>
+              最近接收:{activeDisplay} · {relativeTime(lastDoneAt)}
+            </span>
           )}
+          {status === 'timeout' && '超时,已丢弃'}
         </div>
-
-        {/* 最近完成帧堆栈(live 之外) */}
-        {stackBelow.map((entry) => (
-          <RecentFrameCard key={entry.id} entry={entry} />
-        ))}
+        {(status === 'waiting' || status === 'idle') && (
+          <div className="w-full max-w-[240px]">
+            <SpectrumWaveform height={32} />
+          </div>
+        )}
+        {lastError && (
+          <div className="hud-mono text-xs text-destructive">存档失败:{lastError}</div>
+        )}
       </div>
+
+      {/* 最近完成帧堆栈(live 之外) */}
+      {stackBelow.map((entry) => (
+        <RecentFrameCard key={entry.id} entry={entry} />
+      ))}
     </div>
   )
 }
