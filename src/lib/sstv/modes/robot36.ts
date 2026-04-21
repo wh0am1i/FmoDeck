@@ -1,6 +1,6 @@
 // src/lib/sstv/modes/robot36.ts
 import type { Mode } from './types'
-import { estimateFreq, freqToBrightness } from '../dsp'
+import { freqToBrightness, instantFreq, toAnalytic } from '../dsp'
 
 // 各段耗时(ms),和规范一致
 const SYNC_MS = 9
@@ -15,13 +15,14 @@ const WIDTH = 320
 const CHROMA_WIDTH = 160 // 4:2:0 色差宽度减半
 
 /**
- * 在 [startMs, endMs] 时间窗内取 `count` 个等间距像素的频率,再映射到亮度。
+ * FM 瞬时频率解调:在 [startMs, endMs] 时段内,把 `freq` 数组按 count 个等间距像素
+ * 切片,每个像素取对应小窗(2× 像素宽,最低 4 样本)的均值映射到亮度。
  *
- * 窗口策略:每像素的 Goertzel 窗口取 2× 像素宽度并保底 48 样本,
- * 相邻像素有 50% 重叠,抑制短窗能量估计噪声;在纯色 patch 测试的容差(±20)里完全吃得下。
+ * 不再需要 Goertzel 窗口保底,因为 instantFreq 已经是 sample-level 精度,
+ * 小窗平均只是为了抑制噪声,不影响频率准确性。
  */
 function sampleSection(
-  samples: Float32Array,
+  freq: Float32Array,
   sampleRate: number,
   startMs: number,
   endMs: number,
@@ -29,24 +30,20 @@ function sampleSection(
 ): Uint8ClampedArray {
   const out = new Uint8ClampedArray(count)
   const perPixelMs = (endMs - startMs) / count
-  // 窗口保底 48 样本(覆盖 ~1.5 个 1500Hz 周期)。Robot36 每像素 ~13 样本,
-  // 窗口覆盖 ~3-4 个邻居,平衡短窗能量泄漏和横向边缘平滑。
-  const windowSamples = Math.max(
-    48,
-    Math.round((perPixelMs * 2 * sampleRate) / 1000)
-  )
+  const perPixelSamples = Math.max(1, Math.round((perPixelMs * sampleRate) / 1000))
+  const windowSamples = Math.max(4, perPixelSamples) // 小窗平均,抑制样本级噪声
   for (let i = 0; i < count; i++) {
     const centerMs = startMs + perPixelMs * (i + 0.5)
     const centerIdx = Math.round((centerMs * sampleRate) / 1000)
     const startIdx = Math.max(0, centerIdx - Math.floor(windowSamples / 2))
-    const end = Math.min(samples.length, startIdx + windowSamples)
-    if (end - startIdx < 8) {
+    const end = Math.min(freq.length, startIdx + windowSamples)
+    if (end <= startIdx) {
       out[i] = 0
       continue
     }
-    const win = samples.subarray(startIdx, end)
-    const f = estimateFreq(win, sampleRate, 1500, 2300)
-    out[i] = freqToBrightness(f)
+    let sum = 0
+    for (let k = startIdx; k < end; k++) sum += freq[k] ?? 0
+    out[i] = freqToBrightness(sum / (end - startIdx))
   }
   return out
 }
@@ -68,7 +65,9 @@ function clamp(v: number): number {
 /**
  * Robot36:每行 150ms,每行携带 Y + 一个色差(偶行 R-Y,奇行 B-Y)。
  * 相邻两行共享色差:输出 RGBA 时,每两行用同一组 Cr/Cb(4:2:0)。
- * 简化版:仅用本行色差,相当于每像素都带色偏但不与相邻行混合。
+ *
+ * 解调链:samples → FM 相位解调(toAnalytic + instantFreq)→ 瞬时频率序列 →
+ *   按时间窗切片、小窗平均 → freqToBrightness。
  */
 export const robot36: Mode = {
   name: 'robot36',
@@ -79,13 +78,17 @@ export const robot36: Mode = {
   lineMs: LINE_MS,
 
   decodeLine(samples, row, state, sampleRate): Uint8ClampedArray {
+    // 整行只做一次 FM 解调
+    const { i, q } = toAnalytic(samples, sampleRate)
+    const freq = instantFreq(i, q, sampleRate)
+
     const yStart = SYNC_MS + PORCH1_MS
     const yEnd = yStart + Y_MS
     const chromaStart = yEnd + SEPARATOR_MS + PORCH2_MS
     const chromaEnd = chromaStart + CHROMA_MS
 
-    const yLine = sampleSection(samples, sampleRate, yStart, yEnd, WIDTH)
-    const chroma = sampleSection(samples, sampleRate, chromaStart, chromaEnd, CHROMA_WIDTH)
+    const yLine = sampleSection(freq, sampleRate, yStart, yEnd, WIDTH)
+    const chroma = sampleSection(freq, sampleRate, chromaStart, chromaEnd, CHROMA_WIDTH)
 
     // 跨行状态:偶行存 Cr,奇行存 Cb
     const s = state as { cr?: Uint8ClampedArray; cb?: Uint8ClampedArray }
@@ -99,7 +102,7 @@ export const robot36: Mode = {
 
     const rgba = new Uint8ClampedArray(WIDTH * 4)
     for (let x = 0; x < WIDTH; x++) {
-      const ci = x >> 1 // 4:2:0,两个像素共享一个色差
+      const ci = x >> 1
       const [r, g, b] = yuvToRgb(yLine[x]!, cb[ci] ?? 128, cr[ci] ?? 128)
       rgba[x * 4 + 0] = r
       rgba[x * 4 + 1] = g

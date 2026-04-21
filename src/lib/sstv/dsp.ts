@@ -74,3 +74,94 @@ export function freqToBrightness(freqHz: number): number {
   const clamped = Math.max(1500, Math.min(2300, freqHz))
   return Math.round(((clamped - 1500) / 800) * 255)
 }
+
+/**
+ * 把实信号通过复数 mixer @ centerHz + Butterworth LPF @ cutoffHz 得到
+ * analytic signal 的 I/Q 分量。
+ *
+ * 用于 FM 相位解调:SSTV 信号在 1500-2300 Hz 窄带,中心 1900 Hz;
+ * mixer 把它搬到基带(-400~+400 Hz),LPF 滤掉 2×fc 镜像和带外噪声。
+ */
+export function toAnalytic(
+  samples: Float32Array,
+  sampleRate: number,
+  centerHz = 1900,
+  cutoffHz = 600
+): { i: Float32Array; q: Float32Array } {
+  const n = samples.length
+  const i = new Float32Array(n)
+  const q = new Float32Array(n)
+
+  const omegaC = (2 * Math.PI * centerHz) / sampleRate
+  for (let k = 0; k < n; k++) {
+    const phase = omegaC * k
+    i[k] = (samples[k] ?? 0) * Math.cos(phase)
+    q[k] = -(samples[k] ?? 0) * Math.sin(phase)
+  }
+
+  // Butterworth LPF (Q=1/sqrt(2)),用单个 biquad,24 dB/octave 对 3800Hz 镜像已足够
+  const omega = (2 * Math.PI * cutoffHz) / sampleRate
+  const alpha = Math.sin(omega) / (2 * Math.SQRT1_2)
+  const cosW = Math.cos(omega)
+  const a0 = 1 + alpha
+  const b0 = (1 - cosW) / 2 / a0
+  const b1 = (1 - cosW) / a0
+  const b2 = b0
+  const a1 = (-2 * cosW) / a0
+  const a2 = (1 - alpha) / a0
+
+  applyBiquad(i, b0, b1, b2, a1, a2)
+  applyBiquad(q, b0, b1, b2, a1, a2)
+  return { i, q }
+}
+
+function applyBiquad(
+  x: Float32Array,
+  b0: number,
+  b1: number,
+  b2: number,
+  a1: number,
+  a2: number
+): void {
+  let x1 = 0
+  let x2 = 0
+  let y1 = 0
+  let y2 = 0
+  for (let n = 0; n < x.length; n++) {
+    const xn = x[n] ?? 0
+    const yn = b0 * xn + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
+    x2 = x1
+    x1 = xn
+    y2 = y1
+    y1 = yn
+    x[n] = yn
+  }
+}
+
+/**
+ * 瞬时频率估计(Hz):f[k] = centerHz + Fs/(2π) · arg(z[k] · conj(z[k-1]))
+ *
+ * arg(z[k] · conj(z[k-1])) = atan2(q[k]*i[k-1] - i[k]*q[k-1], i[k]*i[k-1] + q[k]*q[k-1])
+ *
+ * 返回长度同 i/q 的 Float32Array,每个元素是该样本的瞬时频率(Hz)。
+ * f[0] 无法算(缺前一样本),填 centerHz。
+ *
+ * 注意:调用方通常要丢弃前若干样本(LPF 瞬态期,~50 样本 @ cutoff=600Hz/Fs=48k)。
+ */
+export function instantFreq(
+  i: Float32Array,
+  q: Float32Array,
+  sampleRate: number,
+  centerHz = 1900
+): Float32Array {
+  const n = i.length
+  const out = new Float32Array(n)
+  out[0] = centerHz
+  const scale = sampleRate / (2 * Math.PI)
+  for (let k = 1; k < n; k++) {
+    const re = (i[k] ?? 0) * (i[k - 1] ?? 0) + (q[k] ?? 0) * (q[k - 1] ?? 0)
+    const im = (q[k] ?? 0) * (i[k - 1] ?? 0) - (i[k] ?? 0) * (q[k - 1] ?? 0)
+    out[k] = centerHz + scale * Math.atan2(im, re)
+  }
+  return out
+}
