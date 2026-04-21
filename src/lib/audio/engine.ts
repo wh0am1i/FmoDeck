@@ -166,7 +166,7 @@ export class AudioEngine {
     // 频谱分析器：并联挂在 compressor 后，不走 destination，纯采样
     // 不受用户音量 / 静音影响（总是看得到原始信号能量）
     const analyser = this.ctx.createAnalyser()
-    analyser.fftSize = 512
+    analyser.fftSize = 2048
     analyser.smoothingTimeConstant = 0.75
 
     hpf.connect(lpf)
