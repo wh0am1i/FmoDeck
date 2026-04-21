@@ -63,6 +63,55 @@ function clamp(v: number): number {
 }
 
 /**
+ * 在本行前 20ms 内检测 1200Hz sync pulse 的实际中心位置(ms)。
+ * 返回相对理论 sync 中心(4.5ms)的偏移量(ms);找不到或偏移太大时返回 0。
+ *
+ * 算法:滑动一个 9ms 宽的窗口,找窗口内 freq 均值最接近 1200Hz 的位置。
+ * 钳制到 ±3ms(避免噪声导致的离谱偏移把整行搞坏)。
+ */
+function detectSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
+  const searchMs = 20 // 在前 20ms 内搜
+  const syncWidthMs = SYNC_MS // 9ms sync 宽度
+  const searchSamples = Math.min(
+    freq.length,
+    Math.round((searchMs * sampleRate) / 1000)
+  )
+  const winSamples = Math.max(4, Math.round((syncWidthMs * sampleRate) / 1000))
+  if (searchSamples < winSamples + 4) return 0
+
+  // 滑动 1 样本一步,找窗口内 freq 均值最接近 1200 的位置
+  let bestCenterIdx = winSamples / 2
+  let bestDist = Infinity
+  // 初始化窗口和
+  let sum = 0
+  for (let k = 0; k < winSamples; k++) sum += freq[k] ?? 0
+
+  for (let start = 0; start + winSamples <= searchSamples; start++) {
+    const mean = sum / winSamples
+    const dist = Math.abs(mean - 1200)
+    if (dist < bestDist) {
+      bestDist = dist
+      bestCenterIdx = start + winSamples / 2
+    }
+    // 滑窗:滚动加下一个、减最旧的
+    if (start + winSamples < searchSamples) {
+      sum += (freq[start + winSamples] ?? 0) - (freq[start] ?? 0)
+    }
+  }
+
+  // 如果最佳窗口均值距离 1200Hz 仍然很远(>200Hz),说明没找到 sync → 不矫正
+  if (bestDist > 200) return 0
+
+  const detectedMs = (bestCenterIdx / sampleRate) * 1000
+  const expectedMs = SYNC_MS / 2 // 4.5ms
+  const offsetMs = detectedMs - expectedMs
+
+  // 钳制到 ±3ms;超出视为误判,不矫正
+  if (Math.abs(offsetMs) > 3) return 0
+  return offsetMs
+}
+
+/**
  * Robot36:每行 150ms,每行携带 Y + 一个色差(偶行 R-Y,奇行 B-Y)。
  * 相邻两行共享色差:输出 RGBA 时,每两行用同一组 Cr/Cb(4:2:0)。
  *
@@ -78,11 +127,14 @@ export const robot36: Mode = {
   lineMs: LINE_MS,
 
   decodeLine(samples, row, state, sampleRate): Uint8ClampedArray {
-    // 整行只做一次 FM 解调
+    // 整行一次 FM 解调
     const { i, q } = toAnalytic(samples, sampleRate)
     const freq = instantFreq(i, q, sampleRate)
 
-    const yStart = SYNC_MS + PORCH1_MS
+    // 逐行 sync 矫正:消除发送端时钟漂移累积的斜切
+    const syncOffset = detectSyncOffsetMs(freq, sampleRate)
+
+    const yStart = SYNC_MS + PORCH1_MS + syncOffset
     const yEnd = yStart + Y_MS
     const chromaStart = yEnd + SEPARATOR_MS + PORCH2_MS
     const chromaEnd = chromaStart + CHROMA_MS
