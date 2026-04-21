@@ -1,6 +1,6 @@
 [package]
 name = "fmodeck"
-version = "0.1.7"
+version = "0.1.8"
 description = "FmoDeck desktop app — amateur radio FMO console"
 authors = ["wh0am1i"]
 license = "MIT"
