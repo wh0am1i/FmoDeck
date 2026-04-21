@@ -44,17 +44,18 @@ export function SstvView() {
           </label>
         </div>
 
-        {!audioReady ? (
-          <p className="hud-mono text-xs text-accent">
-            {!connected
-              ? '未连接 FMO，请先在设置中连接。'
-              : !enabled
-                ? '音频未开启，请在底栏点击扬声器图标启动。'
-                : '音频连接中…'}
-          </p>
-        ) : (
-          <SstvCanvas />
+        {!connected && (
+          <p className="hud-mono text-xs text-accent">未连接 FMO，请先在设置中连接。</p>
         )}
+        {connected && !enabled && (
+          <p className="hud-mono text-xs text-muted-foreground">
+            点击底栏扬声器图标启动音频。
+          </p>
+        )}
+        {connected && enabled && !playing && (
+          <p className="hud-mono text-xs text-muted-foreground">音频连接中…</p>
+        )}
+        {audioReady && <SstvCanvas />}
 
         <SstvHistory />
       </section>
