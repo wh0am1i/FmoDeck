@@ -12,8 +12,8 @@ export class PcmTap {
   private readonly buf: Float32Array
   private writeIdx = 0
   private _totalWritten = 0
-  /** 上次从 analyser 拉取的 wall-clock 时刻(performance.now ms);0 表示首次。 */
-  private lastPullMs = 0
+  /** 上次拉取时的 AudioContext.currentTime(秒);-1 表示首次。 */
+  private lastCtxTime = -1
 
   constructor(capacity: number) {
     this.buf = new Float32Array(capacity)
@@ -30,35 +30,38 @@ export class PcmTap {
   /**
    * 从 AnalyserNode 拉最近到达的样本并追加。
    *
-   * 注意:analyser.getFloatTimeDomainData 返回的永远是"最近 fftSize 个样本"
-   * 的滚动快照。rAF 以 60Hz 触发(~16ms 间隔),每次取 fftSize 会包含大量
-   * 上次已经写入的重复样本。如果把整块都写进 tap,totalWritten 会按
-   * fftSize/rAF 间隔 的倍数倍速前进(比如 48k/2048 fftSize 下 ~2.67×),
-   * decoder 的时间轴就失真,图像解码错位 + VIS 检测失败。
+   * 关键:analyser.getFloatTimeDomainData 返回永远是"最近 fftSize 个样本"的滚动快照。
+   * rAF(~60Hz)每次取 2048 样本,里面大部分是上次已写过的,如果整块都写就会让
+   * tap.totalWritten 按 fftSize/rAF 间隔 倍速前进(~2.67×),decoder 时间轴失真。
    *
-   * 修法:按 wall-clock 差值计算"自上次拉取以来产生了多少新样本",
-   * 只写 chunk 末尾的那部分(analyser 最新的 N 个样本),把中间重复的丢掉。
-   * 首次拉取无基准时写整块(作为起始填充)。
+   * 修法:用 **AudioContext.currentTime** 做时钟源(音频处理时钟,而不是 wall-clock
+   * performance.now)。两次拉取之间 ctx 前进了 Δt 秒,就写入 Δt×sampleRate 个最新样本。
+   * ctx 被浏览器挂起时 currentTime 不前进,tap 也不增长——自然对齐音频真实产出。
    */
   pullFromAnalyser(analyser: AnalyserNode): void {
     const chunk = new Float32Array(analyser.fftSize)
     analyser.getFloatTimeDomainData(chunk)
 
-    const sampleRate = analyser.context.sampleRate
-    const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
+    const ctx = analyser.context
+    const sampleRate = ctx.sampleRate
+    const ctxTime = ctx.currentTime // 秒
 
     let writeCount: number
-    if (this.lastPullMs === 0) {
+    if (this.lastCtxTime < 0) {
       // 首次:写整块,建立时间基准
       writeCount = chunk.length
     } else {
-      const elapsedMs = now - this.lastPullMs
-      const expected = Math.round((elapsedMs * sampleRate) / 1000)
-      // 钳制:不能比 analyser 缓冲长(超过就说明 rAF 被 throttle 了,丢失的音频无法补),
-      // 也不能为 0(保证至少写 1 样本推进时间轴)
+      const elapsedSec = ctxTime - this.lastCtxTime
+      if (elapsedSec <= 0) {
+        // ctx 挂起 / 时钟未前进 → 不写
+        this.lastCtxTime = ctxTime
+        return
+      }
+      const expected = Math.round(elapsedSec * sampleRate)
+      // 钳制:不能比 analyser 缓冲长(超过说明 rAF 被 throttle 了,丢失的音频无法补)
       writeCount = Math.min(chunk.length, Math.max(1, expected))
     }
-    this.lastPullMs = now
+    this.lastCtxTime = ctxTime
 
     if (writeCount === chunk.length) {
       this.write(chunk)
