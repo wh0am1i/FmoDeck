@@ -20,7 +20,7 @@ function synthMartinM1Line(r: number, g: number, b: number) {
 describe('martin-m1', () => {
   it('基础参数正确', () => {
     expect(martinM1.name).toBe('martin-m1')
-    expect(martinM1.visCode).toBe(0x2c)
+    expect(martinM1.visCode).toBe(0xac)
     expect(martinM1.width).toBe(320)
     expect(martinM1.height).toBe(256)
     expect(Math.abs(martinM1.lineMs - 446.446)).toBeLessThan(0.5)

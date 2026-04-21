@@ -31,26 +31,22 @@ export function concat(...chunks: Float32Array[]): Float32Array {
 
 /**
  * 生成完整的 VIS 头:1900 Hz leader 300ms + 1200 Hz break 10ms + 1900 Hz leader 300ms +
- * 1200 Hz start bit 30ms + 8 data bits(30ms each,1100 Hz=0/1300 Hz=1)+
- * 1 parity bit(偶校验)+ 1200 Hz stop 30ms
+ * 1200 Hz start bit 30ms + 8 bits LSB first(30ms each,1100 Hz=1/1300 Hz=0) +
+ * 1200 Hz stop 30ms。
+ *
+ * 入参 `code` 必须是完整 8-bit on-wire 值(bit 7 = even parity over bits 0-6)。
  */
 export function synthVis(code: number, sampleRate = TEST_SAMPLE_RATE): Float32Array {
-  const bits: number[] = []
-  let ones = 0
-  for (let i = 0; i < 8; i++) {
-    const b = (code >> i) & 1
-    bits.push(b)
-    ones += b
-  }
-  bits.push(ones % 2) // 偶校验位:data + parity 必须有偶数个 1
-
   const parts: Float32Array[] = [
     synthTone(1900, 300, sampleRate),
     synthTone(1200, 10, sampleRate),
     synthTone(1900, 300, sampleRate),
     synthTone(1200, 30, sampleRate) // start bit
   ]
-  for (const b of bits) parts.push(synthTone(b ? 1300 : 1100, 30, sampleRate))
+  for (let i = 0; i < 8; i++) {
+    const b = (code >> i) & 1
+    parts.push(synthTone(b ? 1100 : 1300, 30, sampleRate))
+  }
   parts.push(synthTone(1200, 30, sampleRate)) // stop bit
   return concat(...parts)
 }

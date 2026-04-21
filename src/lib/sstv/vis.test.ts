@@ -17,11 +17,11 @@ describe('VisDetector', () => {
     expect(result!.visCode).toBe(0x88)
   })
 
-  it('识别 Martin M1 VIS(0x2C)', () => {
-    const signal = concat(synthTone(500, 100), synthVis(0x2c))
+  it('识别 Martin M1 VIS(0xAC = on-wire 含 parity)', () => {
+    const signal = concat(synthTone(500, 100), synthVis(0xac))
     const result = det.feed(signal)
     expect(result).not.toBeNull()
-    expect(result!.visCode).toBe(0x2c)
+    expect(result!.visCode).toBe(0xac)
   })
 
   it('识别 Martin M2 VIS(0x28)', () => {
@@ -38,7 +38,7 @@ describe('VisDetector', () => {
   it('识别后 reset 可以再识别', () => {
     expect(det.feed(synthVis(0x88))).not.toBeNull()
     det.reset()
-    expect(det.feed(synthVis(0x2c))).not.toBeNull()
+    expect(det.feed(synthVis(0xac))).not.toBeNull()
   })
 
   it('endOffset 在样本流末尾附近(误差 < 1 个 bit 长度)', () => {

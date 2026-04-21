@@ -2,23 +2,26 @@
 import { goertzel } from './dsp'
 
 export interface VisResult {
-  /** 识别到的 VIS 码(8 bit)。奇偶校验不通过则不返回。 */
+  /** 识别到的 VIS 码(8 bit,bit 7 = even parity over bits 0-6)。 */
   visCode: number
-  /** VIS 结尾相对于最近一次 feed() 数据末尾往前偏移多少样本(>=0)。
-   *  decoder 用这个算出扫描起点 t0。 */
+  /** VIS 结尾相对于最近一次 feed() 数据末尾往前偏移多少样本(>=0)。 */
   endOffset: number
 }
 
 const BIT_MS = 30
 
 /**
- * 朴素实现:每次 feed() 在样本里按固定 bit 长度滑窗扫描,找连续模式:
- *   [leader 1900Hz 持续 >=250ms] → [break 1200Hz ~10ms]
- *   [leader 1900Hz ~300ms] → [start 1200Hz 30ms]
- *   → [8 data bits 1100/1300 Hz 各 30ms] → [parity 1 bit] → [stop 1200Hz 30ms]
+ * SSTV VIS 头检测。标准协议:
+ *   leader 1900Hz(>=300ms)→ break 1200Hz(~10ms)→ leader 1900Hz(~300ms)
+ *   → start bit 1200Hz(30ms)→ 8 data bits LSB first(30ms each)
+ *   → stop bit 1200Hz(30ms)
  *
- * 实际简化:直接定位"leader-start-8bits-parity-stop"的核心段(从第二次 1200 Hz
- * 开始数),鲁棒性够用,噪声过滤靠能量比。
+ * 数据字节的 bit 7 是 even parity over bits 0-6(即 popcount(byte) 必须为偶数)。
+ * Bit 频率约定:1100Hz = "1"(mark),1300Hz = "0"(space)。
+ *
+ * 实现:滑窗扫描,找 "leader 1900Hz 样本 + start bit 1200Hz 样本 + ..." 的核心段,
+ * 噪声过滤靠能量比。每次 feed() 是非流式;调用方传入 ring 最近 ~500ms 即可
+ * (VIS 核心 start→stop 约 300ms + 前置 leader 样本 30ms = 330ms)。
  */
 export class VisDetector {
   private readonly bitSamples: number
@@ -28,32 +31,23 @@ export class VisDetector {
   }
 
   reset(): void {
-    // 无状态,空操作(预留给将来做跨 feed 的流式识别)
+    // 无状态,空操作(预留给未来流式识别)
   }
 
-  /**
-   * 在 `samples` 里找 VIS 头。目前是非流式实现:样本足够包含一整个 VIS 序列
-   * 才能识别。调用方(decoder)每 rAF 传入 ring 最近 ~500ms 数据,VIS 总长 ~370ms
-   * 所以 500ms 窗口够。
-   */
   feed(samples: Float32Array): VisResult | null {
     const n = samples.length
     const bs = this.bitSamples
 
-    // 扫描步长 = bs / 4(7.5ms),速度和精度折中
     const step = Math.max(1, Math.floor(bs / 4))
-    // 从 bs 开始(确保 s - bs >= 0)
-    // 上界: s + 11*bs <= n (start + 8 data + parity + stop = 11 bits 从 s 开始)
-    for (let s = bs; s + 11 * bs <= n; s += step) {
-      // 候选 start bit 位置 s:验证 s-bs 是 1900 Hz(leader 尾部)
+    // 从 bs 开始(s - bs >= 0);上界:start + 8 data + stop = 10 cells 从 s 开始 → s + 10*bs <= n
+    for (let s = bs; s + 10 * bs <= n; s += step) {
+      // leader 尾部(s 前一个 bit 窗口):1900 Hz 主导
       if (!isLeader1900(samples, s - bs, bs, this.sampleRate)) continue
-      // start bit 必须清晰地是 1200 Hz,且不被 1900 Hz 污染
-      // (防止扫描窗口落在 leader/start 边界混合区域)
+      // start bit:1200 Hz 主导,且不被 1900 Hz(leader 边界)污染
       if (!isStartBit1200(samples, s, bs, this.sampleRate)) continue
 
-      // 解 8 位 data
+      // 读 8 个 data bits(bit 7 = parity)
       let code = 0
-      let parityOnes = 0
       let ok = true
       for (let b = 0; b < 8; b++) {
         const off = s + (1 + b) * bs
@@ -62,22 +56,15 @@ export class VisDetector {
           ok = false
           break
         }
-        if (is1 === 1) {
-          code |= 1 << b
-          parityOnes++
-        }
+        if (is1 === 1) code |= 1 << b
       }
       if (!ok) continue
 
-      // parity (偶校验)
-      const parityOff = s + 9 * bs
-      const pBit = bitValue(samples, parityOff, bs, this.sampleRate)
-      if (pBit === -1) continue
-      const expected = parityOnes % 2
-      if (pBit !== expected) continue
+      // Even parity check:popcount(code) 必须为偶数
+      if (popcount(code) % 2 !== 0) continue
 
-      // stop bit:1200 Hz
-      const stopOff = s + 10 * bs
+      // stop bit 在 s + 9*bs(跟在 8 个 data 之后)
+      const stopOff = s + 9 * bs
       if (!isDominantTone(samples, stopOff, bs, 1200, this.sampleRate)) continue
 
       const endOffset = n - (stopOff + bs)
@@ -87,7 +74,7 @@ export class VisDetector {
   }
 }
 
-/** bit 判定:1300 Hz 能量 > 1100 Hz → 1;反之 → 0;都弱 → -1(未决)。 */
+/** bit 判定:1100 Hz 能量 > 1300 Hz → 1(mark);反之 → 0(space);都弱 → -1(未决)。 */
 function bitValue(
   samples: Float32Array,
   start: number,
@@ -101,7 +88,7 @@ function bitValue(
   const max = Math.max(e1100, e1300)
   const noiseFloor = goertzel(win, 500, sampleRate)
   if (max < noiseFloor * 3) return -1
-  return e1300 > e1100 ? 1 : 0
+  return e1100 > e1300 ? 1 : 0
 }
 
 /** leader 检测:1900 Hz 能量必须主导(比 2400 Hz 高 3×)。 */
@@ -146,7 +133,16 @@ function isDominantTone(
   if (start < 0 || start + length > samples.length) return false
   const win = samples.subarray(start, start + length)
   const onE = goertzel(win, hz, sampleRate)
-  // 简单阈值:比一个无关频率(hz + 500)能量高 3×
   const offE = goertzel(win, hz + 500, sampleRate)
   return onE > offE * 3
+}
+
+function popcount(x: number): number {
+  let n = 0
+  let v = x
+  while (v) {
+    n += v & 1
+    v >>>= 1
+  }
+  return n
 }

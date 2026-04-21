@@ -34,11 +34,11 @@ function sampleColor(
   return out
 }
 
-/** Martin M1:每行 446.446ms,sync-porch-G-sep-B-sep-R-sep,320×256 RGB。 */
+/** Martin M1:每行 446.446ms,sync-porch-G-sep-B-sep-R-sep,320×256 RGB。VIS on-wire 0xAC(7-bit code 0x2C + parity bit 7=1)。 */
 export const martinM1: Mode = {
   name: 'martin-m1',
   displayName: 'Martin M1',
-  visCode: 0x2c,
+  visCode: 0xac,
   width: WIDTH,
   height: 256,
   lineMs: LINE_MS,
