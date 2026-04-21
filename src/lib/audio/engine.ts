@@ -41,7 +41,7 @@ export class AudioEngine {
   /** 当前用户音量（0~2），muted=true 时 gain 被强制 0 但此值保留。 */
   private userVolume = 1.0
   /** 抑制标志：用户手动静音 OR 自己正在讲话（过滤自语回声）。
-   *  为 true 时丢弃 incoming PCM，gain 置 0；为 false 时恢复正常。 */
+   *  为 true 时 gain 置 0（扬声器静音）；PCM 仍正常流经滤波链与 analyser。 */
   private suppressed = false
 
   constructor(
@@ -78,13 +78,9 @@ export class AudioEngine {
    * - 用户手动静音
    * - 自己正在讲话时过滤（避免自语回声）
    *
-   * 实现上做两件事：
-   * 1. 后续 incoming PCM 直接丢弃（避免在 ctx 暂停期间堆满调度队列，
-   *    恢复时一口气播出来造成时间错位）
-   * 2. gain 立即置 0，已调度的残余样本静音播完
-   *
-   * 不用 ctx.suspend() 是因为已经 start() 的 AudioBufferSourceNode 在
-   * suspend 期间不会被丢弃，resume 后会一窝蜂倒出来，反而加剧回声。
+   * 实现：gain 立即置 0，扬声器不出声；但 PCM 依然正常调度流经滤波链
+   * 到 analyser，让频谱可视化、SSTV 解码等旁路继续工作。不用
+   * ctx.suspend() 以避免已调度 source 的时间错位。
    */
   setMuted(m: boolean): void {
     if (this.suppressed === m) return
@@ -235,9 +231,9 @@ export class AudioEngine {
 
   private ingest(buf: ArrayBuffer): void {
     if (!this.ctx || !this.chainHead) return
-    // 抑制状态下丢弃 incoming，防止恢复时一口气 flush 出旧声音
-    if (this.suppressed) return
 
+    // 注意：即使 suppressed 也继续调度，让 analyser 看到完整信号
+    //（频谱可视化、SSTV 解码等需要 PCM 流；gain=0 已保证扬声器静音）
     const int16 = new Int16Array(buf)
     if (int16.length === 0) return
 
