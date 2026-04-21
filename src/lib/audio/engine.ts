@@ -20,16 +20,19 @@ const TARGET_LEAD_SEC = 0.5
 const MAX_BUFFER_SEC = 1.0
 
 /**
- * 静默尝试 resume AudioContext。浏览器策略下没 user gesture 时 resume() 可能 reject,
- * 直接 await 会让整条 ensureContext 抛出,阻塞后续 WebSocket 连接。
- * 这里吞掉错误——外部会挂交互监听器,等用户手势再 resume。
+ * Fire-and-forget 尝试 resume AudioContext。
+ *
+ * **关键**:Chrome autoplay 策略下,没 user gesture 时 `ctx.resume()` 返回的 promise
+ * **不 reject 也不 resolve**——它会保持 pending 直到用户手势出现。如果这里 `await`,
+ * 整个 ensureContext 会卡住,后面 WebSocket 连接永远开不起来。
+ *
+ * 所以这里**不 await**,只 fire 调用。外部有 user-gesture listener 负责在用户
+ * 交互时再次触发 ctx.resume()。
  */
-async function tryResume(ctx: AudioContext): Promise<void> {
-  try {
-    await ctx.resume()
-  } catch {
-    // 浏览器未授权自动 resume,忽略,等 installAudioAutoResume 兜底
-  }
+function tryResumeAsync(ctx: AudioContext): void {
+  void ctx.resume().catch(() => {
+    // 忽略错误,auto-resume listener 会兜底
+  })
 }
 
 export type AudioEngineStatus = 'idle' | 'connecting' | 'playing' | 'error' | 'closed'
@@ -66,13 +69,13 @@ export class AudioEngine {
     private readonly events: AudioEngineEvents = {}
   ) {}
 
-  /** 必须由用户手势调用（浏览器 AudioContext 解锁要求）。 */
-  async start(): Promise<void> {
+  /** 由用户手势调用最佳（可解锁 AudioContext）,但即便不在手势里也会把 WebSocket 开起来。 */
+  start(): void {
     if (this.status === 'connecting' || this.status === 'playing') return
 
     this.shouldReconnect = true
     this.reconnectAttempts = 0
-    await this.ensureContext()
+    this.ensureContext()
     this.connect()
   }
 
@@ -133,9 +136,9 @@ export class AudioEngine {
   // 内部
   // -------------------------------------------------------------------
 
-  private async ensureContext(): Promise<void> {
+  private ensureContext(): void {
     if (this.ctx) {
-      if (this.ctx.state === 'suspended') await tryResume(this.ctx)
+      if (this.ctx.state === 'suspended') tryResumeAsync(this.ctx)
       return
     }
 
@@ -217,7 +220,7 @@ export class AudioEngine {
     this.rawAnalyser = rawAnalyser
     this.rawTap = rawTap
 
-    if (this.ctx.state === 'suspended') await tryResume(this.ctx)
+    if (this.ctx.state === 'suspended') tryResumeAsync(this.ctx)
   }
 
   private connect(): void {

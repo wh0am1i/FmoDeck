@@ -90,12 +90,16 @@ export function useFmoAudio(): void {
         }
       })
       engineRef.current = engine
+      // 立即注册到共享 store,不等 start() resolve。
+      // 理由:如果 ctx.resume() 在 suspended 状态卡住(浏览器自动播放策略),
+      // start() 的 promise 可能一直 pending,那时 setEngine 在 .then() 里
+      // 永远不执行,auto-resume 监听(位于 installGlobalAudioResumeListener)
+      // 就找不到 engine,用户点击也没用。提前注册让监听能立即看到 engine。
+      // engine.getAnalyser() 在 ensureContext 完成前会返回 null,消费方已有守卫。
+      engineRefStore.getState().setEngine(engine)
       engine.setVolume(volume)
       engine.setMuted(muted || isSelfSpeaking())
-      void engine.start().then(() => {
-        // start() 里 ensureContext 后 analyser 才存在，推到共享 store
-        engineRefStore.getState().setEngine(engine)
-      })
+      engine.start() // 同步:ensureContext + connect。AudioContext 可能仍 suspended,listener 会兜底 resume
     }
 
     const isSelfSpeaking = (): boolean => {
