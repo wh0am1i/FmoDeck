@@ -12,6 +12,8 @@ export class PcmTap {
   private readonly buf: Float32Array
   private writeIdx = 0
   private _totalWritten = 0
+  /** 上次从 analyser 拉取的 wall-clock 时刻(performance.now ms);0 表示首次。 */
+  private lastPullMs = 0
 
   constructor(capacity: number) {
     this.buf = new Float32Array(capacity)
@@ -25,11 +27,44 @@ export class PcmTap {
     return this.buf.length
   }
 
-  /** 从 AnalyserNode 拉最近一窗(fftSize 个样本)并追加。 */
+  /**
+   * 从 AnalyserNode 拉最近到达的样本并追加。
+   *
+   * 注意:analyser.getFloatTimeDomainData 返回的永远是"最近 fftSize 个样本"
+   * 的滚动快照。rAF 以 60Hz 触发(~16ms 间隔),每次取 fftSize 会包含大量
+   * 上次已经写入的重复样本。如果把整块都写进 tap,totalWritten 会按
+   * fftSize/rAF 间隔 的倍数倍速前进(比如 48k/2048 fftSize 下 ~2.67×),
+   * decoder 的时间轴就失真,图像解码错位 + VIS 检测失败。
+   *
+   * 修法:按 wall-clock 差值计算"自上次拉取以来产生了多少新样本",
+   * 只写 chunk 末尾的那部分(analyser 最新的 N 个样本),把中间重复的丢掉。
+   * 首次拉取无基准时写整块(作为起始填充)。
+   */
   pullFromAnalyser(analyser: AnalyserNode): void {
     const chunk = new Float32Array(analyser.fftSize)
     analyser.getFloatTimeDomainData(chunk)
-    this.write(chunk)
+
+    const sampleRate = analyser.context.sampleRate
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
+
+    let writeCount: number
+    if (this.lastPullMs === 0) {
+      // 首次:写整块,建立时间基准
+      writeCount = chunk.length
+    } else {
+      const elapsedMs = now - this.lastPullMs
+      const expected = Math.round((elapsedMs * sampleRate) / 1000)
+      // 钳制:不能比 analyser 缓冲长(超过就说明 rAF 被 throttle 了,丢失的音频无法补),
+      // 也不能为 0(保证至少写 1 样本推进时间轴)
+      writeCount = Math.min(chunk.length, Math.max(1, expected))
+    }
+    this.lastPullMs = now
+
+    if (writeCount === chunk.length) {
+      this.write(chunk)
+    } else {
+      this.write(chunk.subarray(chunk.length - writeCount))
+    }
   }
 
   write(chunk: Float32Array): void {
