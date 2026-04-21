@@ -66,13 +66,9 @@ function clamp(v: number): number {
 /**
  * 在本行前 25ms 内检测 1200Hz sync pulse 的实际中心位置(ms)。
  * PD120 sync 宽 20ms,比 Robot/Martin 宽。
- * 返回 { raw: 原始偏移量(ms), clamped: 钳制后偏移量(ms) }。
- * 找不到 sync 时两者均为 0。
+ * 返回偏移量(ms);找不到或偏移太大时返回 0。
  */
-function detectSyncOffsetMs(
-  freq: Float32Array,
-  sampleRate: number
-): { raw: number; clamped: number } {
+function detectSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
   const searchMs = 25
   const syncWidthMs = SYNC_MS
   const searchSamples = Math.min(
@@ -80,7 +76,7 @@ function detectSyncOffsetMs(
     Math.round((searchMs * sampleRate) / 1000)
   )
   const winSamples = Math.max(4, Math.round((syncWidthMs * sampleRate) / 1000))
-  if (searchSamples < winSamples + 4) return { raw: 0, clamped: 0 }
+  if (searchSamples < winSamples + 4) return 0
 
   let bestCenterIdx = winSamples / 2
   let bestDist = Infinity
@@ -99,15 +95,15 @@ function detectSyncOffsetMs(
     }
   }
 
-  if (bestDist > 200) return { raw: 0, clamped: 0 }
+  if (bestDist > 200) return 0
 
   const detectedMs = (bestCenterIdx / sampleRate) * 1000
   const expectedMs = SYNC_MS / 2 // 10ms
   const offsetMs = detectedMs - expectedMs
 
   // 钳制到 ±5ms
-  const clamped = Math.abs(offsetMs) > 5 ? 0 : offsetMs
-  return { raw: offsetMs, clamped }
+  if (Math.abs(offsetMs) > 5) return 0
+  return offsetMs
 }
 
 /**
@@ -126,15 +122,12 @@ export const pd120: Mode = {
   rowsPerScanLine: 2,
   scanLineMs: SCAN_LINE_MS,
 
-  decodeLine(samples, _scanLineIndex, state, sampleRate): Uint8ClampedArray {
+  decodeLine(samples, _scanLineIndex, _state, sampleRate): Uint8ClampedArray {
     const { i, q } = toAnalytic(samples, sampleRate)
     const freq = instantFreq(i, q, sampleRate)
 
     // per-line sync 矫正:sync pulse 宽 20ms,在前 25ms 内找
-    const sync = detectSyncOffsetMs(freq, sampleRate)
-    const syncOffset = sync.clamped
-    // 把 raw 写入 state 供 decoder 做斜率校正使用
-    ;(state as { lastRawSyncMs?: number }).lastRawSyncMs = sync.raw
+    const syncOffset = detectSyncOffsetMs(freq, sampleRate)
 
     const y1Start = SYNC_MS + PORCH_MS + syncOffset
     const crStart = y1Start + Y_MS

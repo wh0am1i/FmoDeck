@@ -13,10 +13,6 @@ export type DecoderState =
       nextScanLine: number
       decodeState: DecodeState
       silentRowsStreak: number
-      /** 每行收集的 raw sync 偏移(ms),用于拟合斜率 */
-      syncSamples: { row: number; offsetMs: number }[]
-      /** 拟合出的每行漂移(ms/scan line),负值=实际行更短,正值=更长 */
-      slantMsPerScanLine: number
     }
 
 export interface DecoderEvents {
@@ -76,9 +72,7 @@ export class SstvDecoder {
         t0,
         nextScanLine: 0,
         decodeState: {},
-        silentRowsStreak: 0,
-        syncSamples: [],
-        slantMsPerScanLine: 0
+        silentRowsStreak: 0
       }
       this.fullRgba = new Uint8ClampedArray(mode.width * mode.height * 4)
       this.events.onStart?.(mode)
@@ -87,18 +81,15 @@ export class SstvDecoder {
 
     // decoding
     const { mode, t0, decodeState } = this.state
-    const baseRowSamples = Math.round((mode.scanLineMs * this.sampleRate) / 1000)
-    const slantSamples = Math.round((this.state.slantMsPerScanLine * this.sampleRate) / 1000)
-    const effectiveRowSamples = baseRowSamples + slantSamples
+    const rowSamples = Math.round((mode.scanLineMs * this.sampleRate) / 1000)
     const elapsedSamples = tap.totalWritten - t0
     const elapsedMs = (elapsedSamples / this.sampleRate) * 1000
-    // targetScanLine:基于已写入时间推算当前应处理到第几行
     const targetScanLine = Math.floor(elapsedMs / mode.scanLineMs)
     const scanLineCount = mode.height / mode.rowsPerScanLine
 
     while (this.state.nextScanLine < Math.min(targetScanLine, scanLineCount)) {
-      const scanLineStart = t0 + this.state.nextScanLine * effectiveRowSamples
-      const samples = tap.slice(scanLineStart, baseRowSamples)
+      const scanLineStart = t0 + this.state.nextScanLine * rowSamples
+      const samples = tap.slice(scanLineStart, rowSamples)
       if (!samples) break
 
       // 静音检测:若连续 5 次 RMS < 阈值,视为信号中断,abort
@@ -124,25 +115,6 @@ export class SstvDecoder {
       for (let r = 0; r < mode.rowsPerScanLine; r++) {
         const rowRgba = rgba.subarray(r * mode.width * 4, (r + 1) * mode.width * 4)
         void this.events.onRow?.(firstImageRow + r, new Uint8ClampedArray(rowRgba), mode)
-      }
-
-      // 收集本行 raw sync 偏移用于斜率校正
-      // 只收集 |raw| <= 3ms 的样本:超出此范围大概率是 sync 误判而非真实漂移
-      const rawSyncMs = (decodeState as { lastRawSyncMs?: number }).lastRawSyncMs ?? 0
-      if (Math.abs(rawSyncMs) <= 3) {
-        this.state.syncSamples.push({ row: this.state.nextScanLine, offsetMs: rawSyncMs })
-        // 只保留最近 30 个样本,避免队列无限增长
-        if (this.state.syncSamples.length > 30) this.state.syncSamples.shift()
-      }
-
-      // 至少 8 个样本后开始拟合;每 5 行重新拟合一次
-      if (
-        this.state.syncSamples.length >= 8 &&
-        this.state.nextScanLine % 5 === 0
-      ) {
-        const slope = linearRegressionSlope(this.state.syncSamples)
-        // 钳制斜率到合理范围(±1ms/行),防止异常值把后续行搞乱
-        this.state.slantMsPerScanLine = Math.max(-1, Math.min(1, slope))
       }
 
       this.state.nextScanLine++
@@ -172,27 +144,4 @@ function computeRms(samples: Float32Array): number {
     sumSq += s * s
   }
   return Math.sqrt(sumSq / samples.length)
-}
-
-/**
- * 简单线性回归,返回斜率(dy/dx)。
- * 输入:[{row, offsetMs}] 样本对。
- * 公式:slope = (N·Σxy - Σx·Σy) / (N·Σx² - (Σx)²)
- */
-function linearRegressionSlope(points: { row: number; offsetMs: number }[]): number {
-  const n = points.length
-  if (n < 2) return 0
-  let sumX = 0
-  let sumY = 0
-  let sumXY = 0
-  let sumXX = 0
-  for (const p of points) {
-    sumX += p.row
-    sumY += p.offsetMs
-    sumXY += p.row * p.offsetMs
-    sumXX += p.row * p.row
-  }
-  const denom = n * sumXX - sumX * sumX
-  if (denom === 0) return 0
-  return (n * sumXY - sumX * sumY) / denom
 }

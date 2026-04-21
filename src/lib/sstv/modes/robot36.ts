@@ -64,16 +64,12 @@ function clamp(v: number): number {
 
 /**
  * 在本行前 20ms 内检测 1200Hz sync pulse 的实际中心位置(ms)。
- * 返回 { raw: 原始偏移量(ms), clamped: 钳制后偏移量(ms) }。
- * 找不到 sync 时两者均为 0。
+ * 返回相对理论 sync 中心(4.5ms)的偏移量(ms);找不到或偏移太大时返回 0。
  *
  * 算法:滑动一个 9ms 宽的窗口,找窗口内 freq 均值最接近 1200Hz 的位置。
  * 钳制到 ±3ms(避免噪声导致的离谱偏移把整行搞坏)。
  */
-function detectSyncOffsetMs(
-  freq: Float32Array,
-  sampleRate: number
-): { raw: number; clamped: number } {
+function detectSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
   const searchMs = 20 // 在前 20ms 内搜
   const syncWidthMs = SYNC_MS // 9ms sync 宽度
   const searchSamples = Math.min(
@@ -81,7 +77,7 @@ function detectSyncOffsetMs(
     Math.round((searchMs * sampleRate) / 1000)
   )
   const winSamples = Math.max(4, Math.round((syncWidthMs * sampleRate) / 1000))
-  if (searchSamples < winSamples + 4) return { raw: 0, clamped: 0 }
+  if (searchSamples < winSamples + 4) return 0
 
   // 滑动 1 样本一步,找窗口内 freq 均值最接近 1200 的位置
   let bestCenterIdx = winSamples / 2
@@ -104,15 +100,15 @@ function detectSyncOffsetMs(
   }
 
   // 如果最佳窗口均值距离 1200Hz 仍然很远(>200Hz),说明没找到 sync → 不矫正
-  if (bestDist > 200) return { raw: 0, clamped: 0 }
+  if (bestDist > 200) return 0
 
   const detectedMs = (bestCenterIdx / sampleRate) * 1000
   const expectedMs = SYNC_MS / 2 // 4.5ms
   const offsetMs = detectedMs - expectedMs
 
   // 钳制到 ±3ms;超出视为误判,不矫正
-  const clamped = Math.abs(offsetMs) > 3 ? 0 : offsetMs
-  return { raw: offsetMs, clamped }
+  if (Math.abs(offsetMs) > 3) return 0
+  return offsetMs
 }
 
 /**
@@ -138,10 +134,7 @@ export const robot36: Mode = {
     const freq = instantFreq(i, q, sampleRate)
 
     // 逐行 sync 矫正:消除发送端时钟漂移累积的斜切
-    const sync = detectSyncOffsetMs(freq, sampleRate)
-    const syncOffset = sync.clamped
-    // 把 raw 写入 state 供 decoder 做斜率校正使用
-    ;(state as { lastRawSyncMs?: number }).lastRawSyncMs = sync.raw
+    const syncOffset = detectSyncOffsetMs(freq, sampleRate)
 
     const yStart = SYNC_MS + PORCH1_MS + syncOffset
     const yEnd = yStart + Y_MS
@@ -152,7 +145,7 @@ export const robot36: Mode = {
     const chroma = sampleSection(freq, sampleRate, chromaStart, chromaEnd, CHROMA_WIDTH)
 
     // 跨行状态:偶行存 Cr,奇行存 Cb
-    const s = state as { cr?: Uint8ClampedArray; cb?: Uint8ClampedArray; lastRawSyncMs?: number }
+    const s = state as { cr?: Uint8ClampedArray; cb?: Uint8ClampedArray }
     if (row % 2 === 0) {
       s.cr = chroma
     } else {
