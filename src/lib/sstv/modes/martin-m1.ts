@@ -34,19 +34,25 @@ function sampleColor(
   return out
 }
 
+const CLAMP_MS = 10
+
 /**
- * 在本行前 12ms 内检测 1200Hz sync pulse 的实际中心位置(ms)。
- * 返回相对理论 sync 中心(SYNC_MS/2)的偏移量(ms);找不到或偏移太大时返回 0。
+ * 在本行前 20ms 内检测 1200Hz sync pulse 的实际中心位置(ms)。
+ * 返回 { raw: 未钳制偏移, clamped: 钳制后偏移 }。
+ * 找不到 sync(bestDist > 200)时两者均返回 0。
  */
-function detectSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
-  const searchMs = 12 // sync 4.862ms + 一些余量
+function detectSyncOffsetMsInternal(
+  freq: Float32Array,
+  sampleRate: number
+): { raw: number; clamped: number } {
+  const searchMs = 20 // sync 4.862ms + 更大余量
   const syncWidthMs = SYNC_MS
   const searchSamples = Math.min(
     freq.length,
     Math.round((searchMs * sampleRate) / 1000)
   )
   const winSamples = Math.max(4, Math.round((syncWidthMs * sampleRate) / 1000))
-  if (searchSamples < winSamples + 4) return 0
+  if (searchSamples < winSamples + 4) return { raw: 0, clamped: 0 }
 
   let bestCenterIdx = winSamples / 2
   let bestDist = Infinity
@@ -65,15 +71,21 @@ function detectSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
     }
   }
 
-  if (bestDist > 200) return 0
+  if (bestDist > 200) return { raw: 0, clamped: 0 }
 
   const detectedMs = (bestCenterIdx / sampleRate) * 1000
   const expectedMs = SYNC_MS / 2
-  const offsetMs = detectedMs - expectedMs
+  const raw = detectedMs - expectedMs
+  const clamped = Math.abs(raw) > CLAMP_MS ? 0 : raw
+  return { raw, clamped }
+}
 
-  // Martin 钳制到 ±2ms(每行 446ms 比 Robot36 150ms 更不容易跨行)
-  if (Math.abs(offsetMs) > 2) return 0
-  return offsetMs
+function detectSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
+  return detectSyncOffsetMsInternal(freq, sampleRate).clamped
+}
+
+function detectRawSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
+  return detectSyncOffsetMsInternal(freq, sampleRate).raw
 }
 
 /** Martin M1:每行 446.446ms,sync-porch-G-sep-B-sep-R-sep,320×256 RGB。VIS on-wire 0xAC。 */
@@ -86,13 +98,15 @@ export const martinM1: Mode = {
   rowsPerScanLine: 1,
   scanLineMs: LINE_MS,
 
-  decodeLine(samples, _scanLineIndex, _state, sampleRate): Uint8ClampedArray {
+  decodeLine(samples, _scanLineIndex, state, sampleRate): Uint8ClampedArray {
     // 整行一次 FM 解调
     const { i, q } = toAnalytic(samples, sampleRate)
     const freq = instantFreq(i, q, sampleRate)
 
     // 逐行 sync 矫正
-    const syncOffset = detectSyncOffsetMs(freq, sampleRate)
+    const { raw: rawSync, clamped: syncOffset } = detectSyncOffsetMsInternal(freq, sampleRate)
+    // 把 raw sync 偏移写入 state 供 decoder 的 slant 校准用
+    ;(state as { lastRawSyncMs?: number }).lastRawSyncMs = rawSync
 
     const gStart = SYNC_MS + PORCH_MS + syncOffset
     const bStart = gStart + COLOR_MS + PORCH_MS

@@ -4,6 +4,9 @@ import { modeRegistry } from './modes/registry'
 import type { Mode, DecodeState } from './modes/types'
 import type { PcmTap } from './pcm-tap'
 
+const CALIBRATION_ROWS = 20
+const SLANT_CLAMP_MS = 3 // 斜率钳制(±3 ms/scan line)
+
 export type DecoderState =
   | { type: 'idle' }
   | {
@@ -13,6 +16,9 @@ export type DecoderState =
       nextScanLine: number
       decodeState: DecodeState
       silentRowsStreak: number
+      syncSamples: number[]
+      slantMsPerScanLine: number
+      slantCalibrated: boolean
     }
 
 export interface DecoderEvents {
@@ -72,7 +78,10 @@ export class SstvDecoder {
         t0,
         nextScanLine: 0,
         decodeState: {},
-        silentRowsStreak: 0
+        silentRowsStreak: 0,
+        syncSamples: [],
+        slantMsPerScanLine: 0,
+        slantCalibrated: false
       }
       this.fullRgba = new Uint8ClampedArray(mode.width * mode.height * 4)
       this.events.onStart?.(mode)
@@ -81,15 +90,18 @@ export class SstvDecoder {
 
     // decoding
     const { mode, t0, decodeState } = this.state
-    const rowSamples = Math.round((mode.scanLineMs * this.sampleRate) / 1000)
+    const baseRowSamples = Math.round((mode.scanLineMs * this.sampleRate) / 1000)
+    const slantSamples = Math.round((this.state.slantMsPerScanLine * this.sampleRate) / 1000)
+    const effectiveRowSamples = baseRowSamples + slantSamples
+
     const elapsedSamples = tap.totalWritten - t0
     const elapsedMs = (elapsedSamples / this.sampleRate) * 1000
     const targetScanLine = Math.floor(elapsedMs / mode.scanLineMs)
     const scanLineCount = mode.height / mode.rowsPerScanLine
 
     while (this.state.nextScanLine < Math.min(targetScanLine, scanLineCount)) {
-      const scanLineStart = t0 + this.state.nextScanLine * rowSamples
-      const samples = tap.slice(scanLineStart, rowSamples)
+      const scanLineStart = t0 + this.state.nextScanLine * effectiveRowSamples
+      const samples = tap.slice(scanLineStart, baseRowSamples)
       if (!samples) break
 
       // 静音检测:若连续 5 次 RMS < 阈值,视为信号中断,abort
@@ -107,6 +119,20 @@ export class SstvDecoder {
       }
 
       const rgba = mode.decodeLine(samples, this.state.nextScanLine, decodeState, this.sampleRate)
+
+      // 收集 raw sync 用于 slant 校准(仅未校准前)
+      if (!this.state.slantCalibrated) {
+        const rawMs = (decodeState as { lastRawSyncMs?: number }).lastRawSyncMs ?? 0
+        // 过滤极端值:真实漂移不会超过 ±10ms,超过的是 sync 检测误判
+        if (Math.abs(rawMs) <= 10) {
+          this.state.syncSamples.push(rawMs)
+          if (this.state.syncSamples.length >= CALIBRATION_ROWS) {
+            this.state.slantMsPerScanLine = theilSenSlope(this.state.syncSamples)
+            this.state.slantCalibrated = true
+          }
+        }
+      }
+
       // rgba 长度 = width × rowsPerScanLine × 4
       // 写入 fullRgba 起始偏移 = (nextScanLine × rowsPerScanLine) × width × 4
       const firstImageRow = this.state.nextScanLine * mode.rowsPerScanLine
@@ -144,4 +170,21 @@ function computeRms(samples: Float32Array): number {
     sumSq += s * s
   }
   return Math.sqrt(sumSq / samples.length)
+}
+
+/**
+ * Theil-Sen 估计:所有点对 slope 取中位数。
+ * 对异常值鲁棒,击穿点 29%(即使 29% 样本是异常值仍收敛到真值)。
+ */
+function theilSenSlope(samples: number[]): number {
+  if (samples.length < 2) return 0
+  const slopes: number[] = []
+  for (let i = 0; i < samples.length; i++) {
+    for (let j = i + 1; j < samples.length; j++) {
+      slopes.push((samples[j]! - samples[i]!) / (j - i))
+    }
+  }
+  slopes.sort((a, b) => a - b)
+  const median = slopes[Math.floor(slopes.length / 2)]!
+  return Math.max(-SLANT_CLAMP_MS, Math.min(SLANT_CLAMP_MS, median))
 }

@@ -62,14 +62,17 @@ function clamp(v: number): number {
   return Math.max(0, Math.min(255, Math.round(v)))
 }
 
+const CLAMP_MS = 10
+
 /**
  * 在本行前 20ms 内检测 1200Hz sync pulse 的实际中心位置(ms)。
- * 返回相对理论 sync 中心(4.5ms)的偏移量(ms);找不到或偏移太大时返回 0。
- *
- * 算法:滑动一个 9ms 宽的窗口,找窗口内 freq 均值最接近 1200Hz 的位置。
- * 钳制到 ±3ms(避免噪声导致的离谱偏移把整行搞坏)。
+ * 返回 { raw: 未钳制偏移, clamped: 钳制后偏移 }。
+ * 找不到 sync(bestDist > 200)时两者均返回 0。
  */
-function detectSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
+function detectSyncOffsetMsInternal(
+  freq: Float32Array,
+  sampleRate: number
+): { raw: number; clamped: number } {
   const searchMs = 20 // 在前 20ms 内搜
   const syncWidthMs = SYNC_MS // 9ms sync 宽度
   const searchSamples = Math.min(
@@ -77,7 +80,7 @@ function detectSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
     Math.round((searchMs * sampleRate) / 1000)
   )
   const winSamples = Math.max(4, Math.round((syncWidthMs * sampleRate) / 1000))
-  if (searchSamples < winSamples + 4) return 0
+  if (searchSamples < winSamples + 4) return { raw: 0, clamped: 0 }
 
   // 滑动 1 样本一步,找窗口内 freq 均值最接近 1200 的位置
   let bestCenterIdx = winSamples / 2
@@ -100,15 +103,21 @@ function detectSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
   }
 
   // 如果最佳窗口均值距离 1200Hz 仍然很远(>200Hz),说明没找到 sync → 不矫正
-  if (bestDist > 200) return 0
+  if (bestDist > 200) return { raw: 0, clamped: 0 }
 
   const detectedMs = (bestCenterIdx / sampleRate) * 1000
   const expectedMs = SYNC_MS / 2 // 4.5ms
-  const offsetMs = detectedMs - expectedMs
+  const raw = detectedMs - expectedMs
+  const clamped = Math.abs(raw) > CLAMP_MS ? 0 : raw
+  return { raw, clamped }
+}
 
-  // 钳制到 ±3ms;超出视为误判,不矫正
-  if (Math.abs(offsetMs) > 3) return 0
-  return offsetMs
+function detectSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
+  return detectSyncOffsetMsInternal(freq, sampleRate).clamped
+}
+
+function detectRawSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
+  return detectSyncOffsetMsInternal(freq, sampleRate).raw
 }
 
 /**
@@ -134,7 +143,9 @@ export const robot36: Mode = {
     const freq = instantFreq(i, q, sampleRate)
 
     // 逐行 sync 矫正:消除发送端时钟漂移累积的斜切
-    const syncOffset = detectSyncOffsetMs(freq, sampleRate)
+    const { raw: rawSync, clamped: syncOffset } = detectSyncOffsetMsInternal(freq, sampleRate)
+    // 把 raw sync 偏移写入 state 供 decoder 的 slant 校准用
+    ;(state as { cr?: Uint8ClampedArray; cb?: Uint8ClampedArray; lastRawSyncMs?: number }).lastRawSyncMs = rawSync
 
     const yStart = SYNC_MS + PORCH1_MS + syncOffset
     const yEnd = yStart + Y_MS
