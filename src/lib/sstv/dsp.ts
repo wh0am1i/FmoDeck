@@ -155,27 +155,13 @@ export function instantFreq(
   centerHz = 1900
 ): Float32Array {
   const n = i.length
-  const raw = new Float32Array(n)
-  raw[0] = centerHz
+  const out = new Float32Array(n)
+  out[0] = centerHz
   const scale = sampleRate / (2 * Math.PI)
   for (let k = 1; k < n; k++) {
     const re = (i[k] ?? 0) * (i[k - 1] ?? 0) + (q[k] ?? 0) * (q[k - 1] ?? 0)
     const im = (q[k] ?? 0) * (i[k - 1] ?? 0) - (i[k] ?? 0) * (q[k - 1] ?? 0)
-    raw[k] = centerHz + scale * Math.atan2(im, re)
-  }
-
-  // 平滑:对 arctan2 的逐样本噪声做 5 点移动平均,消除 Opus 编码等带来的相位抖动。
-  // 5 点 @ 44.1kHz ≈ 0.11ms,对 SSTV 1500-2300Hz 的周期(0.43-0.66ms)而言很小,不模糊像素边缘。
-  const out = new Float32Array(n)
-  const w = 5
-  const half = Math.floor(w / 2)
-  let sum = 0
-  for (let k = 0; k < Math.min(w, n); k++) sum += raw[k] ?? centerHz
-  for (let k = 0; k < n; k++) {
-    if (k > half && k + half < n) {
-      sum += (raw[k + half] ?? centerHz) - (raw[k - half - 1] ?? centerHz)
-    }
-    out[k] = sum / Math.min(w, n)
+    out[k] = centerHz + scale * Math.atan2(im, re)
   }
   return out
 }
