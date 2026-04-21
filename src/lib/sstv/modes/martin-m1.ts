@@ -34,7 +34,7 @@ function sampleColor(
   return out
 }
 
-const CLAMP_MS = 10
+const CLAMP_MS = 20
 
 /**
  * 在本行前 20ms 内检测 1200Hz sync pulse 的实际中心位置(ms)。
@@ -45,7 +45,7 @@ function detectSyncOffsetMsInternal(
   freq: Float32Array,
   sampleRate: number
 ): { raw: number; clamped: number } {
-  const searchMs = 20 // sync 4.862ms + 更大余量
+  const searchMs = 40 // sync 4.862ms + 大余量(给未校准期的累积漂移留空间)
   const syncWidthMs = SYNC_MS
   const searchSamples = Math.min(
     freq.length,

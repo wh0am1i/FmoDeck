@@ -4,8 +4,9 @@ import { modeRegistry } from './modes/registry'
 import type { Mode, DecodeState } from './modes/types'
 import type { PcmTap } from './pcm-tap'
 
-const CALIBRATION_ROWS = 20
-const SLANT_CLAMP_MS = 3 // 斜率钳制(±3 ms/scan line)
+const CALIBRATION_ROWS = 10 // 提前校准,减少漂移积累污染样本的机会
+const SLANT_CLAMP_MS = 5 // 斜率钳制(±5 ms/scan line,留给真实极端漂移更多裕量)
+const SLANT_FILTER_MS = 25 // 收集 raw sync 用于 slant 校准时的过滤上限(远大于预期漂移,Theil-Sen 自己抗异常)
 
 export type DecoderState =
   | { type: 'idle' }
@@ -123,8 +124,9 @@ export class SstvDecoder {
       // 收集 raw sync 用于 slant 校准(仅未校准前)
       if (!this.state.slantCalibrated) {
         const rawMs = (decodeState as { lastRawSyncMs?: number }).lastRawSyncMs ?? 0
-        // 过滤极端值:真实漂移不会超过 ±10ms,超过的是 sync 检测误判
-        if (Math.abs(rawMs) <= 10) {
+        // 放宽过滤:真实漂移累积可以超过 10ms(尤其早期未校准 + 长 scan line 的情况);
+        // Theil-Sen 自身对异常值有 29% 击穿点抗噪。只过滤绝对离谱的(检测失败返回 0 除外)。
+        if (rawMs !== 0 && Math.abs(rawMs) <= SLANT_FILTER_MS) {
           this.state.syncSamples.push(rawMs)
           if (this.state.syncSamples.length >= CALIBRATION_ROWS) {
             this.state.slantMsPerScanLine = theilSenSlope(this.state.syncSamples)

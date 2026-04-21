@@ -56,7 +56,7 @@ function clamp(v: number): number {
   return Math.max(0, Math.min(255, Math.round(v)))
 }
 
-const CLAMP_MS = 15
+const CLAMP_MS = 25
 
 /**
  * 在本行前 35ms 内检测 1200Hz sync pulse 的实际中心位置(ms)。
@@ -68,7 +68,7 @@ function detectSyncOffsetMsInternal(
   freq: Float32Array,
   sampleRate: number
 ): { raw: number; clamped: number } {
-  const searchMs = 35 // 比 sync 宽多 15ms 的余量
+  const searchMs = 55 // sync 20ms + 大余量(给未校准期的累积漂移留空间)
   const syncWidthMs = SYNC_MS
   const searchSamples = Math.min(
     freq.length,
