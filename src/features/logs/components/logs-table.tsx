@@ -1,7 +1,15 @@
 import { Fragment, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Star } from 'lucide-react'
 import { GridLocation } from '@/components/shared/grid-location'
-import { logsStore, rowKey, selectPageSlice, type DisplayRow } from '../store'
+import { parseCallsignSsid } from '@/lib/utils/callsign'
+import {
+  logsStore,
+  rowKey,
+  selectPageSlice,
+  selectTodaysContactedBaseCalls,
+  type DisplayRow
+} from '../store'
 import { cn } from '@/lib/utils'
 
 function pad(n: number): string {
@@ -87,6 +95,18 @@ export function LogsTable({ onRowClick }: Props) {
     return m
   }, [all, local])
 
+  const todaysSet = useMemo(
+    () => selectTodaysContactedBaseCalls({ ...logsStore.getState(), all, local }),
+    [all, local]
+  )
+  const isContactedToday = (cs: string): boolean => {
+    try {
+      return todaysSet.has(parseCallsignSsid(cs).call.toUpperCase())
+    } catch {
+      return false
+    }
+  }
+
   const nowMs = Date.now()
   const todayStart = startOfLocalToday(nowMs)
   const yesterdayPrefix = t('common.yesterdayPrefix')
@@ -155,6 +175,12 @@ export function LogsTable({ onRowClick }: Props) {
                         <span className="rounded-sm border border-primary bg-primary/10 px-1 py-0 text-[10px] font-bold uppercase leading-4 text-primary">
                           {t('logs.badgeToday')}
                         </span>
+                      )}
+                      {!isToday && isContactedToday(r.toCallsign) && (
+                        <Star
+                          className="h-3 w-3 fill-yellow-400 text-yellow-400"
+                          aria-label={t('common.contactedToday', { defaultValue: '今日已联' })}
+                        />
                       )}
                       {r.source === 'local' && (
                         <span
