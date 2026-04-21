@@ -5,6 +5,16 @@ import type { Mode } from '@/lib/sstv/modes/types'
 
 type SstvStatus = 'idle' | 'waiting' | 'decoding' | 'done' | 'timeout'
 
+export interface RecentDecodeEntry {
+  id: string
+  mode: SstvMode
+  displayName: string
+  rgba: Uint8ClampedArray
+  width: number
+  height: number
+  createdAt: number
+}
+
 export interface SstvState {
   status: SstvStatus
   activeMode: SstvMode | null
@@ -22,6 +32,8 @@ export interface SstvState {
   /** 后台模式下产生的未读图数量。 */
   unreadCount: number
   lastError: string | null
+  /** 最近完成的几张解码结果(不含进行中的 live),最多 5 张,最新在前。 */
+  recentDecodes: RecentDecodeEntry[]
 
   /** 内部方法,decoder session 调用 */
   onDecoderStart: (mode: Mode) => void
@@ -48,6 +60,7 @@ export const sstvStore = create<SstvState>((set, get) => ({
   lastDoneAt: null,
   unreadCount: 0,
   lastError: null,
+  recentDecodes: [],
 
   onDecoderStart: (mode) => {
     // 分配新的 rgba buffer
@@ -73,12 +86,27 @@ export const sstvStore = create<SstvState>((set, get) => ({
     })
   },
   onDecoderDone: (mode) => {
-    set({
+    const rgba = get().currentRgba
+    if (!rgba) {
+      set({ status: 'done', progress: 1, lastDoneAt: Date.now() })
+      return
+    }
+    const entry: RecentDecodeEntry = {
+      id: String(Date.now()) + '-' + Math.random().toString(36).slice(2, 6),
+      mode: mode.name,
+      displayName: mode.displayName,
+      rgba: new Uint8ClampedArray(rgba), // 深拷贝,防止下次 onDecoderStart 覆盖同一 buffer
+      width: mode.width,
+      height: mode.height,
+      createdAt: Date.now()
+    }
+    set((s) => ({
       status: 'done',
       progress: 1,
-      lastDoneAt: Date.now(),
-      activeMode: mode.name
-    })
+      lastDoneAt: entry.createdAt,
+      activeMode: mode.name,
+      recentDecodes: [entry, ...s.recentDecodes].slice(0, 5)
+    }))
     // 注意:currentRgba 保留不清空,canvas 需要
   },
   onDecoderTimeout: () => {
@@ -103,6 +131,7 @@ export const sstvStore = create<SstvState>((set, get) => ({
       progress: 0,
       currentRgba: null,
       lastRow: -1
+      // recentDecodes 保留,跨 session 的最近记忆
     }),
   setError: (lastError) => set({ lastError }),
 

@@ -1,23 +1,19 @@
 // src/features/sstv/components/sstv-canvas.tsx
 import { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
-import { sstvStore } from '../store'
 import { modeRegistry } from '@/lib/sstv/modes/registry'
 import { SpectrumWaveform } from '@/features/audio/components/spectrum-waveform'
+import { sstvStore } from '../store'
+import type { RecentDecodeEntry } from '../store'
 
-/** 相对时间:< 60s → "N 秒前", < 3600s → "N 分钟前", 否则 → "N 小时前" */
-function relativeTime(ts: number): string {
-  const diffMs = Date.now() - ts
-  const secs = Math.floor(diffMs / 1000)
-  if (secs < 60) return `${secs} 秒前`
-  const mins = Math.floor(secs / 60)
-  if (mins < 60) return `${mins} 分钟前`
-  const hours = Math.floor(mins / 60)
-  return `${hours} 小时前`
+function relativeTime(ms: number): string {
+  const diff = (Date.now() - ms) / 1000
+  if (diff < 60) return `${Math.max(1, Math.floor(diff))} 秒前`
+  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
+  return `${Math.floor(diff / 3600)} 小时前`
 }
 
 export function SstvCanvas({ className }: { className?: string }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
   const status = sstvStore((s) => s.status)
   const activeMode = sstvStore((s) => s.activeMode)
   const progress = sstvStore((s) => s.progress)
@@ -27,29 +23,22 @@ export function SstvCanvas({ className }: { className?: string }) {
   const lastRow = sstvStore((s) => s.lastRow)
   const lastDoneAt = sstvStore((s) => s.lastDoneAt)
   const lastError = sstvStore((s) => s.lastError)
+  const recentDecodes = sstvStore((s) => s.recentDecodes)
 
-  // 相对时间文字,每秒更新
-  const [relTime, setRelTime] = useState<string>('')
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  // "N 秒前"每秒刷新
+  const [, tick] = useState(0)
   useEffect(() => {
-    if (status !== 'done' || lastDoneAt === null) {
-      setRelTime('')
-      return
-    }
-    setRelTime(relativeTime(lastDoneAt))
-    const id = setInterval(() => setRelTime(relativeTime(lastDoneAt)), 1000)
+    if (status !== 'done') return
+    const id = setInterval(() => tick((n) => n + 1), 1000)
     return () => clearInterval(id)
-  }, [status, lastDoneAt])
+  }, [status])
 
-  // 找 displayName
-  const activeDisplay = activeMode
-    ? ([...modeRegistry.values()].find((m) => m.name === activeMode)?.displayName ?? activeMode.toUpperCase())
-    : null
-
-  // Canvas 绘制:有图 → 画 rgba;无图 → 画 HUD 栅格
+  // 绘制 live canvas(进行中或 done 时画 currentRgba;否则画 HUD 栅格)
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-
     if (currentRgba && currentWidth > 0 && currentHeight > 0) {
       if (canvas.width !== currentWidth || canvas.height !== currentHeight) {
         canvas.width = currentWidth
@@ -64,7 +53,7 @@ export function SstvCanvas({ className }: { className?: string }) {
       )
       ctx.putImageData(imgData, 0, 0)
     } else {
-      // 空态:画 HUD 栅格
+      // HUD 栅格空态
       if (canvas.width !== 320 || canvas.height !== 240) {
         canvas.width = 320
         canvas.height = 240
@@ -92,42 +81,105 @@ export function SstvCanvas({ className }: { className?: string }) {
     }
   }, [currentRgba, currentWidth, currentHeight, lastRow])
 
+  const activeDisplay = activeMode
+    ? ([...modeRegistry.values()].find((m) => m.name === activeMode)?.displayName ??
+      activeMode.toUpperCase())
+    : null
+
+  // live 已经在 recentDecodes[0] 里了(done 之后),下方堆栈从 index 1 开始
+  const stackBelow = status === 'done' ? recentDecodes.slice(1) : recentDecodes
+
   return (
-    <div className={cn('relative flex flex-col items-center gap-3', className)}>
+    <div className={cn('flex flex-col gap-3', className)}>
+      <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto pr-1">
+        {/* Live canvas */}
+        <div className="flex flex-col items-center gap-2">
+          <canvas
+            ref={canvasRef}
+            width={320}
+            height={240}
+            style={{
+              imageRendering: 'pixelated',
+              width: '100%',
+              maxWidth: 640,
+              height: 'auto'
+            }}
+            className="rounded-sm border border-primary/30 bg-black"
+          />
+          <div className="hud-mono text-xs text-muted-foreground">
+            {status === 'idle' && '等待音频连接…'}
+            {status === 'waiting' && '监听中'}
+            {status === 'decoding' && activeDisplay && (
+              <span>
+                {activeDisplay} · {Math.round(progress * 100)}%
+              </span>
+            )}
+            {status === 'done' && activeDisplay && lastDoneAt !== null && (
+              <span>
+                最近接收:{activeDisplay} · {relativeTime(lastDoneAt)}
+              </span>
+            )}
+            {status === 'timeout' && '超时,已丢弃'}
+          </div>
+          {(status === 'waiting' || status === 'idle') && (
+            <div className="w-full max-w-[240px]">
+              <SpectrumWaveform height={32} />
+            </div>
+          )}
+          {lastError && (
+            <div className="hud-mono text-xs text-destructive">存档失败:{lastError}</div>
+          )}
+        </div>
+
+        {/* 最近完成帧堆栈(live 之外) */}
+        {stackBelow.map((entry) => (
+          <RecentFrameCard key={entry.id} entry={entry} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function RecentFrameCard({ entry }: { entry: RecentDecodeEntry }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [, tick] = useState(0)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    canvas.width = entry.width
+    canvas.height = entry.height
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    const imgData = new ImageData(
+      new Uint8ClampedArray(entry.rgba.buffer, entry.rgba.byteOffset, entry.rgba.byteLength),
+      entry.width,
+      entry.height
+    )
+    ctx.putImageData(imgData, 0, 0)
+  }, [entry])
+
+  // 相对时间每秒刷新
+  useEffect(() => {
+    const id = setInterval(() => tick((n) => n + 1), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  return (
+    <div className="flex flex-col items-center gap-1 border-t border-primary/10 pt-3">
       <canvas
         ref={canvasRef}
-        width={320}
-        height={240}
-        style={{ imageRendering: 'pixelated', width: '100%', maxWidth: 640, height: 'auto' }}
-        className="rounded-sm border border-primary/30 bg-black"
+        style={{
+          imageRendering: 'pixelated',
+          width: '100%',
+          maxWidth: 640,
+          height: 'auto'
+        }}
+        className="rounded-sm border border-primary/20 bg-black"
       />
-
-      {/* waiting / idle 时显示音频电平表 */}
-      {(status === 'waiting' || status === 'idle') && (
-        <div className="w-full max-w-[240px]">
-          <SpectrumWaveform height={32} />
-        </div>
-      )}
-
       <div className="hud-mono text-xs text-muted-foreground">
-        {status === 'idle' && '等待音频连接…'}
-        {status === 'waiting' && '监听中'}
-        {status === 'decoding' && (
-          <span>
-            {activeDisplay} · {Math.round(progress * 100)}%
-          </span>
-        )}
-        {status === 'done' && (
-          <span>
-            最近接收:{activeDisplay} · {relTime}
-          </span>
-        )}
-        {status === 'timeout' && '超时,已丢弃'}
+        {entry.displayName} · {relativeTime(entry.createdAt)}
       </div>
-
-      {lastError && (
-        <div className="hud-mono text-xs text-destructive">存档失败:{lastError}</div>
-      )}
     </div>
   )
 }
