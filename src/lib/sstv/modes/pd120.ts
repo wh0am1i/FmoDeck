@@ -42,13 +42,20 @@ function sampleSection(
   return out
 }
 
-/** YCbCr(full-range / JPEG-style,SSTV 通用)→ RGB。Y/Cb/Cr 都是 0-255。 */
+/**
+ * PD 专用 YCbCr → RGB:PD 直接编码 R-Y / B-Y(未做 JPEG 的 0.713/0.564 缩放),
+ * 所以解码时系数是 1.0,不是 Robot/Martin 的 1.402/1.772。
+ * 否则 Cr/Cb 会被过度放大,皮肤变粉/品红。
+ *
+ * 推导:已知 Y = 0.299R + 0.587G + 0.114B,R = Y + (Cr-128),B = Y + (Cb-128)
+ *       则 G = Y - 0.509(Cr-128) - 0.194(Cb-128)
+ */
 function yuvToRgb(y: number, cb: number, cr: number): [number, number, number] {
   const cbb = cb - 128
   const crr = cr - 128
-  const r = y + 1.402 * crr
-  const g = y - 0.344136 * cbb - 0.714136 * crr
-  const b = y + 1.772 * cbb
+  const r = y + crr
+  const g = y - 0.509 * crr - 0.194 * cbb
+  const b = y + cbb
   return [clamp(r), clamp(g), clamp(b)]
 }
 

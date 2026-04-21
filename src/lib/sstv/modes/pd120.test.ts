@@ -13,10 +13,10 @@ function clamp(v: number): number {
  * Y2 = Y1(两行相同颜色)。
  */
 function synthPD120ScanLine(r: number, g: number, b: number): Float32Array {
-  // RGB → YCbCr (full-range)
+  // PD 用直接 R-Y / B-Y 编码(不像 JPEG 有 0.713/0.564 scale)
   const y = clamp(Math.round(0.299 * r + 0.587 * g + 0.114 * b))
-  const cr = clamp(Math.round(128 + (r - y) * 0.713))
-  const cb = clamp(Math.round(128 + (b - y) * 0.564))
+  const cr = clamp(Math.round(128 + (r - y)))
+  const cb = clamp(Math.round(128 + (b - y)))
   return concat(
     synthTone(1200, 20),
     synthTone(1500, 2.08),
