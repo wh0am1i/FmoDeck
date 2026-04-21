@@ -80,14 +80,6 @@ function detectSyncOffsetMsInternal(
   return { raw, clamped }
 }
 
-function detectSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
-  return detectSyncOffsetMsInternal(freq, sampleRate).clamped
-}
-
-function detectRawSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
-  return detectSyncOffsetMsInternal(freq, sampleRate).raw
-}
-
 /** Martin M1:每行 446.446ms,sync-porch-G-sep-B-sep-R-sep,320×256 RGB。VIS on-wire 0xAC。 */
 export const martinM1: Mode = {
   name: 'martin-m1',
@@ -111,7 +103,7 @@ export const martinM1: Mode = {
 
     // 中位数滤波:在 Opus 失真下单行 sync 检测有 ±1-2ms 抖动,行间产生"梳齿"条纹。
     // 用最近 5 行 clamped sync 的中位数替代 raw,抑制孤立噪声但仍跟踪真实漂移。
-    if (!st.syncWindow) st.syncWindow = []
+    st.syncWindow ??= []
     st.syncWindow.push(syncRaw)
     if (st.syncWindow.length > 5) st.syncWindow.shift()
     const sorted = [...st.syncWindow].sort((a, b) => a - b)

@@ -103,14 +103,6 @@ function detectSyncOffsetMsInternal(
   return { raw, clamped }
 }
 
-function detectSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
-  return detectSyncOffsetMsInternal(freq, sampleRate).clamped
-}
-
-function detectRawSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
-  return detectSyncOffsetMsInternal(freq, sampleRate).raw
-}
-
 /**
  * PD120:每个 scan line 508.48ms,产生 2 个 image row。
  * 结构:sync(20ms) + porch(2.08ms) + Y1(121.6ms) + Cr(121.6ms) + Cb(121.6ms) + Y2(121.6ms)
@@ -137,7 +129,7 @@ export const pd120: Mode = {
     st.lastRawSyncMs = rawSync
 
     // 中位数滤波:抑制单 scan line sync 检测抖动(避免行间水平错位)
-    if (!st.syncWindow) st.syncWindow = []
+    st.syncWindow ??= []
     st.syncWindow.push(syncRaw)
     if (st.syncWindow.length > 5) st.syncWindow.shift()
     const sorted = [...st.syncWindow].sort((a, b) => a - b)

@@ -161,13 +161,13 @@ export const robot36: Mode = {
 
     // 中位数滤波:两行各自维护最近 5 个 clamped sync 的窗口,取中位数 → 消除 Opus 噪声
     // 下的行间抖动(梳齿/错位)
-    if (!st.sync0Window) st.sync0Window = []
+    st.sync0Window ??= []
     st.sync0Window.push(sync0Raw)
     if (st.sync0Window.length > 5) st.sync0Window.shift()
     const s0sorted = [...st.sync0Window].sort((a, b) => a - b)
     const sync0 = s0sorted[Math.floor(s0sorted.length / 2)]!
 
-    if (!st.sync1Window) st.sync1Window = []
+    st.sync1Window ??= []
     st.sync1Window.push(sync1Raw)
     if (st.sync1Window.length > 5) st.sync1Window.shift()
     const s1sorted = [...st.sync1Window].sort((a, b) => a - b)

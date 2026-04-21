@@ -80,14 +80,6 @@ function detectSyncOffsetMsInternal(
   return { raw, clamped }
 }
 
-function detectSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
-  return detectSyncOffsetMsInternal(freq, sampleRate).clamped
-}
-
-function detectRawSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
-  return detectSyncOffsetMsInternal(freq, sampleRate).raw
-}
-
 /** Martin M2:每行 226.798ms,sync-porch-G-sep-B-sep-R-sep,320×256 RGB。 */
 export const martinM2: Mode = {
   name: 'martin-m2',
@@ -107,7 +99,7 @@ export const martinM2: Mode = {
     st.lastRawSyncMs = rawSync
 
     // 中位数滤波:抑制 Opus 失真下的单行 sync 抖动(避免行间梳齿)
-    if (!st.syncWindow) st.syncWindow = []
+    st.syncWindow ??= []
     st.syncWindow.push(syncRaw)
     if (st.syncWindow.length > 5) st.syncWindow.shift()
     const sorted = [...st.syncWindow].sort((a, b) => a - b)
