@@ -30,7 +30,7 @@ export function SstvView() {
           <div className="flex items-baseline gap-3">
             <h2 className="hud-title text-primary">SSTV</h2>
             <span className="hud-mono text-xs text-muted-foreground">
-              Robot36 / Martin M1 / Martin M2
+              Robot 36 / Robot 72 / Martin M1 / Martin M2 / PD 120
             </span>
           </div>
           <label className="flex cursor-pointer items-center gap-2 hud-mono text-xs text-muted-foreground">

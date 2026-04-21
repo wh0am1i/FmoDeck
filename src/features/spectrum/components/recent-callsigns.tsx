@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { logsStore } from '@/features/logs/store'
+import { Star } from 'lucide-react'
+import { logsStore, selectTodaysContactedBaseCalls } from '@/features/logs/store'
 import { speakingStore } from '@/features/speaking/store'
 import { settingsStore } from '@/stores/settings'
 import { parseCallsignSsid } from '@/lib/utils/callsign'
@@ -38,6 +39,8 @@ export function RecentCallsigns() {
   const history = speakingStore((s) => s.history)
   const current = speakingStore((s) => s.current)
   const myCallsign = settingsStore((s) => s.currentCallsign)
+  const allLogs = logsStore((s) => s.all)
+  const localLogs = logsStore((s) => s.local)
   const navigate = useNavigate()
 
   // 每秒重新渲染，更新 "xxs 前" / 当前讲话时长
@@ -46,6 +49,19 @@ export function RecentCallsigns() {
     const id = setInterval(() => setNowMs(Date.now()), 1000)
     return () => clearInterval(id)
   }, [])
+
+  // 今日已联过的基号集合(⭐ 标记用);全天随着新 QSO 增量扩大
+  const todaysSet = useMemo(
+    () => selectTodaysContactedBaseCalls({ ...logsStore.getState(), all: allLogs, local: localLogs }),
+    [allLogs, localLogs]
+  )
+  const isContactedToday = (cs: string): boolean => {
+    try {
+      return todaysSet.has(parseCallsignSsid(cs).call.toUpperCase())
+    } catch {
+      return false
+    }
+  }
 
   const sorted = [...history].sort((a, b) => b.utcTime - a.utcTime).slice(0, 12)
 
@@ -70,6 +86,12 @@ export function RecentCallsigns() {
         >
           <span className="h-2 w-2 animate-pulse rounded-full bg-primary" aria-hidden="true" />
           <span className="font-semibold">{current.callsign}</span>
+          {isContactedToday(current.callsign) && (
+            <Star
+              className="h-3 w-3 fill-yellow-400 text-yellow-400"
+              aria-label={t('common.contactedToday', { defaultValue: '今日已联' })}
+            />
+          )}
           {isSameOperator(current.callsign, myCallsign) && (
             <span className="rounded-sm border border-primary/60 px-1 text-[9px] leading-3">
               {t('speaking.selfShort')}
@@ -96,6 +118,12 @@ export function RecentCallsigns() {
             title={t('speaking.viewQsoWith')}
           >
             <span className="text-primary">{item.callsign}</span>
+            {isContactedToday(item.callsign) && (
+              <Star
+                className="h-3 w-3 fill-yellow-400 text-yellow-400"
+                aria-label={t('common.contactedToday', { defaultValue: '今日已联' })}
+              />
+            )}
             {isSelf && (
               <span className="rounded-sm border border-primary/60 px-1 text-[9px] leading-3 text-primary">
                 {t('speaking.selfShort')}
