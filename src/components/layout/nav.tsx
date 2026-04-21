@@ -4,8 +4,10 @@ import { cn } from '@/lib/utils'
 
 interface NavItem {
   to: string
-  /** i18n key（nav.*）。 */
-  labelKey: string
+  /** i18n key（nav.*）。与 label 二选一。 */
+  labelKey?: string
+  /** 硬编码文本,不走 i18n。 */
+  label?: string
 }
 
 const ENABLE_APRS = import.meta.env.VITE_ENABLE_APRS !== 'false'
@@ -18,6 +20,7 @@ const items: readonly NavItem[] = [
   { to: '/spectrum', labelKey: 'nav.spectrum' },
   { to: '/control', labelKey: 'nav.control' },
   ...(ENABLE_APRS ? [{ to: '/aprs', labelKey: 'nav.aprs' }] : []),
+  { to: '/sstv', label: 'SSTV' },
   { to: '/settings', labelKey: 'nav.settings' }
 ]
 
@@ -42,7 +45,7 @@ export function Nav() {
             )
           }
         >
-          {t(item.labelKey)}
+          {item.labelKey ? t(item.labelKey) : item.label}
         </NavLink>
       ))}
     </nav>

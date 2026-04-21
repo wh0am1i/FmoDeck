@@ -7,6 +7,7 @@ import { OldFriendsView } from '@/features/old-friends/old-friends-view'
 import { MessagesView } from '@/features/messages/messages-view'
 import { SettingsView } from '@/features/settings/settings-view'
 import { SpectrumView } from '@/features/spectrum/spectrum-view'
+import { SstvView } from '@/features/sstv/sstv-view'
 
 const ENABLE_APRS = import.meta.env.VITE_ENABLE_APRS !== 'false'
 
@@ -34,6 +35,7 @@ export function AppRoutes() {
           }
         />
       )}
+      <Route path="/sstv" element={<SstvView />} />
       <Route path="/settings" element={<SettingsView />} />
       <Route path="*" element={<Navigate to="/logs" replace />} />
     </Routes>
