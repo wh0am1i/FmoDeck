@@ -11,6 +11,7 @@ export function SstvCanvas({ className }: { className?: string }) {
   const status = sstvStore((s) => s.status)
   const activeMode = sstvStore((s) => s.activeMode)
   const progress = sstvStore((s) => s.progress)
+  const lastError = sstvStore((s) => s.lastError)
 
   return (
     <div className={cn('relative flex flex-col items-center gap-3', className)}>
@@ -32,6 +33,11 @@ export function SstvCanvas({ className }: { className?: string }) {
         {status === 'done' && '解码完成,已保存'}
         {status === 'timeout' && '超时,已丢弃'}
       </div>
+      {lastError && (
+        <div className="hud-mono text-xs text-destructive">
+          存档失败:{lastError}
+        </div>
+      )}
     </div>
   )
 }
