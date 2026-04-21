@@ -83,9 +83,10 @@ export const martinM1: Mode = {
   visCode: 0xac,
   width: WIDTH,
   height: 256,
-  lineMs: LINE_MS,
+  rowsPerScanLine: 1,
+  scanLineMs: LINE_MS,
 
-  decodeLine(samples, _row, _state, sampleRate): Uint8ClampedArray {
+  decodeLine(samples, _scanLineIndex, _state, sampleRate): Uint8ClampedArray {
     // 整行一次 FM 解调
     const { i, q } = toAnalytic(samples, sampleRate)
     const freq = instantFreq(i, q, sampleRate)

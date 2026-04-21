@@ -23,7 +23,7 @@ describe('martin-m1', () => {
     expect(martinM1.visCode).toBe(0xac)
     expect(martinM1.width).toBe(320)
     expect(martinM1.height).toBe(256)
-    expect(Math.abs(martinM1.lineMs - 446.446)).toBeLessThan(0.5)
+    expect(Math.abs(martinM1.scanLineMs - 446.446)).toBeLessThan(0.5)
   })
 
   it('纯红(R=255, G=0, B=0)行中间像素解出 R 高、G/B 低', () => {

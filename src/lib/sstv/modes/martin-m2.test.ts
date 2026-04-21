@@ -22,7 +22,7 @@ describe('martin-m2', () => {
     expect(martinM2.visCode).toBe(0x28)
     expect(martinM2.width).toBe(320)
     expect(martinM2.height).toBe(256)
-    expect(Math.abs(martinM2.lineMs - 226.798)).toBeLessThan(0.5)
+    expect(Math.abs(martinM2.scanLineMs - 226.798)).toBeLessThan(0.5)
   })
 
   it('纯红行解出 R 高', () => {

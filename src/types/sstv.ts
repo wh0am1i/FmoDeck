@@ -1,6 +1,6 @@
 // src/types/sstv.ts
 
-export type SstvMode = 'robot36' | 'martin-m1' | 'martin-m2'
+export type SstvMode = 'robot36' | 'robot72' | 'martin-m1' | 'martin-m2' | 'pd120'
 
 export interface SstvImage {
   id: string

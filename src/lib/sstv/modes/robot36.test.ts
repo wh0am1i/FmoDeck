@@ -25,7 +25,7 @@ describe('robot36', () => {
     expect(robot36.visCode).toBe(0x88)
     expect(robot36.width).toBe(320)
     expect(robot36.height).toBe(240)
-    expect(Math.abs(robot36.lineMs - 150)).toBeLessThan(1)
+    expect(Math.abs(robot36.scanLineMs - 150)).toBeLessThan(1)
   })
 
   it('全白 Y 解码后中间像素 R/G/B 都接近 255', () => {

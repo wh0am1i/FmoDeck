@@ -10,7 +10,7 @@ export type DecoderState =
       type: 'decoding'
       mode: Mode
       t0: number
-      nextRow: number
+      nextScanLine: number
       decodeState: DecodeState
       silentRowsStreak: number
     }
@@ -31,9 +31,9 @@ export interface DecoderEvents {
  * 每次 `tick(tap)` 根据当前 tap 内样本推进 VIS 检测 / 逐行解码。
  *
  * idle:VIS 扫描最近 500ms,找到 → decoding
- * decoding:按 t0 和 mode.lineMs 推进 nextRow,解一行回调一次;
+ * decoding:按 t0 和 mode.scanLineMs 推进 nextScanLine,解一个 scan line 回调若干次;
  *           全部行完 → done 回调 → idle
- *           超时(>lineMs*height*1.1) → timeout 回调 → idle
+ *           超时(>scanLineMs*scanLineCount*1.1) → timeout 回调 → idle
  */
 export class SstvDecoder {
   state: DecoderState = { type: 'idle' }
@@ -70,7 +70,7 @@ export class SstvDecoder {
         type: 'decoding',
         mode,
         t0,
-        nextRow: 0,
+        nextScanLine: 0,
         decodeState: {},
         silentRowsStreak: 0
       }
@@ -81,17 +81,18 @@ export class SstvDecoder {
 
     // decoding
     const { mode, t0, decodeState } = this.state
-    const rowSamples = Math.round((mode.lineMs * this.sampleRate) / 1000)
+    const rowSamples = Math.round((mode.scanLineMs * this.sampleRate) / 1000)
     const elapsedSamples = tap.totalWritten - t0
     const elapsedMs = (elapsedSamples / this.sampleRate) * 1000
-    const targetRow = Math.floor(elapsedMs / mode.lineMs)
+    const targetScanLine = Math.floor(elapsedMs / mode.scanLineMs)
+    const scanLineCount = mode.height / mode.rowsPerScanLine
 
-    while (this.state.nextRow < Math.min(targetRow, mode.height)) {
-      const rowStart = t0 + this.state.nextRow * rowSamples
-      const samples = tap.slice(rowStart, rowSamples)
+    while (this.state.nextScanLine < Math.min(targetScanLine, scanLineCount)) {
+      const scanLineStart = t0 + this.state.nextScanLine * rowSamples
+      const samples = tap.slice(scanLineStart, rowSamples)
       if (!samples) break
 
-      // 静音检测:若连续 5 行 RMS < 阈值,视为信号中断,abort
+      // 静音检测:若连续 5 次 RMS < 阈值,视为信号中断,abort
       const rms = computeRms(samples)
       if (rms < 0.01) {
         this.state.silentRowsStreak++
@@ -105,13 +106,21 @@ export class SstvDecoder {
         this.state.silentRowsStreak = 0
       }
 
-      const rgba = mode.decodeLine(samples, this.state.nextRow, decodeState, this.sampleRate)
-      this.fullRgba?.set(rgba, this.state.nextRow * mode.width * 4)
-      this.events.onRow?.(this.state.nextRow, rgba, mode)
-      this.state.nextRow++
+      const rgba = mode.decodeLine(samples, this.state.nextScanLine, decodeState, this.sampleRate)
+      // rgba 长度 = width × rowsPerScanLine × 4
+      // 写入 fullRgba 起始偏移 = (nextScanLine × rowsPerScanLine) × width × 4
+      const firstImageRow = this.state.nextScanLine * mode.rowsPerScanLine
+      this.fullRgba?.set(rgba, firstImageRow * mode.width * 4)
+      // 每个 image row 触发 onRow
+      for (let r = 0; r < mode.rowsPerScanLine; r++) {
+        const rowRgba = rgba.subarray(r * mode.width * 4, (r + 1) * mode.width * 4)
+        void this.events.onRow?.(firstImageRow + r, new Uint8ClampedArray(rowRgba), mode)
+      }
+
+      this.state.nextScanLine++
     }
 
-    if (this.state.nextRow === mode.height) {
+    if (this.state.nextScanLine >= scanLineCount) {
       const rgba = this.fullRgba!
       const doneMode = mode
       this.state = { type: 'idle' }
@@ -120,7 +129,7 @@ export class SstvDecoder {
       return
     }
 
-    if (elapsedMs > mode.lineMs * mode.height * 1.1) {
+    if (elapsedMs > mode.scanLineMs * scanLineCount * 1.1) {
       this.state = { type: 'idle' }
       this.fullRgba = null
       this.events.onTimeout?.()
