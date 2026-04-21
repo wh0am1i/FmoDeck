@@ -47,7 +47,7 @@ export function SstvHistoryItem({ image, selected, onToggleSelect, onDelete }: P
     ([...modeRegistry.values()].find((m) => m.name === image.mode)?.displayName) ??
     image.mode.toUpperCase()
 
-  async function handleDownload() {
+  function handleDownload() {
     const url = URL.createObjectURL(image.imageBlob)
     const a = document.createElement('a')
     a.href = url
@@ -112,7 +112,7 @@ export function SstvHistoryItem({ image, selected, onToggleSelect, onDelete }: P
           <Button variant="ghost" size="sm" onClick={handleDownload} aria-label="下载">
             <Download className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleCopy} aria-label="复制到剪贴板">
+          <Button variant="ghost" size="sm" onClick={() => { void handleCopy() }} aria-label="复制到剪贴板">
             <Copy className="h-4 w-4" />
           </Button>
           <Button
@@ -154,7 +154,7 @@ export function SstvHistoryItem({ image, selected, onToggleSelect, onDelete }: P
                   <Download className="h-4 w-4" />
                   下载
                 </Button>
-                <Button variant="ghost" size="sm" onClick={handleCopy}>
+                <Button variant="ghost" size="sm" onClick={() => { void handleCopy() }}>
                   <Copy className="h-4 w-4" />
                   复制
                 </Button>

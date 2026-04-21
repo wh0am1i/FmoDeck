@@ -19,7 +19,7 @@ export interface DecoderEvents {
   /** 每解出一行触发,UI 用来渐进画 canvas。 */
   onRow?: (row: number, rgba: Uint8ClampedArray, mode: Mode) => void
   /** 整帧完成。rgba 是每行拼起来的 width × height × 4。 */
-  onDone?: (result: { mode: Mode; rgba: Uint8ClampedArray }) => void
+  onDone?: (result: { mode: Mode; rgba: Uint8ClampedArray }) => void | Promise<void>
   /** 超时弃帧。 */
   onTimeout?: () => void
   /** 进入 decoding 状态,UI 可用于分配 canvas。 */
@@ -61,7 +61,6 @@ export class SstvDecoder {
       if (!result) return
       const mode = modeRegistry.get(result.visCode)
       if (!mode) {
-        // eslint-disable-next-line no-console
         console.debug(`[sstv] 未支持的 VIS 码:0x${result.visCode.toString(16)}`)
         return
       }
@@ -117,7 +116,7 @@ export class SstvDecoder {
       const doneMode = mode
       this.state = { type: 'idle' }
       this.fullRgba = null
-      this.events.onDone?.({ mode: doneMode, rgba })
+      void this.events.onDone?.({ mode: doneMode, rgba })
       return
     }
 
@@ -132,8 +131,7 @@ export class SstvDecoder {
 function computeRms(samples: Float32Array): number {
   if (samples.length === 0) return 0
   let sumSq = 0
-  for (let i = 0; i < samples.length; i++) {
-    const s = samples[i] ?? 0
+  for (const s of samples) {
     sumSq += s * s
   }
   return Math.sqrt(sumSq / samples.length)

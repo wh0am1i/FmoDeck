@@ -13,7 +13,7 @@ type Filter = 'all' | SstvMode
 
 const PAGE_SIZE = 20
 
-const FILTER_LABELS: Array<{ key: Filter; label: string }> = [
+const FILTER_LABELS: { key: Filter; label: string }[] = [
   { key: 'all', label: '全部' },
   { key: 'robot36', label: 'Robot 36' },
   { key: 'martin-m1', label: 'Martin M1' },
@@ -171,12 +171,12 @@ export function SstvHistory() {
                 image={img}
                 selected={selectedIds.has(img.id)}
                 onToggleSelect={() => toggleSelect(img.id)}
-                onDelete={handleDelete}
+                onDelete={(id) => { void handleDelete(id) }}
               />
             ))}
           </div>
           {hasMore && filter === 'all' && (
-            <Button variant="outline" size="sm" onClick={loadMore} disabled={loading}>
+            <Button variant="outline" size="sm" onClick={() => { void loadMore() }} disabled={loading}>
               {loading ? '加载中…' : '加载更多'}
             </Button>
           )}
@@ -193,7 +193,7 @@ export function SstvHistory() {
         destructive
         loading={clearing}
         loadingLabel="清理中…"
-        onConfirm={handleClear}
+        onConfirm={() => { void handleClear() }}
       />
 
       <ConfirmDialog
@@ -206,7 +206,7 @@ export function SstvHistory() {
         destructive
         loading={deletingSel}
         loadingLabel="删除中…"
-        onConfirm={handleDeleteSelected}
+        onConfirm={() => { void handleDeleteSelected() }}
       />
     </div>
   )

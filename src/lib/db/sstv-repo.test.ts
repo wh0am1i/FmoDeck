@@ -3,9 +3,9 @@ import 'fake-indexeddb/auto'
 import { afterEach, describe, expect, it } from 'vitest'
 import { sstvRepo } from './sstv-repo'
 
-async function makeImage(
+function makeImage(
   mode: 'robot36' = 'robot36'
-): Promise<Parameters<typeof sstvRepo.add>[0]> {
+): Parameters<typeof sstvRepo.add>[0] {
   const imageBlob = new Blob([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], { type: 'image/png' })
   const thumbnailBlob = new Blob([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], { type: 'image/png' })
   return {
@@ -23,7 +23,7 @@ afterEach(async () => {
 
 describe('sstv-repo', () => {
   it('add 后能 get 和 list', async () => {
-    const img = await sstvRepo.add(await makeImage())
+    const img = await sstvRepo.add(makeImage())
     expect(img.id).toBeTruthy()
     expect(img.createdAt).toBeGreaterThan(0)
 
@@ -36,9 +36,9 @@ describe('sstv-repo', () => {
   })
 
   it('list 按 createdAt 降序(新在前)', async () => {
-    const a = await sstvRepo.add(await makeImage())
+    const a = await sstvRepo.add(makeImage())
     await new Promise((r) => setTimeout(r, 5))
-    const b = await sstvRepo.add(await makeImage())
+    const b = await sstvRepo.add(makeImage())
     const list = await sstvRepo.list()
     expect(list[0]!.id).toBe(b.id)
     expect(list[1]!.id).toBe(a.id)
@@ -46,7 +46,7 @@ describe('sstv-repo', () => {
 
   it('list 支持 limit 分页', async () => {
     for (let i = 0; i < 5; i++) {
-      await sstvRepo.add(await makeImage())
+      await sstvRepo.add(makeImage())
       await new Promise((r) => setTimeout(r, 2))
     }
     const page = await sstvRepo.list({ limit: 2 })
@@ -54,9 +54,9 @@ describe('sstv-repo', () => {
   })
 
   it('list 支持 before 游标', async () => {
-    const records: Array<{ id: string; createdAt: number }> = []
+    const records: { id: string; createdAt: number }[] = []
     for (let i = 0; i < 3; i++) {
-      const r = await sstvRepo.add(await makeImage())
+      const r = await sstvRepo.add(makeImage())
       records.push({ id: r.id, createdAt: r.createdAt })
       await new Promise((r) => setTimeout(r, 5))
     }
@@ -66,7 +66,7 @@ describe('sstv-repo', () => {
   })
 
   it('delete 删单条', async () => {
-    const img = await sstvRepo.add(await makeImage())
+    const img = await sstvRepo.add(makeImage())
     await sstvRepo.delete(img.id)
     expect(await sstvRepo.get(img.id)).toBeNull()
     expect(await sstvRepo.list()).toHaveLength(0)
@@ -74,14 +74,14 @@ describe('sstv-repo', () => {
 
   it('count 返回条数', async () => {
     expect(await sstvRepo.count()).toBe(0)
-    await sstvRepo.add(await makeImage())
-    await sstvRepo.add(await makeImage())
+    await sstvRepo.add(makeImage())
+    await sstvRepo.add(makeImage())
     expect(await sstvRepo.count()).toBe(2)
   })
 
   it('clear 清空所有', async () => {
-    await sstvRepo.add(await makeImage())
-    await sstvRepo.add(await makeImage())
+    await sstvRepo.add(makeImage())
+    await sstvRepo.add(makeImage())
     await sstvRepo.clear()
     expect(await sstvRepo.count()).toBe(0)
   })

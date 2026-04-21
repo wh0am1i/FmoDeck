@@ -18,8 +18,8 @@ export function goertzel(samples: Float32Array, targetHz: number, sampleRate: nu
   let s0 = 0
   let s1 = 0
   let s2 = 0
-  for (let i = 0; i < samples.length; i++) {
-    s0 = (samples[i] ?? 0) + coeff * s1 - s2
+  for (const s of samples) {
+    s0 = s + coeff * s1 - s2
     s2 = s1
     s1 = s0
   }

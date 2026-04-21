@@ -34,8 +34,8 @@ export class PcmTap {
 
   write(chunk: Float32Array): void {
     const cap = this.buf.length
-    for (let i = 0; i < chunk.length; i++) {
-      this.buf[this.writeIdx] = chunk[i]!
+    for (const s of chunk) {
+      this.buf[this.writeIdx] = s
       this.writeIdx = (this.writeIdx + 1) % cap
     }
     this._totalWritten += chunk.length

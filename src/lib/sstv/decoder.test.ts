@@ -41,7 +41,7 @@ describe('SstvDecoder', () => {
     expect(decoder.state.type).toBe('idle')
   })
 
-  it('解码中途被静音打断时触发 timeout', async () => {
+  it('解码中途被静音打断时触发 timeout', () => {
     const onTimeout = vi.fn()
     const onDone = vi.fn()
     const decoder = new SstvDecoder(TEST_SAMPLE_RATE, { onTimeout, onDone })
@@ -67,7 +67,7 @@ describe('SstvDecoder', () => {
     expect(decoder.state.type).toBe('idle')
   })
 
-  it('完整 Robot36 流:VIS + 240 行 → done → 回 idle', { timeout: 30_000 }, async () => {
+  it('完整 Robot36 流:VIS + 240 行 → done → 回 idle', { timeout: 30_000 }, () => {
     const onRow = vi.fn()
     const onDone = vi.fn()
     const decoder = new SstvDecoder(TEST_SAMPLE_RATE, { onRow, onDone })

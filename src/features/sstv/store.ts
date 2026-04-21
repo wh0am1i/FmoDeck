@@ -82,7 +82,7 @@ export const sstvStore = create<SstvState>((set, get) => ({
   },
   onDecoderRow: (row, rgba, mode) => {
     const buf = get().currentRgba
-    if (!buf || buf.length !== mode.width * mode.height * 4) return
+    if (buf?.length !== mode.width * mode.height * 4) return
     // 写入对应行
     buf.set(rgba, row * mode.width * 4)
     set({

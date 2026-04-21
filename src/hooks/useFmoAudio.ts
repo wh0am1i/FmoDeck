@@ -39,9 +39,9 @@ function isSameOperator(a: string, b: string): boolean {
 function installAudioAutoResume(engine: AudioEngine): void {
   const analyser = engine.getAnalyser()
   const ctx = analyser?.context as AudioContext | undefined
-  if (!ctx || ctx.state !== 'suspended') return
+  if (ctx?.state !== 'suspended') return
 
-  const events: Array<keyof DocumentEventMap> = ['click', 'keydown', 'touchstart', 'pointerdown']
+  const events: (keyof DocumentEventMap)[] = ['click', 'keydown', 'touchstart', 'pointerdown']
   const cleanup = () => {
     for (const e of events) document.removeEventListener(e, tryResume)
   }
