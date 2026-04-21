@@ -132,9 +132,16 @@ export const pd120: Mode = {
     const freq = instantFreq(i, q, sampleRate)
 
     // per-line sync 矫正:sync pulse 宽 20ms,在前 35ms 内找
-    const { raw: rawSync, clamped: syncOffset } = detectSyncOffsetMsInternal(freq, sampleRate)
-    // 把 raw sync 偏移写入 state 供 decoder 的 slant 校准用
-    ;(state as { lastRawSyncMs?: number }).lastRawSyncMs = rawSync
+    const { raw: rawSync, clamped: syncRaw } = detectSyncOffsetMsInternal(freq, sampleRate)
+    const st = state as { lastRawSyncMs?: number; syncWindow?: number[] }
+    st.lastRawSyncMs = rawSync
+
+    // 中位数滤波:抑制单 scan line sync 检测抖动(避免行间水平错位)
+    if (!st.syncWindow) st.syncWindow = []
+    st.syncWindow.push(syncRaw)
+    if (st.syncWindow.length > 5) st.syncWindow.shift()
+    const sorted = [...st.syncWindow].sort((a, b) => a - b)
+    const syncOffset = sorted[Math.floor(sorted.length / 2)]!
 
     const y1Start = SYNC_MS + PORCH_MS + syncOffset
     const crStart = y1Start + Y_MS

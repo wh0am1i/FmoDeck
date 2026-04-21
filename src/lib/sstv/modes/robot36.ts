@@ -138,7 +138,7 @@ export const robot36: Mode = {
 
     // Row 0(偶行)的 sync 在 0~20ms 范围内检测
     const row0SearchEnd = Math.round(20 * sampleRate / 1000)
-    const { raw: rawSync0, clamped: sync0 } = detectSyncOffsetMsInternal(
+    const { raw: rawSync0, clamped: sync0Raw } = detectSyncOffsetMsInternal(
       freq.subarray(0, Math.min(freq.length, row0SearchEnd)),
       sampleRate
     )
@@ -146,13 +146,32 @@ export const robot36: Mode = {
     // Row 1(奇行)的 sync 在 150~170ms 范围内检测(相对整段 300ms 音频)
     const row1StartSamples = Math.round(LINE_MS * sampleRate / 1000)
     const row1SearchEnd = Math.round((LINE_MS + 20) * sampleRate / 1000)
-    const { clamped: sync1 } = detectSyncOffsetMsInternal(
+    const { clamped: sync1Raw } = detectSyncOffsetMsInternal(
       freq.subarray(row1StartSamples, Math.min(freq.length, row1SearchEnd)),
       sampleRate
     )
 
     // 把第一行的 raw sync 偏移写入 state 供 decoder 的 slant 校准用
-    ;(state as { lastRawSyncMs?: number }).lastRawSyncMs = rawSync0
+    const st = state as {
+      lastRawSyncMs?: number
+      sync0Window?: number[]
+      sync1Window?: number[]
+    }
+    st.lastRawSyncMs = rawSync0
+
+    // 中位数滤波:两行各自维护最近 5 个 clamped sync 的窗口,取中位数 → 消除 Opus 噪声
+    // 下的行间抖动(梳齿/错位)
+    if (!st.sync0Window) st.sync0Window = []
+    st.sync0Window.push(sync0Raw)
+    if (st.sync0Window.length > 5) st.sync0Window.shift()
+    const s0sorted = [...st.sync0Window].sort((a, b) => a - b)
+    const sync0 = s0sorted[Math.floor(s0sorted.length / 2)]!
+
+    if (!st.sync1Window) st.sync1Window = []
+    st.sync1Window.push(sync1Raw)
+    if (st.sync1Window.length > 5) st.sync1Window.shift()
+    const s1sorted = [...st.sync1Window].sort((a, b) => a - b)
+    const sync1 = s1sorted[Math.floor(s1sorted.length / 2)]!
 
     // Row 0 时间窗(绝对 ms)
     const y0Start = SYNC_MS + PORCH1_MS + sync0

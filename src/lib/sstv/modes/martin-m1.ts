@@ -104,9 +104,18 @@ export const martinM1: Mode = {
     const freq = instantFreq(i, q, sampleRate)
 
     // 逐行 sync 矫正
-    const { raw: rawSync, clamped: syncOffset } = detectSyncOffsetMsInternal(freq, sampleRate)
+    const { raw: rawSync, clamped: syncRaw } = detectSyncOffsetMsInternal(freq, sampleRate)
     // 把 raw sync 偏移写入 state 供 decoder 的 slant 校准用
-    ;(state as { lastRawSyncMs?: number }).lastRawSyncMs = rawSync
+    const st = state as { lastRawSyncMs?: number; syncWindow?: number[] }
+    st.lastRawSyncMs = rawSync
+
+    // 中位数滤波:在 Opus 失真下单行 sync 检测有 ±1-2ms 抖动,行间产生"梳齿"条纹。
+    // 用最近 5 行 clamped sync 的中位数替代 raw,抑制孤立噪声但仍跟踪真实漂移。
+    if (!st.syncWindow) st.syncWindow = []
+    st.syncWindow.push(syncRaw)
+    if (st.syncWindow.length > 5) st.syncWindow.shift()
+    const sorted = [...st.syncWindow].sort((a, b) => a - b)
+    const syncOffset = sorted[Math.floor(sorted.length / 2)]!
 
     const gStart = SYNC_MS + PORCH_MS + syncOffset
     const bStart = gStart + COLOR_MS + PORCH_MS

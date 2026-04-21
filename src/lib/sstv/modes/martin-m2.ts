@@ -102,9 +102,16 @@ export const martinM2: Mode = {
     const { i, q } = toAnalytic(samples, sampleRate)
     const freq = instantFreq(i, q, sampleRate)
 
-    const { raw: rawSync, clamped: syncOffset } = detectSyncOffsetMsInternal(freq, sampleRate)
-    // 把 raw sync 偏移写入 state 供 decoder 的 slant 校准用
-    ;(state as { lastRawSyncMs?: number }).lastRawSyncMs = rawSync
+    const { raw: rawSync, clamped: syncRaw } = detectSyncOffsetMsInternal(freq, sampleRate)
+    const st = state as { lastRawSyncMs?: number; syncWindow?: number[] }
+    st.lastRawSyncMs = rawSync
+
+    // 中位数滤波:抑制 Opus 失真下的单行 sync 抖动(避免行间梳齿)
+    if (!st.syncWindow) st.syncWindow = []
+    st.syncWindow.push(syncRaw)
+    if (st.syncWindow.length > 5) st.syncWindow.shift()
+    const sorted = [...st.syncWindow].sort((a, b) => a - b)
+    const syncOffset = sorted[Math.floor(sorted.length / 2)]!
 
     const gStart = SYNC_MS + PORCH_MS + syncOffset
     const bStart = gStart + COLOR_MS + PORCH_MS
