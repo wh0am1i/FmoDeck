@@ -71,3 +71,9 @@ src-tauri/Cargo.lock.bak
 **/*.jks
 **/*.keystore
 **/keystore.properties
+
+# ---- 本地构建/测试产物 ----
+# latest.json 由 scripts/build-latest-json.sh 在 CI 生成
+latest.json
+# sstv/ 是 decode-real-sstv.test.ts 的本地真实信号样本,skipIf 无目录自动跳过
+/sstv/

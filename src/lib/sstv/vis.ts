@@ -9,6 +9,10 @@ export interface VisResult {
 }
 
 const BIT_MS = 30
+const LEADER_MS = 300
+const BREAK_MS = 10
+const LEADER_CORE_MS = 200
+const BREAK_SEARCH_MARGIN_MS = 20
 
 /**
  * SSTV VIS 头检测。标准协议:
@@ -19,15 +23,21 @@ const BIT_MS = 30
  * 数据字节的 bit 7 是 even parity over bits 0-6(即 popcount(byte) 必须为偶数)。
  * Bit 频率约定:1100Hz = "1"(mark),1300Hz = "0"(space)。
  *
- * 实现:滑窗扫描,找 "leader 1900Hz 样本 + start bit 1200Hz 样本 + ..." 的核心段,
- * 噪声过滤靠能量比。每次 feed() 是非流式;调用方传入 ring 最近 ~500ms 即可
- * (VIS 核心 start→stop 约 300ms + 前置 leader 样本 30ms = 330ms)。
+ * 实现:滑窗扫描完整前导:
+ *   leader(300ms) → break(10ms) → leader(300ms) → start/data/stop。
+ * 这比只看 leader 尾巴 + start/data/stop 更稳,能避免把行同步/图像数据误判成 VIS。
  */
 export class VisDetector {
   private readonly bitSamples: number
+  private readonly leaderSamples: number
+  private readonly breakSamples: number
+  private readonly preambleSamples: number
 
   constructor(private readonly sampleRate: number) {
     this.bitSamples = Math.round((BIT_MS / 1000) * sampleRate)
+    this.leaderSamples = Math.round((LEADER_MS / 1000) * sampleRate)
+    this.breakSamples = Math.round((BREAK_MS / 1000) * sampleRate)
+    this.preambleSamples = this.leaderSamples * 2 + this.breakSamples
   }
 
   reset(): void {
@@ -39,10 +49,10 @@ export class VisDetector {
     const bs = this.bitSamples
 
     const step = Math.max(1, Math.floor(bs / 4))
-    // 从 bs 开始(s - bs >= 0);上界:start + 8 data + stop = 10 cells 从 s 开始 → s + 10*bs <= n
-    for (let s = bs; s + 10 * bs <= n; s += step) {
-      // leader 尾部(s 前一个 bit 窗口):1900 Hz 主导
-      if (!isLeader1900(samples, s - bs, bs, this.sampleRate)) continue
+    // 完整前导至少需要 300ms leader + 10ms break + 300ms leader
+    // 上界:start + 8 data + stop = 10 cells 从 s 开始 → s + 10*bs <= n
+    for (let s = this.preambleSamples; s + 10 * bs <= n; s += step) {
+      if (!hasPreamble(samples, s, this.sampleRate)) continue
       // start bit:1200 Hz 主导,且不被 1900 Hz(leader 边界)污染
       if (!isStartBit1200(samples, s, bs, this.sampleRate)) continue
 
@@ -105,6 +115,31 @@ function isLeader1900(
   return e1900 > e2400 * 3
 }
 
+function hasPreamble(samples: Float32Array, startBitOff: number, sampleRate: number): boolean {
+  const firstLeaderCoreStart =
+    startBitOff - Math.round(((LEADER_MS + BREAK_MS + LEADER_MS - 250) / 1000) * sampleRate)
+  const secondLeaderCoreStart =
+    startBitOff - Math.round(((LEADER_MS - 250) / 1000) * sampleRate)
+  const leaderCoreSamples = Math.round((LEADER_CORE_MS / 1000) * sampleRate)
+  if (!isLeader1900(samples, firstLeaderCoreStart, leaderCoreSamples, sampleRate)) return false
+  if (!isLeader1900(samples, secondLeaderCoreStart, leaderCoreSamples, sampleRate)) return false
+
+  const expectedBreakStartMs = LEADER_MS + BREAK_MS
+  const searchStartMs = expectedBreakStartMs - BREAK_SEARCH_MARGIN_MS
+  const searchEndMs = expectedBreakStartMs + BREAK_SEARCH_MARGIN_MS
+  const searchStart = startBitOff - Math.round((searchEndMs / 1000) * sampleRate)
+  const searchEnd = startBitOff - Math.round((searchStartMs / 1000) * sampleRate)
+  return hasDominantToneInRange(
+    samples,
+    searchStart,
+    searchEnd,
+    Math.max(1, Math.floor(sampleRate / 500)),
+    Math.max(4, Math.round((BREAK_MS / 1000) * sampleRate)),
+    1200,
+    sampleRate
+  )
+}
+
 /**
  * start bit / stop bit 检测:1200 Hz 必须同时主导 1700 Hz 和 1900 Hz。
  * 额外检测 1900 Hz 防止窗口落在 leader/start 边界混合区域时误判。
@@ -135,6 +170,22 @@ function isDominantTone(
   const onE = goertzel(win, hz, sampleRate)
   const offE = goertzel(win, hz + 500, sampleRate)
   return onE > offE * 3
+}
+
+function hasDominantToneInRange(
+  samples: Float32Array,
+  start: number,
+  end: number,
+  step: number,
+  windowLength: number,
+  hz: number,
+  sampleRate: number
+): boolean {
+  if (start < 0 || end > samples.length || end - start < windowLength) return false
+  for (let off = start; off + windowLength <= end; off += step) {
+    if (isDominantTone(samples, off, windowLength, hz, sampleRate)) return true
+  }
+  return false
 }
 
 function popcount(x: number): number {

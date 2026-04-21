@@ -1,6 +1,7 @@
 // src/lib/sstv/modes/martin-m2.ts
 import type { Mode } from './types'
-import { freqToBrightness, instantFreq, toAnalytic } from '../dsp'
+import { instantFreq, toAnalytic } from '../dsp'
+import { sampleBrightnessSection } from './sample-section'
 
 const SYNC_MS = 4.862
 const PORCH_MS = 0.572
@@ -8,31 +9,6 @@ const COLOR_MS = 73.216
 const LINE_MS = SYNC_MS + PORCH_MS + (COLOR_MS + PORCH_MS) * 3 // 226.798
 
 const WIDTH = 320
-
-function sampleColor(
-  freq: Float32Array,
-  sampleRate: number,
-  startMs: number
-): Uint8ClampedArray {
-  const out = new Uint8ClampedArray(WIDTH)
-  const perPxMs = COLOR_MS / WIDTH
-  const perPxSamples = Math.max(1, Math.round((perPxMs * sampleRate) / 1000))
-  const windowSamples = Math.max(4, perPxSamples)
-  for (let x = 0; x < WIDTH; x++) {
-    const centerMs = startMs + perPxMs * (x + 0.5)
-    const centerIdx = Math.round((centerMs * sampleRate) / 1000)
-    const startIdx = Math.max(0, centerIdx - Math.floor(windowSamples / 2))
-    const end = Math.min(freq.length, startIdx + windowSamples)
-    if (end <= startIdx) {
-      out[x] = 0
-      continue
-    }
-    let sum = 0
-    for (let k = startIdx; k < end; k++) sum += freq[k] ?? 0
-    out[x] = freqToBrightness(sum / (end - startIdx))
-  }
-  return out
-}
 
 const CLAMP_MS = 20
 
@@ -52,7 +28,7 @@ function detectSyncOffsetMsInternal(
     Math.round((searchMs * sampleRate) / 1000)
   )
   const winSamples = Math.max(4, Math.round((syncWidthMs * sampleRate) / 1000))
-  if (searchSamples < winSamples + 4) return { raw: 0, clamped: 0 }
+  if (searchSamples < winSamples + 4) return { raw: NaN, clamped: 0 }
 
   let bestCenterIdx = winSamples / 2
   let bestDist = Infinity
@@ -71,7 +47,7 @@ function detectSyncOffsetMsInternal(
     }
   }
 
-  if (bestDist > 200) return { raw: 0, clamped: 0 }
+  if (bestDist > 200) return { raw: NaN, clamped: 0 }
 
   const detectedMs = (bestCenterIdx / sampleRate) * 1000
   const expectedMs = SYNC_MS / 2
@@ -109,9 +85,9 @@ export const martinM2: Mode = {
     const bStart = gStart + COLOR_MS + PORCH_MS
     const rStart = bStart + COLOR_MS + PORCH_MS
 
-    const g = sampleColor(freq, sampleRate, gStart)
-    const b = sampleColor(freq, sampleRate, bStart)
-    const r = sampleColor(freq, sampleRate, rStart)
+    const g = sampleBrightnessSection(freq, sampleRate, gStart, gStart + COLOR_MS, WIDTH)
+    const b = sampleBrightnessSection(freq, sampleRate, bStart, bStart + COLOR_MS, WIDTH)
+    const r = sampleBrightnessSection(freq, sampleRate, rStart, rStart + COLOR_MS, WIDTH)
 
     const rgba = new Uint8ClampedArray(WIDTH * 4)
     for (let x = 0; x < WIDTH; x++) {

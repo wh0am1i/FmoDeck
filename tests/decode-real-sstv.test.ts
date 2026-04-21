@@ -149,13 +149,13 @@ function decode(wav: Wav): DecodeResult {
   }
 
   if (!result && identifiedMode && decoder.state.type === 'decoding') {
-    console.log(`  [partial] 识别到模式但未完整解码,已解 ${decoder.state.nextRow}/${identifiedMode.height} 行`)
+    console.log(`  [partial] 识别到模式但未完整解码,已解到 scanLine=${decoder.state.nextScanLine}`)
   }
 
   if (!result) {
     throw new Error(
       identifiedMode
-        ? `${identifiedMode.displayName} 未完整解码`
+        ? '已识别模式但未完整解码'
         : '未识别到 VIS 头'
     )
   }

@@ -3,6 +3,8 @@ import { useEffect, useRef } from 'react'
 import { SstvDecoder } from '@/lib/sstv/decoder'
 import { PcmTap } from '@/lib/sstv/pcm-tap'
 import { engineRefStore } from '@/features/audio/engine-store'
+import { AUDIO_SOURCE_SAMPLE_RATE } from '@/lib/audio/engine'
+import { LivePcmPump } from '@/lib/sstv/live-pcm-pump'
 import { sstvStore } from '../store'
 import { sstvRepo } from '@/lib/db/sstv-repo'
 import { settingsStore } from '@/stores/settings'
@@ -11,12 +13,18 @@ import { toast } from 'sonner'
 import type { Mode } from '@/lib/sstv/modes/types'
 
 /**
- * SSTV 解码 session。无参数;驱动 analyser → PcmTap → SstvDecoder → sstvStore + IDB。
+ * SSTV 解码 session。无参数;优先驱动 raw PCM → LivePcmPump → SstvDecoder，
+ * fallback 时才走 raw analyser → PcmTap → SstvDecoder →
+ * sstvStore + IDB。
+ *
+ * 说明:
+ * - FMO 下行原始流本身就是 8kHz PCM；直接订阅它可以避开 AudioContext 调度带来的
+ *   时间空洞。Robot72 这类快模式对这类空洞最敏感。
+ * - 只有在没有原始 PCM 订阅能力时，才退回 raw analyser 路径。
  *
  * 完成时:
  *  - toast 提示(应用内)
  *  - 如果 settings.notificationsEnabled 则 desktop Notification
- *  - sstvStore.unreadCount++
  *
  * 调用方负责控制 mount/unmount 生命周期(见 <SstvSessionRunner />)。
  */
@@ -25,20 +33,40 @@ export function useSstvDecoder(): void {
   const tapRef = useRef<PcmTap | null>(null)
 
   useEffect(() => {
-    let raf = 0
     let stopped = false
     let attachInterval: ReturnType<typeof setInterval> | null = null
+    let pumpInterval: ReturnType<typeof setInterval> | null = null
+    let unsubscribeRawPcm: (() => void) | null = null
 
-    const tryAttach = (): boolean => {
-      const engine = engineRefStore.getState().engine
-      // SSTV 必须使用 **原始** analyser(绕过 compressor/EQ/HPF/LPF),
-      // 否则 FM 相位被处理链扭曲,解码结果乱码
-      const analyser = engine?.getRawAnalyser()
-      if (!analyser || !engine) return false
+    const stopAttachLoop = () => {
+      if (!attachInterval) return
+      clearInterval(attachInterval)
+      attachInterval = null
+    }
 
-      const sampleRate = (analyser.context as AudioContext).sampleRate
-      tapRef.current = new PcmTap(Math.round(sampleRate * 3))
-      decoderRef.current = new SstvDecoder(sampleRate, {
+    const stopPump = () => {
+      if (!pumpInterval) return
+      clearInterval(pumpInterval)
+      pumpInterval = null
+    }
+
+    const stopRawPcm = () => {
+      if (!unsubscribeRawPcm) return
+      unsubscribeRawPcm()
+      unsubscribeRawPcm = null
+    }
+
+    const detach = () => {
+      stopPump()
+      stopRawPcm()
+      decoderRef.current?.reset()
+      decoderRef.current = null
+      tapRef.current = null
+      sstvStore.getState().setIdle()
+    }
+
+    const createDecoder = (sampleRate: number): SstvDecoder =>
+      new SstvDecoder(sampleRate, {
         onStart: (mode) => {
           sstvStore.getState().onDecoderStart(mode)
         },
@@ -57,7 +85,6 @@ export function useSstvDecoder(): void {
               thumbnailBlob
             })
             sstvStore.getState().incrementSavedCount()
-            sstvStore.getState().incrementUnread()
             toast.success(`SSTV 接收完成:${mode.displayName}`, {
               description: '已存入历史'
             })
@@ -74,38 +101,94 @@ export function useSstvDecoder(): void {
         }
       })
 
-      sstvStore.getState().setWaiting()
-
-      const loop = () => {
-        if (stopped) return
-        raf = requestAnimationFrame(loop)
-        if (document.visibilityState === 'hidden') return
-        tapRef.current?.pullFromAnalyser(analyser)
-        if (tapRef.current && decoderRef.current) {
-          decoderRef.current.tick(tapRef.current)
-        }
+    const tick = (analyser: AnalyserNode) => {
+      if (stopped) return
+      tapRef.current?.pullFromAnalyser(analyser)
+      if (tapRef.current && decoderRef.current) {
+        decoderRef.current.tick(tapRef.current)
       }
-      loop()
+    }
+
+    const startPump = (analyser: AnalyserNode) => {
+      stopPump()
+      tick(analyser)
+      // 20ms 轮询可稳定覆盖 44.1k/48k 下 raw analyser 的滚动窗口，
+      // 同时不依赖 requestAnimationFrame 或页面可见性。
+      pumpInterval = setInterval(() => {
+        tick(analyser)
+      }, 20)
+    }
+
+    const attachViaRawPcm = (engine: {
+      subscribeRawPcm: (listener: (chunk: Float32Array, sampleRate: number) => void) => () => void
+    }): boolean => {
+      stopPump()
+      stopRawPcm()
+      tapRef.current = null
+      // 本地变量 pin 住类型,避免 IDE TS Server 偶发把 import 的常量推断成
+      // error 类型时 @typescript-eslint/no-unsafe-argument 误报。
+      const sampleRate: number = AUDIO_SOURCE_SAMPLE_RATE
+      const decoder = createDecoder(sampleRate)
+      const pump = new LivePcmPump(sampleRate, decoder)
+      decoderRef.current = decoder
+      unsubscribeRawPcm = engine.subscribeRawPcm((chunk, sourceSampleRate) => {
+        if (stopped) return
+        pump.push(chunk, sourceSampleRate)
+      })
+      sstvStore.getState().setWaiting()
       return true
     }
 
-    if (!tryAttach()) {
+    const attachTo = (engine = engineRefStore.getState().engine): boolean => {
+      if (!engine) return false
+      if (typeof engine.subscribeRawPcm === 'function') {
+        return attachViaRawPcm(engine)
+      }
+
+      const analyser = engine.getRawAnalyser()
+      if (!analyser) return false
+      const sampleRate = (analyser.context as AudioContext).sampleRate
+
+      stopRawPcm()
+      tapRef.current = new PcmTap(Math.round(sampleRate * 3))
+      decoderRef.current = createDecoder(sampleRate)
+      sstvStore.getState().setWaiting()
+      startPump(analyser)
+      return true
+    }
+
+    const ensureAttachLoop = () => {
+      if (attachInterval) return
       attachInterval = setInterval(() => {
-        if (tryAttach() && attachInterval) {
-          clearInterval(attachInterval)
-          attachInterval = null
+        if (attachTo()) {
+          stopAttachLoop()
         }
       }, 250)
     }
 
+    const tryAttach = (): boolean => {
+      if (pumpInterval && decoderRef.current && tapRef.current) return true
+      return attachTo()
+    }
+
+    if (!tryAttach()) {
+      ensureAttachLoop()
+    }
+
+    const unsubEngine = engineRefStore.subscribe((s, prev) => {
+      if (s.engine === prev.engine) return
+      stopAttachLoop()
+      detach()
+      if (!attachTo(s.engine)) {
+        ensureAttachLoop()
+      }
+    })
+
     return () => {
       stopped = true
-      if (attachInterval) clearInterval(attachInterval)
-      cancelAnimationFrame(raf)
-      decoderRef.current?.reset()
-      decoderRef.current = null
-      tapRef.current = null
-      sstvStore.getState().setIdle()
+      unsubEngine()
+      stopAttachLoop()
+      detach()
     }
   }, [])
 }
@@ -120,7 +203,7 @@ async function rgbaToBlobs(
   canvas.height = mode.height
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('2D context unavailable')
-  const imageData = new ImageData(rgba, mode.width, mode.height)
+  const imageData = new ImageData(Uint8ClampedArray.from(rgba), mode.width, mode.height)
   ctx.putImageData(imageData, 0, 0)
 
   const imageBlob = await new Promise<Blob>((resolve, reject) => {

@@ -13,11 +13,13 @@
  *   重置到 now + MIN_START_BUFFER_SEC。
  */
 
-const SOURCE_SAMPLE_RATE = 8000
+export const AUDIO_SOURCE_SAMPLE_RATE = 8000
 const MIN_START_BUFFER_SEC = 0.1
 const LOW_BUFFER_SEC = 0.3
 const TARGET_LEAD_SEC = 0.5
 const MAX_BUFFER_SEC = 1.0
+const RAW_DECODE_LEAD_SEC = 1.0
+const RAW_DECODE_REANCHOR_EPSILON_SEC = 0.05
 
 /**
  * Fire-and-forget 尝试 resume AudioContext。
@@ -36,6 +38,14 @@ function tryResumeAsync(ctx: AudioContext): void {
 }
 
 export type AudioEngineStatus = 'idle' | 'connecting' | 'playing' | 'error' | 'closed'
+export type RawPcmListener = (chunk: Float32Array, sampleRate: number) => void
+
+export function chooseRawDecodeStartTime(nextStartTime: number, now: number): number {
+  if (nextStartTime < now + RAW_DECODE_REANCHOR_EPSILON_SEC) {
+    return now + RAW_DECODE_LEAD_SEC
+  }
+  return nextStartTime
+}
 
 export interface AudioEngineEvents {
   onStatus?: (status: AudioEngineStatus, err?: Error) => void
@@ -55,6 +65,7 @@ export class AudioEngine {
   private rawTap: GainNode | null = null
 
   private nextStartTime = 0
+  private rawDecodeNextStartTime = 0
   private status: AudioEngineStatus = 'idle'
   private shouldReconnect = false
   private reconnectAttempts = 0
@@ -63,6 +74,7 @@ export class AudioEngine {
   /** 抑制标志：用户手动静音 OR 自己正在讲话（过滤自语回声）。
    *  为 true 时 gain 置 0（扬声器静音）；PCM 仍正常流经滤波链与 analyser。 */
   private suppressed = false
+  private readonly rawPcmListeners = new Set<RawPcmListener>()
 
   constructor(
     private readonly url: string,
@@ -86,6 +98,7 @@ export class AudioEngine {
     this.ws = null
     // 保留 AudioContext 以便下次快速恢复
     this.nextStartTime = 0
+    this.rawDecodeNextStartTime = 0
   }
 
   setVolume(v: number): void {
@@ -121,10 +134,21 @@ export class AudioEngine {
 
   /**
    * 原始音频 analyser,BufferSource 并联,**不经过** HPF/LPF/EQ/Compressor 任何处理节点。
-   * SSTV 的 FM 相位解调专用——只有未处理的信号相位才完整。
+   * 主要用于原始波形观察 / 调试。
    */
   getRawAnalyser(): AnalyserNode | null {
     return this.rawAnalyser
+  }
+
+  getContextSampleRate(): number | null {
+    return this.ctx?.sampleRate ?? null
+  }
+
+  subscribeRawPcm(listener: RawPcmListener): () => void {
+    this.rawPcmListeners.add(listener)
+    return () => {
+      this.rawPcmListeners.delete(listener)
+    }
   }
 
   private applyGain(): void {
@@ -193,13 +217,16 @@ export class AudioEngine {
     analyser.fftSize = 2048
     analyser.smoothingTimeConstant = 0.75
 
-    // 原始音频 analyser:接在 BufferSource 之后、HPF 之前,**没有**经过任何 biquad/compressor。
-    // SSTV 的 FM 相位解调依赖原始相位完整性,走过 compressor+EQ 的信号相位已经被破坏。
-    // rawTap 是一个 unity-gain GainNode,作为 BufferSource 的并联连接点。
+    // SSTV 专用 raw analyser:
+    // - 不走 HPF/LPF/EQ/Compressor，保留 FM 相位完整性
+    // - 但也不再复用扬声器播放那条低延迟调度，因为播放链会为语音体验重锚 nextStartTime，
+    //   这会给 SSTV 造成块间缝隙 / 相位断裂
+    // - 改为独立的连续排队源，只接到 rawTap → rawAnalyser，不连 destination
     const rawTap = this.ctx.createGain()
     rawTap.gain.value = 1.0
     const rawAnalyser = this.ctx.createAnalyser()
-    rawAnalyser.fftSize = 2048
+    // 给后台拉样和主线程偶发抖动留更大窗口。
+    rawAnalyser.fftSize = 32768
     rawAnalyser.smoothingTimeConstant = 0 // SSTV 要瞬态精度,不要平滑
 
     hpf.connect(lpf)
@@ -282,19 +309,22 @@ export class AudioEngine {
     const float = new Float32Array(int16.length)
     // 小端 Int16 → Float32（-1.0 ~ 1.0）
     for (let i = 0; i < int16.length; i++) float[i] = int16[i]! / 32768
+    for (const listener of this.rawPcmListeners) {
+      try {
+        listener(float, AUDIO_SOURCE_SAMPLE_RATE)
+      } catch (err) {
+        console.error('[audio] raw pcm listener failed', err)
+      }
+    }
 
     // 告诉浏览器这段样本以 8kHz 采样；接线后节点链会自动重采样到
     // ctx.sampleRate（44.1k/48k），省了手写 resampler。
-    const audioBuf = this.ctx.createBuffer(1, float.length, SOURCE_SAMPLE_RATE)
+    const audioBuf = this.ctx.createBuffer(1, float.length, AUDIO_SOURCE_SAMPLE_RATE)
     audioBuf.getChannelData(0).set(float)
 
-    const src = this.ctx.createBufferSource()
-    src.buffer = audioBuf
-    // 同时送到两条独立路径:
-    //   主链: src → chainHead(HPF→LPF→EQ→Compressor→Gain→destination) + 主 analyser
-    //   旁路: src → rawTap → rawAnalyser(给 SSTV 用的原始 FM 相位信号)
-    src.connect(this.chainHead)
-    if (this.rawTap) src.connect(this.rawTap)
+    const playSrc = this.ctx.createBufferSource()
+    playSrc.buffer = audioBuf
+    playSrc.connect(this.chainHead)
 
     const now = this.ctx.currentTime
     const bufferAhead = this.nextStartTime - now
@@ -313,8 +343,18 @@ export class AudioEngine {
       startAt = this.nextStartTime
     }
 
-    src.start(startAt)
+    playSrc.start(startAt)
     this.nextStartTime = startAt + audioBuf.duration
+
+    if (this.rawTap) {
+      const rawSrc = this.ctx.createBufferSource()
+      rawSrc.buffer = audioBuf
+      rawSrc.connect(this.rawTap)
+
+      const rawStartAt = chooseRawDecodeStartTime(this.rawDecodeNextStartTime, now)
+      rawSrc.start(rawStartAt)
+      this.rawDecodeNextStartTime = rawStartAt + audioBuf.duration
+    }
   }
 
   private setStatus(s: AudioEngineStatus, err?: Error): void {

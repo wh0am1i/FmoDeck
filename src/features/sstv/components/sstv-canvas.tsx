@@ -47,7 +47,7 @@ export function SstvCanvas({ className }: { className?: string }) {
       const ctx = canvas.getContext('2d')
       if (!ctx) return
       const imgData = new ImageData(
-        new Uint8ClampedArray(currentRgba.buffer, currentRgba.byteOffset, currentRgba.byteLength),
+        Uint8ClampedArray.from(currentRgba),
         currentWidth,
         currentHeight
       )
@@ -150,7 +150,7 @@ function RecentFrameCard({ entry }: { entry: RecentDecodeEntry }) {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     const imgData = new ImageData(
-      new Uint8ClampedArray(entry.rgba.buffer, entry.rgba.byteOffset, entry.rgba.byteLength),
+      Uint8ClampedArray.from(entry.rgba),
       entry.width,
       entry.height
     )

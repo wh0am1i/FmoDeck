@@ -35,6 +35,42 @@ describe('VisDetector', () => {
     expect(det.feed(signal)).toBeNull()
   })
 
+  it('缺少完整 leader-break-leader 前导时不误判为 VIS', () => {
+    const tailOnly = concat(
+      synthTone(1900, 30),
+      synthTone(1200, 30), // start bit
+      synthTone(1300, 30),
+      synthTone(1300, 30),
+      synthTone(1300, 30),
+      synthTone(1100, 30),
+      synthTone(1300, 30),
+      synthTone(1300, 30),
+      synthTone(1300, 30),
+      synthTone(1100, 30),
+      synthTone(1200, 30) // stop bit
+    )
+    expect(det.feed(tailOnly)).toBeNull()
+  })
+
+  it('缺少 1200Hz break 时不误判为 VIS', () => {
+    const noBreak = concat(
+      synthTone(1900, 300),
+      synthTone(1900, 10),
+      synthTone(1900, 300),
+      synthTone(1200, 30),
+      synthTone(1300, 30),
+      synthTone(1300, 30),
+      synthTone(1300, 30),
+      synthTone(1100, 30),
+      synthTone(1300, 30),
+      synthTone(1300, 30),
+      synthTone(1300, 30),
+      synthTone(1100, 30),
+      synthTone(1200, 30)
+    )
+    expect(det.feed(noBreak)).toBeNull()
+  })
+
   it('识别后 reset 可以再识别', () => {
     expect(det.feed(synthVis(0x88))).not.toBeNull()
     det.reset()

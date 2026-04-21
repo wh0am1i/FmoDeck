@@ -1,6 +1,7 @@
 // src/lib/sstv/modes/pd120.ts
 import type { Mode } from './types'
-import { freqToBrightness, instantFreq, toAnalytic } from '../dsp'
+import { instantFreq, toAnalytic } from '../dsp'
+import { sampleBrightnessSection } from './sample-section'
 
 // PD120 规范:一个 scan line 产 2 个 image row
 const SYNC_MS = 20
@@ -10,37 +11,6 @@ const SCAN_LINE_MS = SYNC_MS + PORCH_MS + Y_MS * 4 // 508.48
 
 const WIDTH = 640
 const HEIGHT = 496
-
-/**
- * FM 瞬时频率解调:在 [startMs, endMs] 时段内,把 `freq` 数组按 count 个等间距像素
- * 切片,每个像素取对应小窗的均值映射到亮度。
- */
-function sampleSection(
-  freq: Float32Array,
-  sampleRate: number,
-  startMs: number,
-  endMs: number,
-  count: number
-): Uint8ClampedArray {
-  const out = new Uint8ClampedArray(count)
-  const perPixelMs = (endMs - startMs) / count
-  const perPixelSamples = Math.max(1, Math.round((perPixelMs * sampleRate) / 1000))
-  const windowSamples = Math.max(4, perPixelSamples)
-  for (let i = 0; i < count; i++) {
-    const centerMs = startMs + perPixelMs * (i + 0.5)
-    const centerIdx = Math.round((centerMs * sampleRate) / 1000)
-    const startIdx = Math.max(0, centerIdx - Math.floor(windowSamples / 2))
-    const end = Math.min(freq.length, startIdx + windowSamples)
-    if (end <= startIdx) {
-      out[i] = 0
-      continue
-    }
-    let sum = 0
-    for (let k = startIdx; k < end; k++) sum += freq[k] ?? 0
-    out[i] = freqToBrightness(sum / (end - startIdx))
-  }
-  return out
-}
 
 /** YCbCr(full-range / JPEG-style,SSTV 通用)→ RGB。Y/Cb/Cr 都是 0-255。 */
 function yuvToRgb(y: number, cb: number, cr: number): [number, number, number] {
@@ -75,7 +45,7 @@ function detectSyncOffsetMsInternal(
     Math.round((searchMs * sampleRate) / 1000)
   )
   const winSamples = Math.max(4, Math.round((syncWidthMs * sampleRate) / 1000))
-  if (searchSamples < winSamples + 4) return { raw: 0, clamped: 0 }
+  if (searchSamples < winSamples + 4) return { raw: NaN, clamped: 0 }
 
   let bestCenterIdx = winSamples / 2
   let bestDist = Infinity
@@ -94,7 +64,7 @@ function detectSyncOffsetMsInternal(
     }
   }
 
-  if (bestDist > 200) return { raw: 0, clamped: 0 }
+  if (bestDist > 200) return { raw: NaN, clamped: 0 }
 
   const detectedMs = (bestCenterIdx / sampleRate) * 1000
   const expectedMs = SYNC_MS / 2 // 10ms
@@ -140,10 +110,10 @@ export const pd120: Mode = {
     const cbStart = crStart + Y_MS
     const y2Start = cbStart + Y_MS
 
-    const y1 = sampleSection(freq, sampleRate, y1Start, y1Start + Y_MS, WIDTH)
-    const cr = sampleSection(freq, sampleRate, crStart, crStart + Y_MS, WIDTH)
-    const cb = sampleSection(freq, sampleRate, cbStart, cbStart + Y_MS, WIDTH)
-    const y2 = sampleSection(freq, sampleRate, y2Start, y2Start + Y_MS, WIDTH)
+    const y1 = sampleBrightnessSection(freq, sampleRate, y1Start, y1Start + Y_MS, WIDTH)
+    const cr = sampleBrightnessSection(freq, sampleRate, crStart, crStart + Y_MS, WIDTH)
+    const cb = sampleBrightnessSection(freq, sampleRate, cbStart, cbStart + Y_MS, WIDTH)
+    const y2 = sampleBrightnessSection(freq, sampleRate, y2Start, y2Start + Y_MS, WIDTH)
 
     // 两行共用 Cr/Cb。用 Rec.601 full-range YCbCr → RGB
     const rgba = new Uint8ClampedArray(WIDTH * 2 * 4)
