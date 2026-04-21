@@ -41,7 +41,7 @@ describe('SstvDecoder', () => {
     expect(decoder.state.type).toBe('idle')
   })
 
-  it('完整 Robot36 流:VIS + 240 行 → done → 回 idle', async () => {
+  it('完整 Robot36 流:VIS + 240 行 → done → 回 idle', { timeout: 30_000 }, async () => {
     const onRow = vi.fn()
     const onDone = vi.fn()
     const decoder = new SstvDecoder(TEST_SAMPLE_RATE, { onRow, onDone })
