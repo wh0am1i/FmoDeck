@@ -32,31 +32,30 @@ function isSameOperator(a: string, b: string): boolean {
 
 /**
  * 浏览器策略:AudioContext 必须在用户手势回调里才能从 'suspended' 变为 'running'。
- * 页面刷新时如果 audio.enabled 是持久化 true,我们会自动 engine.start(),
- * 但此时没有用户手势,ctx 会停在 suspended。挂一次性监听,用户在页面
- * 任意地方的第一次交互就 resume。
+ * 页面刷新时 audio.enabled 持久化 true 会触发自动 engine.start(),但没有用户手势,
+ * ctx 会停在 suspended 状态,audio 永远不会真正播放。
+ *
+ * 解法:在 useFmoAudio 生命周期内持续监听任意用户交互,每次交互动态查找当前
+ * engine 的 ctx 并调用 resume()。不依赖 engine.start() resolve,因为某些边缘
+ * 情况下 ctx.resume() 的 promise 可能不 resolve(老浏览器策略)。
+ *
+ * 返回 cleanup 函数,hook 卸载时调用。
  */
-function installAudioAutoResume(engine: AudioEngine): void {
-  const analyser = engine.getAnalyser()
-  const ctx = analyser?.context as AudioContext | undefined
-  if (ctx?.state !== 'suspended') return
-
+function installGlobalAudioResumeListener(): () => void {
   const events: (keyof DocumentEventMap)[] = ['click', 'keydown', 'touchstart', 'pointerdown']
-  const cleanup = () => {
-    for (const e of events) document.removeEventListener(e, tryResume)
-  }
   const tryResume = () => {
-    ctx
-      .resume()
-      .then(() => {
-        if (ctx.state === 'running') cleanup()
-      })
-      .catch(() => {
-        // 忽略,下次交互再试
-      })
+    const engine = engineRefStore.getState().engine
+    const ctx = engine?.getAnalyser()?.context as AudioContext | undefined
+    if (ctx?.state !== 'suspended') return
+    void ctx.resume().catch(() => {
+      // 忽略,下次交互再试
+    })
   }
   for (const e of events) {
     document.addEventListener(e, tryResume, { passive: true })
+  }
+  return () => {
+    for (const e of events) document.removeEventListener(e, tryResume)
   }
 }
 
@@ -96,7 +95,6 @@ export function useFmoAudio(): void {
       void engine.start().then(() => {
         // start() 里 ensureContext 后 analyser 才存在，推到共享 store
         engineRefStore.getState().setEngine(engine)
-        installAudioAutoResume(engine)
       })
     }
 
@@ -110,6 +108,10 @@ export function useFmoAudio(): void {
       const userMuted = audioStore.getState().muted
       engineRef.current?.setMuted(userMuted || isSelfSpeaking())
     }
+
+    // 全局 user-gesture 监听,hook 挂载期间始终在。不依赖 engine.start() resolve,
+    // 因为某些情况下(浏览器策略)ctx.resume() promise 可能一直 pending。
+    const uninstallResumeListener = installGlobalAudioResumeListener()
 
     sync()
 
@@ -147,6 +149,7 @@ export function useFmoAudio(): void {
       unsubConn()
       unsubSettings()
       unsubSpeaking()
+      uninstallResumeListener()
       engineRef.current?.stop()
       engineRef.current = null
       engineRefStore.getState().setEngine(null)
