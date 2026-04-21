@@ -131,8 +131,12 @@ export const robot36: Mode = {
     const { i, q } = toAnalytic(samples, sampleRate)
     const freq = instantFreq(i, q, sampleRate)
 
-    // 逐行 sync 矫正:消除发送端时钟漂移累积的斜切
-    const syncOffset = detectSyncOffsetMs(freq, sampleRate)
+    // 逐行 sync 矫正:消除发送端时钟漂移累积的斜切 + 跨行低通平滑抑制噪声抖动
+    const st = state as { cr?: Uint8ClampedArray; cb?: Uint8ClampedArray; syncSmooth?: number }
+    const raw = detectSyncOffsetMs(freq, sampleRate)
+    const prev = st.syncSmooth ?? 0
+    const syncOffset = 0.3 * raw + 0.7 * prev
+    st.syncSmooth = syncOffset
 
     const yStart = SYNC_MS + PORCH1_MS + syncOffset
     const yEnd = yStart + Y_MS
@@ -143,7 +147,7 @@ export const robot36: Mode = {
     const chroma = sampleSection(freq, sampleRate, chromaStart, chromaEnd, CHROMA_WIDTH)
 
     // 跨行状态:偶行存 Cr,奇行存 Cb
-    const s = state as { cr?: Uint8ClampedArray; cb?: Uint8ClampedArray }
+    const s = st
     if (row % 2 === 0) {
       s.cr = chroma
     } else {

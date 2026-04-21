@@ -85,13 +85,17 @@ export const martinM1: Mode = {
   height: 256,
   lineMs: LINE_MS,
 
-  decodeLine(samples, _row, _state, sampleRate): Uint8ClampedArray {
+  decodeLine(samples, _row, state, sampleRate): Uint8ClampedArray {
     // 整行一次 FM 解调
     const { i, q } = toAnalytic(samples, sampleRate)
     const freq = instantFreq(i, q, sampleRate)
 
-    // 逐行 sync 矫正
-    const syncOffset = detectSyncOffsetMs(freq, sampleRate)
+    // 逐行 sync 矫正 + 跨行低通平滑,抑制单行噪声造成的左右锯齿
+    const s = state as { syncSmooth?: number }
+    const raw = detectSyncOffsetMs(freq, sampleRate)
+    const prev = s.syncSmooth ?? 0
+    const syncOffset = 0.3 * raw + 0.7 * prev
+    s.syncSmooth = syncOffset
 
     const gStart = SYNC_MS + PORCH_MS + syncOffset
     const bStart = gStart + COLOR_MS + PORCH_MS
