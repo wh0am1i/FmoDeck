@@ -5,8 +5,7 @@ import {
   getAll,
   getItem,
   openDatabase,
-  putItem,
-  deleteDatabase as rawDeleteDatabase
+  putItem
 } from '@/lib/storage/indexeddb'
 import type { SstvImage } from '@/types/sstv'
 
@@ -88,6 +87,16 @@ export const sstvRepo = {
   },
 
   async clear(): Promise<void> {
-    await rawDeleteDatabase(DB_NAME)
+    const db = await openRepo()
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(STORE, 'readwrite')
+        const req = tx.objectStore(STORE).clear()
+        req.onsuccess = () => resolve()
+        req.onerror = () => reject(req.error ?? new Error('clear failed'))
+      })
+    } finally {
+      db.close()
+    }
   }
 }
