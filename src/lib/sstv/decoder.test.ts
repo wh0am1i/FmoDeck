@@ -16,6 +16,26 @@ function synthRobot36Line(y: number, chroma: number, row: number) {
   )
 }
 
+/** 合成一对 row(2 行 300ms),供完整流测试使用。 */
+function synthRobot36Pair(y0: number, cr: number, y1: number, cb: number) {
+  return concat(
+    // Row 0 (even, Cr)
+    synthTone(1200, 9),
+    synthTone(1500, 3),
+    synthTone(brightnessToFreq(y0), 88),
+    synthTone(2300, 4.5),
+    synthTone(1900, 1.5),
+    synthTone(brightnessToFreq(cr), 44),
+    // Row 1 (odd, Cb)
+    synthTone(1200, 9),
+    synthTone(1500, 3),
+    synthTone(brightnessToFreq(y1), 88),
+    synthTone(1500, 4.5),
+    synthTone(1900, 1.5),
+    synthTone(brightnessToFreq(cb), 44)
+  )
+}
+
 describe('SstvDecoder', () => {
   it('初始状态是 idle', () => {
     const decoder = new SstvDecoder(TEST_SAMPLE_RATE)
@@ -67,7 +87,7 @@ describe('SstvDecoder', () => {
     expect(decoder.state.type).toBe('idle')
   })
 
-  it('完整 Robot36 流:VIS + 240 行 → done → 回 idle', { timeout: 30_000 }, () => {
+  it('完整 Robot36 流:VIS + 120 对行 → done → 回 idle', { timeout: 30_000 }, () => {
     const onRow = vi.fn()
     const onDone = vi.fn()
     const decoder = new SstvDecoder(TEST_SAMPLE_RATE, { onRow, onDone })
@@ -80,9 +100,9 @@ describe('SstvDecoder', () => {
     decoder.tick(tap)
     expect(decoder.state.type).toBe('decoding')
 
-    // 2) 逐行写 240 行全灰图,每写一行 tick 一次推进解码
-    for (let row = 0; row < 240; row++) {
-      tap.write(synthRobot36Line(128, 128, row))
+    // 2) 逐对写 120 对全灰图(rowsPerScanLine=2,每对 300ms),每写一对 tick 一次
+    for (let pair = 0; pair < 120; pair++) {
+      tap.write(synthRobot36Pair(128, 128, 128, 128))
       decoder.tick(tap)
     }
 
@@ -93,6 +113,7 @@ describe('SstvDecoder', () => {
 
     expect(onDone).toHaveBeenCalledTimes(1)
     expect(onRow).toHaveBeenCalled()
+    // rowsPerScanLine=2,每对触发 2 次 onRow,120 对 → 240 次
     expect(onRow.mock.calls.length).toBeGreaterThan(235)
     expect(decoder.state.type).toBe('idle')
   })

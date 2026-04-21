@@ -10,9 +10,10 @@ const SEPARATOR_MS = 4.5
 const PORCH2_MS = 1.5
 const CHROMA_MS = 44
 const LINE_MS = SYNC_MS + PORCH1_MS + Y_MS + SEPARATOR_MS + PORCH2_MS + CHROMA_MS // 150
+const SCAN_LINE_MS = LINE_MS * 2 // 300ms,一个 scan line 包 2 行
 
 const WIDTH = 320
-const CHROMA_WIDTH = 160 // 4:2:0 色差宽度减半
+const CHROMA_WIDTH = 160 // 水平 2:1 subsampled,ci = x >> 1
 
 /**
  * FM 瞬时频率解调:在 [startMs, endMs] 时段内,把 `freq` 数组按 count 个等间距像素
@@ -112,17 +113,11 @@ function detectSyncOffsetMsInternal(
   return { raw, clamped }
 }
 
-function detectSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
-  return detectSyncOffsetMsInternal(freq, sampleRate).clamped
-}
-
-function detectRawSyncOffsetMs(freq: Float32Array, sampleRate: number): number {
-  return detectSyncOffsetMsInternal(freq, sampleRate).raw
-}
-
 /**
- * Robot36:每行 150ms,每行携带 Y + 一个色差(偶行 R-Y,奇行 B-Y)。
- * 相邻两行共享色差:输出 RGBA 时,每两行用同一组 Cr/Cb(4:2:0)。
+ * Robot36:每对行 300ms,包含 2 行:
+ *   第一行(偶行): sync + porch + Y[even] + 2300Hz sep + porch + R-Y(Cr)
+ *   第二行(奇行): sync + porch + Y[odd]  + 1500Hz sep + porch + B-Y(Cb)
+ * 两行共享同一组 Cr/Cb(垂直 4:2:0 subsampling),消除隔行色震。
  *
  * 解调链:samples → FM 相位解调(toAnalytic + instantFreq)→ 瞬时频率序列 →
  *   按时间窗切片、小窗平均 → freqToBrightness。
@@ -133,46 +128,63 @@ export const robot36: Mode = {
   visCode: 0x88,
   width: WIDTH,
   height: 240,
-  rowsPerScanLine: 1,
-  scanLineMs: LINE_MS,
+  rowsPerScanLine: 2,
+  scanLineMs: SCAN_LINE_MS,
 
-  decodeLine(samples, scanLineIndex, state, sampleRate): Uint8ClampedArray {
-    const row = scanLineIndex
-    // 整行一次 FM 解调
+  decodeLine(samples, _scanLineIndex, state, sampleRate): Uint8ClampedArray {
+    // 整段 300ms 一次 FM 解调
     const { i, q } = toAnalytic(samples, sampleRate)
     const freq = instantFreq(i, q, sampleRate)
 
-    // 逐行 sync 矫正:消除发送端时钟漂移累积的斜切
-    const { raw: rawSync, clamped: syncOffset } = detectSyncOffsetMsInternal(freq, sampleRate)
-    // 把 raw sync 偏移写入 state 供 decoder 的 slant 校准用
-    ;(state as { cr?: Uint8ClampedArray; cb?: Uint8ClampedArray; lastRawSyncMs?: number }).lastRawSyncMs = rawSync
+    // Row 0(偶行)的 sync 在 0~20ms 范围内检测
+    const row0SearchEnd = Math.round(20 * sampleRate / 1000)
+    const { raw: rawSync0, clamped: sync0 } = detectSyncOffsetMsInternal(
+      freq.subarray(0, Math.min(freq.length, row0SearchEnd)),
+      sampleRate
+    )
 
-    const yStart = SYNC_MS + PORCH1_MS + syncOffset
-    const yEnd = yStart + Y_MS
-    const chromaStart = yEnd + SEPARATOR_MS + PORCH2_MS
-    const chromaEnd = chromaStart + CHROMA_MS
+    // Row 1(奇行)的 sync 在 150~170ms 范围内检测(相对整段 300ms 音频)
+    const row1StartSamples = Math.round(LINE_MS * sampleRate / 1000)
+    const row1SearchEnd = Math.round((LINE_MS + 20) * sampleRate / 1000)
+    const { clamped: sync1 } = detectSyncOffsetMsInternal(
+      freq.subarray(row1StartSamples, Math.min(freq.length, row1SearchEnd)),
+      sampleRate
+    )
 
-    const yLine = sampleSection(freq, sampleRate, yStart, yEnd, WIDTH)
-    const chroma = sampleSection(freq, sampleRate, chromaStart, chromaEnd, CHROMA_WIDTH)
+    // 把第一行的 raw sync 偏移写入 state 供 decoder 的 slant 校准用
+    ;(state as { lastRawSyncMs?: number }).lastRawSyncMs = rawSync0
 
-    // 跨行状态:偶行存 Cr,奇行存 Cb
-    const s = state as { cr?: Uint8ClampedArray; cb?: Uint8ClampedArray }
-    if (row % 2 === 0) {
-      s.cr = chroma
-    } else {
-      s.cb = chroma
-    }
-    const cr = s.cr ?? new Uint8ClampedArray(CHROMA_WIDTH).fill(128)
-    const cb = s.cb ?? new Uint8ClampedArray(CHROMA_WIDTH).fill(128)
+    // Row 0 时间窗(绝对 ms)
+    const y0Start = SYNC_MS + PORCH1_MS + sync0
+    const y0End = y0Start + Y_MS
+    const crStart = y0End + SEPARATOR_MS + PORCH2_MS
+    const crEnd = crStart + CHROMA_MS
 
-    const rgba = new Uint8ClampedArray(WIDTH * 4)
+    // Row 1 时间窗(相对整段音频,加 LINE_MS=150ms 偏移)
+    const y1Start = LINE_MS + SYNC_MS + PORCH1_MS + sync1
+    const y1End = y1Start + Y_MS
+    const cbStart = y1End + SEPARATOR_MS + PORCH2_MS
+    const cbEnd = cbStart + CHROMA_MS
+
+    const y0 = sampleSection(freq, sampleRate, y0Start, y0End, WIDTH)
+    const cr = sampleSection(freq, sampleRate, crStart, crEnd, CHROMA_WIDTH)
+    const y1 = sampleSection(freq, sampleRate, y1Start, y1End, WIDTH)
+    const cb = sampleSection(freq, sampleRate, cbStart, cbEnd, CHROMA_WIDTH)
+
+    // 用同一组 (Cr, Cb) 画两行 —— 正确的 4:2:0,消除隔行色震
+    const rgba = new Uint8ClampedArray(WIDTH * 2 * 4)
     for (let x = 0; x < WIDTH; x++) {
-      const ci = x >> 1
-      const [r, g, b] = yuvToRgb(yLine[x]!, cb[ci] ?? 128, cr[ci] ?? 128)
-      rgba[x * 4 + 0] = r
-      rgba[x * 4 + 1] = g
-      rgba[x * 4 + 2] = b
+      const ci = x >> 1 // CHROMA_WIDTH=160,两像素共用一个色差
+      const [r0, g0, b0] = yuvToRgb(y0[x]!, cb[ci] ?? 128, cr[ci] ?? 128)
+      const [r1, g1, b1] = yuvToRgb(y1[x]!, cb[ci] ?? 128, cr[ci] ?? 128)
+      rgba[x * 4 + 0] = r0
+      rgba[x * 4 + 1] = g0
+      rgba[x * 4 + 2] = b0
       rgba[x * 4 + 3] = 255
+      rgba[(WIDTH + x) * 4 + 0] = r1
+      rgba[(WIDTH + x) * 4 + 1] = g1
+      rgba[(WIDTH + x) * 4 + 2] = b1
+      rgba[(WIDTH + x) * 4 + 3] = 255
     }
     return rgba
   }
