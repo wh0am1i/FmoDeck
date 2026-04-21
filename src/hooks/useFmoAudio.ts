@@ -30,6 +30,36 @@ function isSameOperator(a: string, b: string): boolean {
   }
 }
 
+/**
+ * 浏览器策略:AudioContext 必须在用户手势回调里才能从 'suspended' 变为 'running'。
+ * 页面刷新时如果 audio.enabled 是持久化 true,我们会自动 engine.start(),
+ * 但此时没有用户手势,ctx 会停在 suspended。挂一次性监听,用户在页面
+ * 任意地方的第一次交互就 resume。
+ */
+function installAudioAutoResume(engine: AudioEngine): void {
+  const analyser = engine.getAnalyser()
+  const ctx = analyser?.context as AudioContext | undefined
+  if (!ctx || ctx.state !== 'suspended') return
+
+  const events: Array<keyof DocumentEventMap> = ['click', 'keydown', 'touchstart', 'pointerdown']
+  const cleanup = () => {
+    for (const e of events) document.removeEventListener(e, tryResume)
+  }
+  const tryResume = () => {
+    ctx
+      .resume()
+      .then(() => {
+        if (ctx.state === 'running') cleanup()
+      })
+      .catch(() => {
+        // 忽略,下次交互再试
+      })
+  }
+  for (const e of events) {
+    document.addEventListener(e, tryResume, { passive: true })
+  }
+}
+
 export function useFmoAudio(): void {
   const engineRef = useRef<AudioEngine | null>(null)
 
@@ -66,6 +96,7 @@ export function useFmoAudio(): void {
       void engine.start().then(() => {
         // start() 里 ensureContext 后 analyser 才存在，推到共享 store
         engineRefStore.getState().setEngine(engine)
+        installAudioAutoResume(engine)
       })
     }
 
