@@ -46,6 +46,10 @@ export class AudioEngine {
   private gain: GainNode | null = null
   private chainHead: AudioNode | null = null
   private analyser: AnalyserNode | null = null
+  /** 原始音频 analyser,接在滤波链前(BufferSource 并联),保留 FM 相位完整性,供 SSTV 解码使用。 */
+  private rawAnalyser: AnalyserNode | null = null
+  /** 原始信号入口(BufferSourceNode.connect 的并联目标,不经过 HPF/LPF/EQ/Compressor)。 */
+  private rawTap: GainNode | null = null
 
   private nextStartTime = 0
   private status: AudioEngineStatus = 'idle'
@@ -110,6 +114,14 @@ export class AudioEngine {
   /** 给 UI 画频谱用。engine 未 start 前为 null。 */
   getAnalyser(): AnalyserNode | null {
     return this.analyser
+  }
+
+  /**
+   * 原始音频 analyser,BufferSource 并联,**不经过** HPF/LPF/EQ/Compressor 任何处理节点。
+   * SSTV 的 FM 相位解调专用——只有未处理的信号相位才完整。
+   */
+  getRawAnalyser(): AnalyserNode | null {
+    return this.rawAnalyser
   }
 
   private applyGain(): void {
@@ -178,6 +190,15 @@ export class AudioEngine {
     analyser.fftSize = 2048
     analyser.smoothingTimeConstant = 0.75
 
+    // 原始音频 analyser:接在 BufferSource 之后、HPF 之前,**没有**经过任何 biquad/compressor。
+    // SSTV 的 FM 相位解调依赖原始相位完整性,走过 compressor+EQ 的信号相位已经被破坏。
+    // rawTap 是一个 unity-gain GainNode,作为 BufferSource 的并联连接点。
+    const rawTap = this.ctx.createGain()
+    rawTap.gain.value = 1.0
+    const rawAnalyser = this.ctx.createAnalyser()
+    rawAnalyser.fftSize = 2048
+    rawAnalyser.smoothingTimeConstant = 0 // SSTV 要瞬态精度,不要平滑
+
     hpf.connect(lpf)
     lpf.connect(eqLow)
     eqLow.connect(eqMid)
@@ -186,10 +207,15 @@ export class AudioEngine {
     compressor.connect(gain)
     compressor.connect(analyser)
     gain.connect(this.ctx.destination)
+    rawTap.connect(rawAnalyser)
+    // rawTap 不连到 destination,避免双倍音量;也不 connect 到 hpf,ingest() 里会让 source 同时
+    // connect 到 chainHead 和 rawTap(split)
 
     this.chainHead = hpf
     this.gain = gain
     this.analyser = analyser
+    this.rawAnalyser = rawAnalyser
+    this.rawTap = rawTap
 
     if (this.ctx.state === 'suspended') await tryResume(this.ctx)
   }
@@ -261,7 +287,11 @@ export class AudioEngine {
 
     const src = this.ctx.createBufferSource()
     src.buffer = audioBuf
+    // 同时送到两条独立路径:
+    //   主链: src → chainHead(HPF→LPF→EQ→Compressor→Gain→destination) + 主 analyser
+    //   旁路: src → rawTap → rawAnalyser(给 SSTV 用的原始 FM 相位信号)
     src.connect(this.chainHead)
+    if (this.rawTap) src.connect(this.rawTap)
 
     const now = this.ctx.currentTime
     const bufferAhead = this.nextStartTime - now

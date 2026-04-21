@@ -31,7 +31,9 @@ export function useSstvDecoder(): void {
 
     const tryAttach = (): boolean => {
       const engine = engineRefStore.getState().engine
-      const analyser = engine?.getAnalyser()
+      // SSTV 必须使用 **原始** analyser(绕过 compressor/EQ/HPF/LPF),
+      // 否则 FM 相位被处理链扭曲,解码结果乱码
+      const analyser = engine?.getRawAnalyser()
       if (!analyser || !engine) return false
 
       const sampleRate = (analyser.context as AudioContext).sampleRate
