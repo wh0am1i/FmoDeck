@@ -19,6 +19,19 @@ const LOW_BUFFER_SEC = 0.3
 const TARGET_LEAD_SEC = 0.5
 const MAX_BUFFER_SEC = 1.0
 
+/**
+ * 静默尝试 resume AudioContext。浏览器策略下没 user gesture 时 resume() 可能 reject,
+ * 直接 await 会让整条 ensureContext 抛出,阻塞后续 WebSocket 连接。
+ * 这里吞掉错误——外部会挂交互监听器,等用户手势再 resume。
+ */
+async function tryResume(ctx: AudioContext): Promise<void> {
+  try {
+    await ctx.resume()
+  } catch {
+    // 浏览器未授权自动 resume,忽略,等 installAudioAutoResume 兜底
+  }
+}
+
 export type AudioEngineStatus = 'idle' | 'connecting' | 'playing' | 'error' | 'closed'
 
 export interface AudioEngineEvents {
@@ -110,7 +123,7 @@ export class AudioEngine {
 
   private async ensureContext(): Promise<void> {
     if (this.ctx) {
-      if (this.ctx.state === 'suspended') await this.ctx.resume()
+      if (this.ctx.state === 'suspended') await tryResume(this.ctx)
       return
     }
 
@@ -178,7 +191,7 @@ export class AudioEngine {
     this.gain = gain
     this.analyser = analyser
 
-    if (this.ctx.state === 'suspended') await this.ctx.resume()
+    if (this.ctx.state === 'suspended') await tryResume(this.ctx)
   }
 
   private connect(): void {
