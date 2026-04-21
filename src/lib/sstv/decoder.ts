@@ -12,6 +12,7 @@ export type DecoderState =
       t0: number
       nextRow: number
       decodeState: DecodeState
+      silentRowsStreak: number
     }
 
 export interface DecoderEvents {
@@ -71,7 +72,8 @@ export class SstvDecoder {
         mode,
         t0,
         nextRow: 0,
-        decodeState: {}
+        decodeState: {},
+        silentRowsStreak: 0
       }
       this.fullRgba = new Uint8ClampedArray(mode.width * mode.height * 4)
       this.events.onStart?.(mode)
@@ -89,6 +91,21 @@ export class SstvDecoder {
       const rowStart = t0 + this.state.nextRow * rowSamples
       const samples = tap.slice(rowStart, rowSamples)
       if (!samples) break
+
+      // 静音检测:若连续 5 行 RMS < 阈值,视为信号中断,abort
+      const rms = computeRms(samples)
+      if (rms < 0.01) {
+        this.state.silentRowsStreak++
+        if (this.state.silentRowsStreak >= 5) {
+          this.state = { type: 'idle' }
+          this.fullRgba = null
+          this.events.onTimeout?.()
+          return
+        }
+      } else {
+        this.state.silentRowsStreak = 0
+      }
+
       const rgba = mode.decodeLine(samples, this.state.nextRow, decodeState, this.sampleRate)
       this.fullRgba?.set(rgba, this.state.nextRow * mode.width * 4)
       this.events.onRow?.(this.state.nextRow, rgba, mode)
@@ -110,4 +127,14 @@ export class SstvDecoder {
       this.events.onTimeout?.()
     }
   }
+}
+
+function computeRms(samples: Float32Array): number {
+  if (samples.length === 0) return 0
+  let sumSq = 0
+  for (let i = 0; i < samples.length; i++) {
+    const s = samples[i] ?? 0
+    sumSq += s * s
+  }
+  return Math.sqrt(sumSq / samples.length)
 }

@@ -41,6 +41,32 @@ describe('SstvDecoder', () => {
     expect(decoder.state.type).toBe('idle')
   })
 
+  it('解码中途被静音打断时触发 timeout', async () => {
+    const onTimeout = vi.fn()
+    const onDone = vi.fn()
+    const decoder = new SstvDecoder(TEST_SAMPLE_RATE, { onTimeout, onDone })
+    const tap = new PcmTap(TEST_SAMPLE_RATE * 60)
+
+    tap.write(synthVis(0x88))
+    decoder.tick(tap)
+    expect(decoder.state.type).toBe('decoding')
+
+    // 先写几行有效 Robot36 数据
+    for (let row = 0; row < 10; row++) {
+      tap.write(synthRobot36Line(128, 128, row))
+      decoder.tick(tap)
+    }
+
+    // 之后写入长段静音(零值)模拟信号中断
+    const silence = new Float32Array(TEST_SAMPLE_RATE * 2) // 2 秒纯零
+    tap.write(silence)
+    for (let i = 0; i < 20; i++) decoder.tick(tap)
+
+    expect(onTimeout).toHaveBeenCalled()
+    expect(onDone).not.toHaveBeenCalled()
+    expect(decoder.state.type).toBe('idle')
+  })
+
   it('完整 Robot36 流:VIS + 240 行 → done → 回 idle', { timeout: 30_000 }, async () => {
     const onRow = vi.fn()
     const onDone = vi.fn()
