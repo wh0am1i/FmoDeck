@@ -1,9 +1,6 @@
 // src/features/sstv/sstv-view.tsx
-import { useEffect } from 'react'
 import { audioStore } from '@/features/audio/store'
 import { connectionStore } from '@/stores/connection'
-import { settingsStore } from '@/stores/settings'
-import { sstvStore } from './store'
 import { SstvCanvas } from './components/sstv-canvas'
 import { SstvHistory } from './components/sstv-history'
 
@@ -11,17 +8,10 @@ export function SstvView() {
   const enabled = audioStore((s) => s.enabled)
   const audioStatus = audioStore((s) => s.status)
   const connStatus = connectionStore((s) => s.status)
-  const backgroundSstv = settingsStore((s) => s.backgroundSstv)
-  const setBackgroundSstv = settingsStore((s) => s.setBackgroundSstv)
 
   const connected = connStatus === 'connected'
   const playing = audioStatus === 'playing'
   const audioReady = enabled && playing && connected
-
-  // 进 SSTV tab 就标记已读
-  useEffect(() => {
-    sstvStore.getState().markAllRead()
-  }, [])
 
   return (
     <div className="flex flex-col gap-4">
@@ -33,15 +23,6 @@ export function SstvView() {
               Robot 36 / Robot 72 / Martin M1 / Martin M2 / PD 120
             </span>
           </div>
-          <label className="flex cursor-pointer items-center gap-2 hud-mono text-xs text-muted-foreground">
-            <input
-              type="checkbox"
-              checked={backgroundSstv}
-              onChange={(e) => setBackgroundSstv(e.target.checked)}
-              className="accent-primary"
-            />
-            后台监听（离开此 tab 也继续解码）
-          </label>
         </div>
 
         {!connected && (

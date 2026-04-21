@@ -29,8 +29,6 @@ export interface SstvState {
   lastRow: number
   /** 最近一次完整解码的时间戳(ms)。 */
   lastDoneAt: number | null
-  /** 后台模式下产生的未读图数量。 */
-  unreadCount: number
   lastError: string | null
   /** 最近完成的几张解码结果(不含进行中的 live),最多 5 张,最新在前。 */
   recentDecodes: RecentDecodeEntry[]
@@ -47,10 +45,6 @@ export interface SstvState {
   /** 每次成功写 IDB 后 +1,history 监听此字段重新加载 */
   savedCount: number
   incrementSavedCount: () => void
-
-  /** 公开方法 */
-  incrementUnread: () => void
-  markAllRead: () => void
 }
 
 export const sstvStore = create<SstvState>((set, get) => ({
@@ -62,7 +56,6 @@ export const sstvStore = create<SstvState>((set, get) => ({
   currentHeight: 0,
   lastRow: -1,
   lastDoneAt: null,
-  unreadCount: 0,
   savedCount: 0,
   lastError: null,
   recentDecodes: [],
@@ -140,7 +133,5 @@ export const sstvStore = create<SstvState>((set, get) => ({
     }),
   setError: (lastError) => set({ lastError }),
 
-  incrementSavedCount: () => set((s) => ({ savedCount: s.savedCount + 1 })),
-  incrementUnread: () => set((s) => ({ unreadCount: s.unreadCount + 1 })),
-  markAllRead: () => set({ unreadCount: 0 })
+  incrementSavedCount: () => set((s) => ({ savedCount: s.savedCount + 1 }))
 }))

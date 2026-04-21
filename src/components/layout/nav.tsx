@@ -1,7 +1,6 @@
 import { NavLink } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
-import { sstvStore } from '@/features/sstv/store'
 
 interface NavItem {
   to: string
@@ -27,7 +26,6 @@ const items: readonly NavItem[] = [
 
 export function Nav() {
   const { t } = useTranslation()
-  const unreadSstv = sstvStore((s) => s.unreadCount)
   return (
     <nav
       aria-label="主导航"
@@ -48,14 +46,6 @@ export function Nav() {
           }
         >
           {item.labelKey ? t(item.labelKey) : item.label}
-          {item.to === '/sstv' && unreadSstv > 0 && (
-            <span
-              aria-hidden="true"
-              className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground"
-            >
-              {unreadSstv > 9 ? '9+' : unreadSstv}
-            </span>
-          )}
         </NavLink>
       ))}
     </nav>
