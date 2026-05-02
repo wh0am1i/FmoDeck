@@ -6,6 +6,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { MessageService } from '@/lib/message-service/client'
 import { notify } from '@/lib/notifications'
 import { connectionStore } from '@/stores/connection'
+import { isFromSelf, selfStore } from '@/stores/self'
 import { settingsStore } from '@/stores/settings'
 import { messagesStore, selectHasMore, selectUnreadCount } from './store'
 import { ComposeDialog } from './components/compose-dialog'
@@ -31,6 +32,7 @@ export function MessagesView() {
   const [didAutoLoad, setDidAutoLoad] = useState(false)
 
   const canLoad = connectionStatus === 'connected' && client !== null
+  const selfCallsign = selfStore((s) => s.callsign)
 
   const refresh = async () => {
     if (!client) return
@@ -88,6 +90,8 @@ export function MessagesView() {
     const svc = new MessageService(client)
     const unsub = svc.onSummary((s) => {
       messagesStore.getState().prependSummary(s)
+      // 出站回声推送（极少见，但有些固件会回 echo）→ 不打扰，只刷新列表
+      if (isFromSelf(s.from, selfStore.getState().callsign)) return
       const title = t('messages.newFrom', { from: s.from })
       toast.info(title)
       if (settingsStore.getState().notificationsEnabled) {
@@ -97,6 +101,50 @@ export function MessagesView() {
     return unsub
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canLoad, didAutoLoad])
+
+  // 后台回填出站消息的收件人:服务端 getList 通常不带 toCallsign,但 getDetail 带。
+  // 对每条 from===self && 缺 to 的消息拉一次 detail,把 to 写回 store。
+  // getDetail 不会标已读(setRead 是详情对话框单独触发的),所以这里安全。
+  //
+  // 关键:list 不进 deps —— 否则 enrichTo 写入会触发 effect cleanup,
+  // 把 in-flight worker 的写入打断。改用 store.subscribe 监听 list 变化。
+  useEffect(() => {
+    if (!canLoad || !client || !selfCallsign) return
+    let cancelled = false
+    const seen = new Set<string>()
+    const svc = new MessageService(client)
+
+    async function enrichOne(messageId: string): Promise<void> {
+      if (cancelled || seen.has(messageId)) return
+      seen.add(messageId)
+      try {
+        const detail = await svc.getDetail(messageId)
+        if (cancelled) return
+        if (detail.to) messagesStore.getState().enrichTo(messageId, detail.to)
+      } catch {
+        // 失败保留 seen,避免持续轮询
+      }
+    }
+
+    function scan(): void {
+      if (cancelled) return
+      for (const m of messagesStore.getState().list) {
+        if (m.to) continue
+        if (!isFromSelf(m.from, selfCallsign)) continue
+        void enrichOne(m.messageId)
+      }
+    }
+
+    scan()
+    const unsub = messagesStore.subscribe((s, prev) => {
+      if (s.list !== prev.list) scan()
+    })
+
+    return () => {
+      cancelled = true
+      unsub()
+    }
+  }, [canLoad, client, selfCallsign])
 
   if (!canLoad) {
     return (

@@ -1,7 +1,8 @@
 // src/lib/sstv/modes/martin-m1.ts
 import type { Mode } from './types'
-import { instantFreq, toAnalytic } from '../dsp'
+import { fmDemod } from '../dsp'
 import { sampleBrightnessSection } from './sample-section'
+import { hampelFilter } from '../sync-filter'
 
 const SYNC_MS = 4.862
 const PORCH_MS = 0.572
@@ -66,10 +67,9 @@ export const martinM1: Mode = {
   rowsPerScanLine: 1,
   scanLineMs: LINE_MS,
 
-  decodeLine(samples, _scanLineIndex, state, sampleRate): Uint8ClampedArray {
-    // 整行一次 FM 解调
-    const { i, q } = toAnalytic(samples, sampleRate)
-    const freq = instantFreq(i, q, sampleRate)
+  decodeLine(samples, _scanLineIndex, state, sampleRate, warmupSamples = 0): Uint8ClampedArray {
+    // 整行一次 FM 解调,丢弃 warmup 前缀(LPF 瞬态)
+    const freq = fmDemod(samples, sampleRate, warmupSamples)
 
     // 逐行 sync 矫正
     const { raw: rawSync, clamped: syncRaw } = detectSyncOffsetMsInternal(freq, sampleRate)
@@ -77,13 +77,12 @@ export const martinM1: Mode = {
     const st = state as { lastRawSyncMs?: number; syncWindow?: number[] }
     st.lastRawSyncMs = rawSync
 
-    // 中位数滤波:在 Opus 失真下单行 sync 检测有 ±1-2ms 抖动,行间产生"梳齿"条纹。
-    // 用最近 5 行 clamped sync 的中位数替代 raw,抑制孤立噪声但仍跟踪真实漂移。
+    // Hampel 滤波:孤立异常用中位数替换,正常变化原样通过。
+    // 之前固定中位数会让真实 slant 缓变每 5 行才跳一次,出现"5-行台阶"。
     st.syncWindow ??= []
     st.syncWindow.push(syncRaw)
     if (st.syncWindow.length > 5) st.syncWindow.shift()
-    const sorted = [...st.syncWindow].sort((a, b) => a - b)
-    const syncOffset = sorted[Math.floor(sorted.length / 2)]!
+    const syncOffset = hampelFilter(st.syncWindow)
 
     const gStart = SYNC_MS + PORCH_MS + syncOffset
     const bStart = gStart + COLOR_MS + PORCH_MS

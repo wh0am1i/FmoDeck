@@ -14,7 +14,7 @@ interface Props {
 
 /**
  * 把 Maidenhead 网格渲染成 "网格码 · 地名" 的可点击链接。
- * 点击打开 OpenStreetMap 对应位置。
+ * 点击在 MaidenMap 中打开对应网格。
  *
  * 地名由 maidenmap 服务反查并缓存到 localStorage；查询未完成时先显示
  * 经纬度作为占位，查到后替换为地名。
@@ -74,7 +74,7 @@ export function GridLocation({ grid, className, emphasized = false }: Props) {
 
   return (
     <a
-      href={mapUrl(ll)}
+      href={mapUrl(grid)}
       target="_blank"
       rel="noreferrer noopener"
       // 阻止冒泡，避免父级 tr / button 的 onClick 同时触发（比如日志
@@ -84,7 +84,7 @@ export function GridLocation({ grid, className, emphasized = false }: Props) {
       onClick={(e) => {
         e.stopPropagation()
         e.preventDefault()
-        void openExternal(mapUrl(ll))
+        void openExternal(mapUrl(grid))
       }}
       className={cn(
         'hud-mono inline-flex flex-wrap items-baseline gap-x-1.5 text-primary hover:underline',

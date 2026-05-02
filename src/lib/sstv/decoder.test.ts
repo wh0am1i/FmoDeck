@@ -91,10 +91,10 @@ describe('SstvDecoder', () => {
       decoder.tick(tap)
     }
 
-    // 之后写入长段静音(零值)模拟信号中断
-    const silence = new Float32Array(TEST_SAMPLE_RATE * 2) // 2 秒纯零
+    // 之后写入长段静音(零值)模拟信号中断;阈值 5s 累积 → 给 6s 留余量
+    const silence = new Float32Array(TEST_SAMPLE_RATE * 6)
     tap.write(silence)
-    for (let i = 0; i < 20; i++) decoder.tick(tap)
+    for (let i = 0; i < 30; i++) decoder.tick(tap)
 
     expect(onTimeout).toHaveBeenCalled()
     expect(onDone).not.toHaveBeenCalled()

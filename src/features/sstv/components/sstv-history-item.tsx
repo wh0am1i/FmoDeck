@@ -1,5 +1,6 @@
 // src/features/sstv/components/sstv-history-item.tsx
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Copy, Download, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export function SstvHistoryItem({ image, selected, onToggleSelect, onDelete }: Props) {
+  const { t } = useTranslation()
   const [thumbUrl, setThumbUrl] = useState<string | null>(null)
   const [fullUrl, setFullUrl] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
@@ -62,9 +64,9 @@ export function SstvHistoryItem({ image, selected, onToggleSelect, onDelete }: P
     try {
       const clipItem = new ClipboardItem({ 'image/png': image.imageBlob })
       await navigator.clipboard.write([clipItem])
-      toast.success('已复制到剪贴板')
+      toast.success(t('sstv.item.copied'))
     } catch (err) {
-      toast.error('复制失败', {
+      toast.error(t('sstv.item.copyFailed'), {
         description: err instanceof Error ? err.message : String(err)
       })
     }
@@ -92,14 +94,13 @@ export function SstvHistoryItem({ image, selected, onToggleSelect, onDelete }: P
             checked={selected}
             onChange={onToggleSelect}
             className="accent-primary"
-            aria-label="选中此条"
+            aria-label={t('sstv.item.selectAria')}
           />
           {thumbUrl ? (
             <img
               src={thumbUrl}
               alt=""
               className="h-[72px] w-[96px] cursor-pointer border border-primary/20 object-cover"
-              style={{ imageRendering: 'pixelated' }}
               onClick={() => setOpen(true)}
             />
           ) : (
@@ -109,17 +110,17 @@ export function SstvHistoryItem({ image, selected, onToggleSelect, onDelete }: P
             <div className="hud-mono text-primary">{displayName}</div>
             <div className="text-muted-foreground">{formatted}</div>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleDownload} aria-label="下载">
+          <Button variant="ghost" size="sm" onClick={handleDownload} aria-label={t('sstv.item.downloadAria')}>
             <Download className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => { void handleCopy() }} aria-label="复制到剪贴板">
+          <Button variant="ghost" size="sm" onClick={() => { void handleCopy() }} aria-label={t('sstv.item.copyAria')}>
             <Copy className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => onDelete(image.id)}
-            aria-label="删除"
+            aria-label={t('sstv.item.deleteAria')}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -131,14 +132,13 @@ export function SstvHistoryItem({ image, selected, onToggleSelect, onDelete }: P
           <DialogTitle className="sr-only">
             {displayName} · {formatted}
           </DialogTitle>
-          <DialogDescription className="sr-only">SSTV 解码图像</DialogDescription>
+          <DialogDescription className="sr-only">{t('sstv.item.dialogDesc')}</DialogDescription>
           {fullUrl && (
             <div className="flex flex-col items-center gap-3">
               <img
                 src={fullUrl}
                 alt=""
                 style={{
-                  imageRendering: 'pixelated',
                   maxWidth: '100%',
                   maxHeight: '75vh'
                 }}
@@ -152,11 +152,11 @@ export function SstvHistoryItem({ image, selected, onToggleSelect, onDelete }: P
                 </span>
                 <Button variant="ghost" size="sm" onClick={handleDownload}>
                   <Download className="h-4 w-4" />
-                  下载
+                  {t('sstv.item.downloadBtn')}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => { void handleCopy() }}>
                   <Copy className="h-4 w-4" />
-                  复制
+                  {t('sstv.item.copyBtn')}
                 </Button>
               </div>
             </div>

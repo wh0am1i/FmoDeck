@@ -1,8 +1,10 @@
 // src/lib/sstv/modes/robot36.ts
 import type { Mode } from './types'
-import { instantFreq, toAnalytic } from '../dsp'
+import { fmDemod } from '../dsp'
+import { ycbcrToRgb } from '../colorspace'
 import { sampleBrightnessSection } from './sample-section'
 import { detectSyncPulseOffsetMs } from './sync-detect'
+import { hampelFilter } from '../sync-filter'
 
 // 各段耗时(ms),和规范一致
 const SYNC_MS = 9
@@ -16,20 +18,6 @@ const SCAN_LINE_MS = LINE_MS * 2 // 300ms,一个 scan line 包 2 行
 
 const WIDTH = 320
 const CHROMA_WIDTH = 160 // 水平 2:1 subsampled,ci = x >> 1
-
-/** YCbCr(full-range / JPEG-style,SSTV 通用)→ RGB。Y/Cb/Cr 都是 0-255。 */
-function yuvToRgb(y: number, cb: number, cr: number): [number, number, number] {
-  const cbb = cb - 128
-  const crr = cr - 128
-  const r = y + 1.402 * crr
-  const g = y - 0.344136 * cbb - 0.714136 * crr
-  const b = y + 1.772 * cbb
-  return [clamp(r), clamp(g), clamp(b)]
-}
-
-function clamp(v: number): number {
-  return Math.max(0, Math.min(255, Math.round(v)))
-}
 
 const CLAMP_MS = 20
 
@@ -67,10 +55,9 @@ export const robot36: Mode = {
   rowsPerScanLine: 2,
   scanLineMs: SCAN_LINE_MS,
 
-  decodeLine(samples, _scanLineIndex, state, sampleRate): Uint8ClampedArray {
-    // 整段 300ms 一次 FM 解调
-    const { i, q } = toAnalytic(samples, sampleRate)
-    const freq = instantFreq(i, q, sampleRate)
+  decodeLine(samples, _scanLineIndex, state, sampleRate, warmupSamples = 0): Uint8ClampedArray {
+    // 整段 300ms 一次 FM 解调,丢弃 warmup 前缀(LPF 瞬态)
+    const freq = fmDemod(samples, sampleRate, warmupSamples)
 
     // Row 0(偶行)的 sync 在 0~20ms 范围内检测
     const row0SearchEnd = Math.round(20 * sampleRate / 1000)
@@ -95,19 +82,17 @@ export const robot36: Mode = {
     }
     st.lastRawSyncMs = rawSync0
 
-    // 中位数滤波:两行各自维护最近 5 个 clamped sync 的窗口,取中位数 → 消除 Opus 噪声
-    // 下的行间抖动(梳齿/错位)
+    // Hampel 滤波:两行各自维护最近 5 个 clamped sync 窗口,孤立异常被替换,
+    // 正常 slant 缓变直接通过(避免之前固定中位数的"5-行台阶")
     st.sync0Window ??= []
     st.sync0Window.push(sync0Raw)
     if (st.sync0Window.length > 5) st.sync0Window.shift()
-    const s0sorted = [...st.sync0Window].sort((a, b) => a - b)
-    const sync0 = s0sorted[Math.floor(s0sorted.length / 2)]!
+    const sync0 = hampelFilter(st.sync0Window)
 
     st.sync1Window ??= []
     st.sync1Window.push(sync1Raw)
     if (st.sync1Window.length > 5) st.sync1Window.shift()
-    const s1sorted = [...st.sync1Window].sort((a, b) => a - b)
-    const sync1 = s1sorted[Math.floor(s1sorted.length / 2)]!
+    const sync1 = hampelFilter(st.sync1Window)
 
     // Row 0 时间窗(绝对 ms)
     const y0Start = SYNC_MS + PORCH1_MS + sync0
@@ -130,8 +115,8 @@ export const robot36: Mode = {
     const rgba = new Uint8ClampedArray(WIDTH * 2 * 4)
     for (let x = 0; x < WIDTH; x++) {
       const ci = x >> 1 // CHROMA_WIDTH=160,两像素共用一个色差
-      const [r0, g0, b0] = yuvToRgb(y0[x]!, cb[ci] ?? 128, cr[ci] ?? 128)
-      const [r1, g1, b1] = yuvToRgb(y1[x]!, cb[ci] ?? 128, cr[ci] ?? 128)
+      const [r0, g0, b0] = ycbcrToRgb(y0[x]!, cb[ci] ?? 128, cr[ci] ?? 128)
+      const [r1, g1, b1] = ycbcrToRgb(y1[x]!, cb[ci] ?? 128, cr[ci] ?? 128)
       rgba[x * 4 + 0] = r0
       rgba[x * 4 + 1] = g0
       rgba[x * 4 + 2] = b0

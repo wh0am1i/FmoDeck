@@ -1,19 +1,33 @@
 // src/features/sstv/components/sstv-canvas.tsx
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { modeRegistry } from '@/lib/sstv/modes/registry'
 import { SpectrumWaveform } from '@/features/audio/components/spectrum-waveform'
 import { sstvStore } from '../store'
+import { tryForceStart } from '../control'
+import { SstvSignalMeter } from './sstv-signal-meter'
 import type { RecentDecodeEntry } from '../store'
 
-function relativeTime(ms: number): string {
+// 调试录音面板:dev 模式才动态加载,prod 构建因 import.meta.env.DEV 被替换为 false,
+// 整个 lazy chunk 不会被引用 → recording.ts + 面板代码从 prod bundle 中剥离。
+const SstvRecorderPanel = import.meta.env.DEV
+  ? lazy(() =>
+      import('./sstv-recorder-panel').then((m) => ({ default: m.SstvRecorderPanel }))
+    )
+  : null
+
+function relativeTime(ms: number, t: TFunction): string {
   const diff = (Date.now() - ms) / 1000
-  if (diff < 60) return `${Math.max(1, Math.floor(diff))} 秒前`
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
-  return `${Math.floor(diff / 3600)} 小时前`
+  if (diff < 60) return t('sstv.relTimeSec', { n: Math.max(1, Math.floor(diff)) })
+  if (diff < 3600) return t('sstv.relTimeMin', { n: Math.floor(diff / 60) })
+  return t('sstv.relTimeHour', { n: Math.floor(diff / 3600) })
 }
 
 export function SstvCanvas({ className }: { className?: string }) {
+  const { t } = useTranslation()
   const status = sstvStore((s) => s.status)
   const activeMode = sstvStore((s) => s.activeMode)
   const progress = sstvStore((s) => s.progress)
@@ -24,6 +38,7 @@ export function SstvCanvas({ className }: { className?: string }) {
   const lastDoneAt = sstvStore((s) => s.lastDoneAt)
   const lastError = sstvStore((s) => s.lastError)
   const recentDecodes = sstvStore((s) => s.recentDecodes)
+  const partialInfo = sstvStore((s) => s.partialInfo)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -93,40 +108,61 @@ export function SstvCanvas({ className }: { className?: string }) {
     <div className={cn('flex flex-col gap-4', className)}>
       {/* Live canvas */}
       <div className="flex flex-col items-center gap-2">
-        <canvas
-          ref={canvasRef}
-          width={320}
-          height={240}
-          style={{
-            imageRendering: 'pixelated',
-            width: '100%',
-            maxWidth: 640,
-            height: 'auto'
-          }}
-          className="rounded-sm border border-primary/30 bg-black"
-        />
+        <div className="relative w-full" style={{ maxWidth: 640 }}>
+          <canvas
+            ref={canvasRef}
+            width={320}
+            height={240}
+            style={{ width: '100%', height: 'auto' }}
+            className="rounded-sm border border-primary/30 bg-black"
+          />
+          {partialInfo && currentRgba && (
+            <div className="hud-mono pointer-events-none absolute right-1.5 top-1.5 rounded-sm border border-accent/60 bg-black/70 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-accent">
+              {t('sstv.partialBadge', {
+                done: partialInfo.completedScanLines,
+                total: partialInfo.totalScanLines
+              })}
+            </div>
+          )}
+        </div>
         <div className="hud-mono text-xs text-muted-foreground">
-          {status === 'idle' && '等待音频连接…'}
-          {status === 'waiting' && '监听中'}
+          {status === 'idle' && t('sstv.statusIdle')}
+          {status === 'waiting' && t('sstv.statusWaiting')}
           {status === 'decoding' && activeDisplay && (
             <span>
-              {activeDisplay} · {Math.round(progress * 100)}%
+              {t('sstv.statusDecoding', {
+                mode: activeDisplay,
+                percent: Math.round(progress * 100)
+              })}
             </span>
           )}
           {status === 'done' && activeDisplay && lastDoneAt !== null && (
             <span>
-              最近接收:{activeDisplay} · {relativeTime(lastDoneAt)}
+              {t('sstv.statusRecent', {
+                mode: activeDisplay,
+                relTime: relativeTime(lastDoneAt, t)
+              })}
             </span>
           )}
-          {status === 'timeout' && '超时,已丢弃'}
+          {status === 'timeout' && t('sstv.statusTimeout')}
         </div>
         {(status === 'waiting' || status === 'idle') && (
-          <div className="w-full max-w-[240px]">
+          <div className="flex w-full max-w-[280px] flex-col gap-2">
             <SpectrumWaveform height={32} />
+            <SstvSignalMeter />
+            <ManualDecodePanel />
           </div>
         )}
+        {SstvRecorderPanel && (
+          <Suspense fallback={null}>
+            <SstvRecorderPanel decoderActive={status === 'decoding'} />
+          </Suspense>
+        )}
         {lastError && (
-          <div className="hud-mono text-xs text-destructive">存档失败:{lastError}</div>
+          <div className="hud-mono text-xs text-destructive">
+            {t('sstv.archiveFailedPrefix')}
+            {lastError}
+          </div>
         )}
       </div>
 
@@ -138,7 +174,64 @@ export function SstvCanvas({ className }: { className?: string }) {
   )
 }
 
+function ManualDecodePanel() {
+  const { t } = useTranslation()
+  const modes = [...modeRegistry.values()]
+  const [visCode, setVisCode] = useState<number>(modes[0]?.visCode ?? 0)
+  const [seconds, setSeconds] = useState<number>(3)
+
+  const handleClick = () => {
+    const ms = Math.max(0, Math.min(3, seconds)) * 1000
+    const ok = tryForceStart(visCode, ms)
+    if (!ok) {
+      toast.error(t('sstv.manual.failed'))
+    }
+  }
+
+  return (
+    <details className="hud-mono border-t border-primary/10 pt-2 text-xs">
+      <summary className="cursor-pointer text-muted-foreground hover:text-primary">
+        {t('sstv.manual.title')}
+      </summary>
+      <div className="mt-2 flex flex-col gap-2">
+        <select
+          value={visCode}
+          onChange={(e) => setVisCode(Number(e.target.value))}
+          className="hud-mono rounded-sm border border-primary/30 bg-black/40 px-1.5 py-0.5 text-xs text-primary outline-none"
+        >
+          {modes.map((m) => (
+            <option key={m.visCode} value={m.visCode}>
+              {m.displayName}
+            </option>
+          ))}
+        </select>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            min={0}
+            max={3}
+            step={0.5}
+            value={seconds}
+            onChange={(e) => setSeconds(Number(e.target.value))}
+            className="hud-mono w-16 rounded-sm border border-primary/30 bg-black/40 px-1.5 py-0.5 text-xs text-primary outline-none"
+          />
+          <span className="text-muted-foreground">{t('sstv.manual.secondsAgo')}</span>
+        </div>
+        <button
+          type="button"
+          onClick={handleClick}
+          className="border border-accent/50 px-2 py-0.5 text-accent hover:bg-accent/10"
+        >
+          {t('sstv.manual.go')}
+        </button>
+        <span className="text-[10px] text-muted-foreground">{t('sstv.manual.hint')}</span>
+      </div>
+    </details>
+  )
+}
+
 function RecentFrameCard({ entry }: { entry: RecentDecodeEntry }) {
+  const { t } = useTranslation()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [, tick] = useState(0)
 
@@ -168,7 +261,6 @@ function RecentFrameCard({ entry }: { entry: RecentDecodeEntry }) {
       <canvas
         ref={canvasRef}
         style={{
-          imageRendering: 'pixelated',
           width: '100%',
           maxWidth: 640,
           height: 'auto'
@@ -176,7 +268,7 @@ function RecentFrameCard({ entry }: { entry: RecentDecodeEntry }) {
         className="rounded-sm border border-primary/20 bg-black"
       />
       <div className="hud-mono text-xs text-muted-foreground">
-        {entry.displayName} · {relativeTime(entry.createdAt)}
+        {entry.displayName} · {relativeTime(entry.createdAt, t)}
       </div>
     </div>
   )

@@ -18,6 +18,8 @@ export interface MessagesState {
   /** 新推送的摘要 prepend 到最前（按 messageId 去重）。 */
   prependSummary: (s: MessageSummary) => void
   markRead: (messageId: string) => void
+  /** 写入某条消息的收件人复合呼号（后台 getDetail 回填用），缺省字段时不动。 */
+  enrichTo: (messageId: string, to: string) => void
   /** 批量标已读：对所有 isRead=false 的条目调 svc.setRead，然后本地全部置为已读。 */
   markAllRead: (svc: MessageService) => Promise<number>
   /** 删除单条：调 svc.deleteItem，然后从本地 list 移除。 */
@@ -37,6 +39,32 @@ function handleError(err: unknown): Error {
   return err instanceof Error ? err : new Error(String(err))
 }
 
+/**
+ * 刷新列表时把客户端"私有真相"字段从旧 list 续到新数据上,按 messageId 匹配:
+ *   - `to`:服务端 getList 通常不带 toCallsign,靠后台 getDetail 回填
+ *   - `isRead`:已读状态客户端写得比服务端更准(出站消息服务端可能压根不维护)。
+ *     单向迁移:client=true 永远胜过 server=false,反之不动
+ *
+ * 不做这个合并的话,切换 nav 触发 refresh 会瞬间把 to 退回自己呼号、
+ * 已读条目又重新冒蓝点。
+ */
+function preserveLocal(
+  fresh: readonly MessageSummary[],
+  old: readonly MessageSummary[]
+): MessageSummary[] {
+  if (old.length === 0) return [...fresh]
+  const oldMap = new Map<string, MessageSummary>()
+  for (const m of old) oldMap.set(m.messageId, m)
+  return fresh.map((m) => {
+    const cached = oldMap.get(m.messageId)
+    if (!cached) return m
+    const to = m.to ?? cached.to
+    const isRead = m.isRead || cached.isRead
+    if (to === m.to && isRead === m.isRead) return m
+    return { ...m, ...(to ? { to } : {}), isRead }
+  })
+}
+
 export const messagesStore = create<MessagesState>()((set, get) => ({
   ...INITIAL,
 
@@ -44,8 +72,9 @@ export const messagesStore = create<MessagesState>()((set, get) => ({
     set({ status: 'loading', error: null })
     try {
       const page = await svc.getList()
+      const old = get().list
       set({
-        list: page.list,
+        list: preserveLocal(page.list, old),
         nextAnchorId: page.nextAnchorId,
         status: 'idle'
       })
@@ -64,7 +93,8 @@ export const messagesStore = create<MessagesState>()((set, get) => ({
       const page = await svc.getList({ anchorId: nextAnchorId })
       // append + 去重（保底，避免服务端边界重复）
       const existingIds = new Set(list.map((m) => m.messageId))
-      const merged = [...list, ...page.list.filter((m) => !existingIds.has(m.messageId))]
+      const fresh = page.list.filter((m) => !existingIds.has(m.messageId))
+      const merged = [...list, ...preserveLocal(fresh, list)]
       set({
         list: merged,
         nextAnchorId: page.nextAnchorId,
@@ -83,6 +113,13 @@ export const messagesStore = create<MessagesState>()((set, get) => ({
   markRead: (messageId: string) =>
     set((state) => ({
       list: state.list.map((m) => (m.messageId === messageId ? { ...m, isRead: true } : m))
+    })),
+
+  enrichTo: (messageId: string, to: string) =>
+    set((state) => ({
+      list: state.list.map((m) =>
+        m.messageId === messageId && m.to !== to ? { ...m, to } : m
+      )
     })),
 
   markAllRead: async (svc: MessageService) => {

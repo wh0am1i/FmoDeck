@@ -1,9 +1,11 @@
 // src/features/sstv/components/sstv-history.tsx
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { cn } from '@/lib/utils'
+import { modeRegistry } from '@/lib/sstv/modes/registry'
 import type { SstvImage, SstvMode } from '@/types/sstv'
 import { sstvRepo } from '@/lib/db/sstv-repo'
 import { SstvHistoryItem } from './sstv-history-item'
@@ -13,14 +15,16 @@ type Filter = 'all' | SstvMode
 
 const PAGE_SIZE = 20
 
-const FILTER_LABELS: { key: Filter; label: string }[] = [
-  { key: 'all', label: '全部' },
-  { key: 'robot36', label: 'Robot 36' },
-  { key: 'martin-m1', label: 'Martin M1' },
-  { key: 'martin-m2', label: 'Martin M2' }
-]
-
 export function SstvHistory() {
+  const { t } = useTranslation()
+  // 从 modeRegistry 动态生成筛选项,新加 mode 自动出现在筛选区
+  const filterLabels = useMemo<{ key: Filter; label: string }[]>(
+    () => [
+      { key: 'all', label: t('sstv.filter.all') },
+      ...[...modeRegistry.values()].map((m) => ({ key: m.name as Filter, label: m.displayName }))
+    ],
+    [t]
+  )
   const [images, setImages] = useState<SstvImage[]>([])
   const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -120,19 +124,19 @@ export function SstvHistory() {
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="hud-mono text-xs uppercase tracking-widest text-muted-foreground">
-          历史记录 ({totalCount})
+          {t('sstv.history.title', { count: totalCount })}
         </h3>
         <div className="flex items-center gap-2">
           {selCount > 0 && (
             <Button variant="outline" size="sm" onClick={() => setDeleteSelOpen(true)}>
               <Trash2 className="h-4 w-4" />
-              删除选中 ({selCount})
+              {t('sstv.history.deleteSelected', { count: selCount })}
             </Button>
           )}
           {totalCount > 0 && (
             <Button variant="outline" size="sm" onClick={() => setClearOpen(true)}>
               <Trash2 className="h-4 w-4" />
-              清空全部
+              {t('sstv.history.clearAll')}
             </Button>
           )}
         </div>
@@ -140,7 +144,7 @@ export function SstvHistory() {
 
       {totalCount > 0 && (
         <div className="flex flex-wrap gap-1">
-          {FILTER_LABELS.map((f) => (
+          {filterLabels.map((f) => (
             <button
               key={f.key}
               type="button"
@@ -159,9 +163,9 @@ export function SstvHistory() {
       )}
 
       {totalCount === 0 ? (
-        <p className="hud-mono text-xs text-muted-foreground">暂无历史。</p>
+        <p className="hud-mono text-xs text-muted-foreground">{t('sstv.history.empty')}</p>
       ) : filtered.length === 0 ? (
-        <p className="hud-mono text-xs text-muted-foreground">此模式下暂无记录。</p>
+        <p className="hud-mono text-xs text-muted-foreground">{t('sstv.history.emptyForFilter')}</p>
       ) : (
         <>
           <div className="flex max-h-[600px] flex-col gap-2 overflow-y-auto pr-1">
@@ -177,7 +181,7 @@ export function SstvHistory() {
           </div>
           {hasMore && filter === 'all' && (
             <Button variant="outline" size="sm" onClick={() => { void loadMore() }} disabled={loading}>
-              {loading ? '加载中…' : '加载更多'}
+              {loading ? t('sstv.history.loading') : t('sstv.history.loadMore')}
             </Button>
           )}
         </>
@@ -186,26 +190,26 @@ export function SstvHistory() {
       <ConfirmDialog
         open={clearOpen}
         onOpenChange={setClearOpen}
-        title="清空 SSTV 历史"
-        description="这会删除所有已保存的 SSTV 解码图像,此操作不可撤销。"
-        confirmLabel="确认清空"
-        cancelLabel="取消"
+        title={t('sstv.history.clearTitle')}
+        description={t('sstv.history.clearDescription')}
+        confirmLabel={t('sstv.history.clearConfirm')}
+        cancelLabel={t('sstv.history.cancel')}
         destructive
         loading={clearing}
-        loadingLabel="清理中…"
+        loadingLabel={t('sstv.history.clearLoading')}
         onConfirm={() => { void handleClear() }}
       />
 
       <ConfirmDialog
         open={deleteSelOpen}
         onOpenChange={setDeleteSelOpen}
-        title={`删除 ${selCount} 条记录`}
-        description="此操作不可撤销。"
-        confirmLabel="删除"
-        cancelLabel="取消"
+        title={t('sstv.history.deleteCountTitle', { count: selCount })}
+        description={t('sstv.history.deleteCountDescription')}
+        confirmLabel={t('sstv.history.deleteConfirm')}
+        cancelLabel={t('sstv.history.cancel')}
         destructive
         loading={deletingSel}
-        loadingLabel="删除中…"
+        loadingLabel={t('sstv.history.deleteLoading')}
         onConfirm={() => { void handleDeleteSelected() }}
       />
     </div>

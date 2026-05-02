@@ -89,10 +89,8 @@ describe('formatLatLng', () => {
 })
 
 describe('mapUrl', () => {
-  it('生成 OSM 链接', () => {
-    const url = mapUrl({ lat: 31.5, lng: 113 })
-    expect(url).toContain('openstreetmap.org')
-    expect(url).toContain('mlat=31.50000')
-    expect(url).toContain('mlon=113.00000')
+  it('生成 MaidenMap 链接', () => {
+    const url = mapUrl('OM89bn')
+    expect(url).toBe('https://maidenmap.wh0am1i.com/?grid=OM89bn')
   })
 })

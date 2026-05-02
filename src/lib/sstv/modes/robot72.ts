@@ -1,8 +1,10 @@
 // src/lib/sstv/modes/robot72.ts
 import type { Mode } from './types'
-import { instantFreq, toAnalytic } from '../dsp'
+import { fmDemod } from '../dsp'
+import { ycbcrToRgb } from '../colorspace'
 import { sampleBrightnessSection } from './sample-section'
 import { detectSyncPulseOffsetMs } from './sync-detect'
+import { hampelFilter } from '../sync-filter'
 
 // 各段耗时(ms),和 Robot 72 规范一致
 const SYNC_MS = 9
@@ -27,20 +29,6 @@ const SCAN_LINE_MS =
 
 const WIDTH = 320
 const CHROMA_WIDTH = 160 // 4:2:2：两个像素共享一个 R-Y / B-Y 样本
-
-/** YCbCr(full-range / JPEG-style,SSTV 通用)→ RGB。Y/Cb/Cr 都是 0-255。 */
-function yuvToRgb(y: number, cb: number, cr: number): [number, number, number] {
-  const cbb = cb - 128
-  const crr = cr - 128
-  const r = y + 1.402 * crr
-  const g = y - 0.344136 * cbb - 0.714136 * crr
-  const b = y + 1.772 * cbb
-  return [clamp(r), clamp(g), clamp(b)]
-}
-
-function clamp(v: number): number {
-  return Math.max(0, Math.min(255, Math.round(v)))
-}
 
 const CLAMP_MS = 20
 
@@ -75,10 +63,9 @@ export const robot72: Mode = {
   rowsPerScanLine: 1,
   scanLineMs: SCAN_LINE_MS,
 
-  decodeLine(samples, _scanLineIndex, state, sampleRate): Uint8ClampedArray {
-    // 整行一次 FM 解调
-    const { i, q } = toAnalytic(samples, sampleRate)
-    const freq = instantFreq(i, q, sampleRate)
+  decodeLine(samples, _scanLineIndex, state, sampleRate, warmupSamples = 0): Uint8ClampedArray {
+    // 整行一次 FM 解调,丢弃 warmup 前缀(LPF 瞬态)
+    const freq = fmDemod(samples, sampleRate, warmupSamples)
 
     // 逐行 sync 矫正
     const { raw: rawSync, clamped: syncRaw } = detectSyncOffsetMsInternal(freq, sampleRate)
@@ -90,12 +77,11 @@ export const robot72: Mode = {
     }
     s.lastRawSyncMs = rawSync
 
-    // 单行 sync 检测会抖动;取最近 5 行 clamped sync 的中位数避免梳齿。
+    // Hampel 滤波:孤立异常用中位数替换,真实 slant 缓变直接通过。
     s.syncWindow ??= []
     s.syncWindow.push(syncRaw)
     if (s.syncWindow.length > 5) s.syncWindow.shift()
-    const sorted = [...s.syncWindow].sort((a, b) => a - b)
-    const syncOffset = sorted[Math.floor(sorted.length / 2)]!
+    const syncOffset = hampelFilter(s.syncWindow)
 
     const yStart = SYNC_MS + PORCH1_MS + syncOffset
     const yEnd = yStart + Y_MS
@@ -111,7 +97,7 @@ export const robot72: Mode = {
     const rgba = new Uint8ClampedArray(WIDTH * 4)
     for (let x = 0; x < WIDTH; x++) {
       const ci = x >> 1
-      const [r, g, b] = yuvToRgb(yLine[x]!, cb[ci] ?? 128, cr[ci] ?? 128)
+      const [r, g, b] = ycbcrToRgb(yLine[x]!, cb[ci] ?? 128, cr[ci] ?? 128)
       rgba[x * 4 + 0] = r
       rgba[x * 4 + 1] = g
       rgba[x * 4 + 2] = b

@@ -22,7 +22,7 @@ export function UpdateSection(): React.JSX.Element | null {
 
   if (!isAndroid()) return null
 
-  const baseUrl = import.meta.env.VITE_UPDATE_BASE_URL as string | undefined
+  const baseUrl = import.meta.env.VITE_UPDATE_BASE_URL
   const canCheck = Boolean(baseUrl) && state !== 'checking'
 
   const onManualCheck = async (): Promise<void> => {

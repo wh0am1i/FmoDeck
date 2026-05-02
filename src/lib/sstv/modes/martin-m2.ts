@@ -1,7 +1,8 @@
 // src/lib/sstv/modes/martin-m2.ts
 import type { Mode } from './types'
-import { instantFreq, toAnalytic } from '../dsp'
+import { fmDemod } from '../dsp'
 import { sampleBrightnessSection } from './sample-section'
+import { hampelFilter } from '../sync-filter'
 
 const SYNC_MS = 4.862
 const PORCH_MS = 0.572
@@ -66,20 +67,18 @@ export const martinM2: Mode = {
   rowsPerScanLine: 1,
   scanLineMs: LINE_MS,
 
-  decodeLine(samples, _scanLineIndex, state, sampleRate): Uint8ClampedArray {
-    const { i, q } = toAnalytic(samples, sampleRate)
-    const freq = instantFreq(i, q, sampleRate)
+  decodeLine(samples, _scanLineIndex, state, sampleRate, warmupSamples = 0): Uint8ClampedArray {
+    const freq = fmDemod(samples, sampleRate, warmupSamples)
 
     const { raw: rawSync, clamped: syncRaw } = detectSyncOffsetMsInternal(freq, sampleRate)
     const st = state as { lastRawSyncMs?: number; syncWindow?: number[] }
     st.lastRawSyncMs = rawSync
 
-    // 中位数滤波:抑制 Opus 失真下的单行 sync 抖动(避免行间梳齿)
+    // Hampel 滤波:孤立异常用中位数替换,正常变化原样通过(去掉行间梳齿不留台阶)
     st.syncWindow ??= []
     st.syncWindow.push(syncRaw)
     if (st.syncWindow.length > 5) st.syncWindow.shift()
-    const sorted = [...st.syncWindow].sort((a, b) => a - b)
-    const syncOffset = sorted[Math.floor(sorted.length / 2)]!
+    const syncOffset = hampelFilter(st.syncWindow)
 
     const gStart = SYNC_MS + PORCH_MS + syncOffset
     const bStart = gStart + COLOR_MS + PORCH_MS

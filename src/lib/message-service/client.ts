@@ -3,6 +3,56 @@ import type { MessageDetail, MessagePage, MessageSummary } from '@/types/message
 
 type Unsub = () => void
 
+/**
+ * 服务端两种历史形状：
+ * - 老：`{messageId, from, timestamp, isRead}` —— 复合 `from` 已是 `BH6SCA-9` 形式
+ * - 新：`{messageId, fromCallsign, fromSSID, toCallsign, toSSID?, timestamp, read}`
+ * 这里统一吃下，输出 `MessageSummary`（保留 from 复合，附加可选 to 复合）。
+ */
+interface RawSummary {
+  messageId: string
+  from?: string
+  fromCallsign?: string
+  fromSSID?: number
+  to?: string
+  toCallsign?: string
+  toSSID?: number
+  timestamp: number
+  isRead?: boolean
+  read?: number | boolean
+  message?: string
+}
+
+function toComposite(call: string, ssid?: number): string {
+  return ssid && ssid > 0 ? `${call}-${ssid}` : call
+}
+
+function normalizeSummary(raw: RawSummary): MessageSummary {
+  const from = raw.from ?? toComposite(raw.fromCallsign ?? '', raw.fromSSID)
+  const toCallRaw = raw.to ?? raw.toCallsign
+  const to = toCallRaw ? toComposite(toCallRaw, raw.toSSID) : undefined
+  const isRead =
+    typeof raw.isRead === 'boolean'
+      ? raw.isRead
+      : typeof raw.read === 'boolean'
+        ? raw.read
+        : raw.read === 1
+  return {
+    messageId: raw.messageId,
+    from,
+    ...(to ? { to } : {}),
+    timestamp: raw.timestamp,
+    isRead
+  }
+}
+
+function normalizeDetail(raw: RawSummary): MessageDetail {
+  return {
+    ...normalizeSummary(raw),
+    message: raw.message ?? ''
+  }
+}
+
 export class MessageService {
   constructor(private readonly api: FmoApiClient) {}
 
@@ -12,7 +62,8 @@ export class MessageService {
   async getList(params: { anchorId?: number; pageSize?: number } = {}): Promise<MessagePage> {
     const resp = await this.api.send({ type: 'message', subType: 'getList', data: params })
     if (resp.code !== 0) throw new Error(`getList failed: code=${resp.code}`)
-    return resp.data as MessagePage
+    const page = resp.data as MessagePage & { list: RawSummary[] }
+    return { ...page, list: page.list.map(normalizeSummary) }
   }
 
   async getDetail(messageId: string): Promise<MessageDetail> {
@@ -27,16 +78,16 @@ export class MessageService {
     //   B. { ...detail, message: "正文" }（扁平）
     // MessageDetail 自己也有个 `message` 字段（正文）。用"嵌套对象"来区分
     // wrapper vs 扁平：wrapper.message 是 object，detail.message 是 string。
-    const data = resp.data as { message?: unknown } & Partial<MessageDetail>
+    const data = resp.data as { message?: unknown } & RawSummary
     if (
       data &&
       typeof data === 'object' &&
       typeof data.message === 'object' &&
       data.message !== null
     ) {
-      return data.message as MessageDetail
+      return normalizeDetail(data.message as RawSummary)
     }
-    return data as MessageDetail
+    return normalizeDetail(data)
   }
 
   async setRead(messageId: string): Promise<void> {
@@ -76,7 +127,7 @@ export class MessageService {
   onSummary(cb: (summary: MessageSummary) => void): Unsub {
     return this.api.onPush((msg) => {
       if (msg.type === 'message' && msg.subType === 'summary') {
-        cb(msg.data as MessageSummary)
+        cb(normalizeSummary(msg.data as RawSummary))
       }
     })
   }

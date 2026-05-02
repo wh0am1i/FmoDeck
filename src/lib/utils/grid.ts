@@ -78,7 +78,7 @@ export function formatLatLng(ll: LatLng, digits = 2): string {
   return `${latStr}, ${lngStr}`
 }
 
-/** OpenStreetMap 外链（隐私友好 + 无需 API key）。 */
-export function mapUrl(ll: LatLng, zoom = 10): string {
-  return `https://www.openstreetmap.org/?mlat=${ll.lat.toFixed(5)}&mlon=${ll.lng.toFixed(5)}#map=${zoom}/${ll.lat.toFixed(4)}/${ll.lng.toFixed(4)}`
+/** MaidenMap 外链（自建服务，与反查地名同源）。 */
+export function mapUrl(grid: string): string {
+  return `https://maidenmap.wh0am1i.com/?grid=${encodeURIComponent(grid)}`
 }

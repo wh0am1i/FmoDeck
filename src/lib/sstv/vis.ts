@@ -121,8 +121,12 @@ function hasPreamble(samples: Float32Array, startBitOff: number, sampleRate: num
   const secondLeaderCoreStart =
     startBitOff - Math.round(((LEADER_MS - 250) / 1000) * sampleRate)
   const leaderCoreSamples = Math.round((LEADER_CORE_MS / 1000) * sampleRate)
-  if (!isLeader1900(samples, firstLeaderCoreStart, leaderCoreSamples, sampleRate)) return false
-  if (!isLeader1900(samples, secondLeaderCoreStart, leaderCoreSamples, sampleRate)) return false
+  // 放宽:只要 ≥1 段 leader 1900Hz 主导即可。弱信号 / QSB 下另一段可能被 fade,
+  // 不应因此漏掉整次解码。break + start + 8 data + parity + stop 五道结构校验
+  // 已能把误识别压到很低。
+  const leader1Ok = isLeader1900(samples, firstLeaderCoreStart, leaderCoreSamples, sampleRate)
+  const leader2Ok = isLeader1900(samples, secondLeaderCoreStart, leaderCoreSamples, sampleRate)
+  if (!leader1Ok && !leader2Ok) return false
 
   const expectedBreakStartMs = LEADER_MS + BREAK_MS
   const searchStartMs = expectedBreakStartMs - BREAK_SEARCH_MARGIN_MS

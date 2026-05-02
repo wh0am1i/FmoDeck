@@ -139,6 +139,32 @@ function applyBiquad(
 }
 
 /**
+ * Biquad LPF 在 toAnalytic 起始有 ~1.3ms 的瞬态(time constant ≈ 1/(2π·fc),
+ * 5 个常数后衰减到 <1%)。SSTV sync pulse 短至 4-9ms,瞬态盖在 sync 窗里
+ * 会污染检测精度。FM_WARMUP_MS=5 留 4× 余量,@8k 是 40 样本,@48k 是 240 样本。
+ */
+export const FM_WARMUP_MS = 5
+
+/**
+ * 一站式 FM 解调:samples → analytic IQ → 瞬时频率,丢弃前 `warmupSamples` 个
+ * 样本(LPF 瞬态)。返回的 freq[0] 对应 samples[warmupSamples]。
+ *
+ * 调用方应保证 samples 含有足够的 warmup 前缀(decoder 切片时往前借)。
+ * warmupSamples 为 0 时退化为 toAnalytic + instantFreq。
+ */
+export function fmDemod(
+  samples: Float32Array,
+  sampleRate: number,
+  warmupSamples = 0,
+  centerHz = 1900,
+  cutoffHz = 600
+): Float32Array {
+  const { i, q } = toAnalytic(samples, sampleRate, centerHz, cutoffHz)
+  const freq = instantFreq(i, q, sampleRate, centerHz)
+  return warmupSamples > 0 ? freq.subarray(warmupSamples) : freq
+}
+
+/**
  * 瞬时频率估计(Hz):f[k] = centerHz + Fs/(2π) · arg(z[k] · conj(z[k-1]))
  *
  * arg(z[k] · conj(z[k-1])) = atan2(q[k]*i[k-1] - i[k]*q[k-1], i[k]*i[k-1] + q[k]*q[k-1])

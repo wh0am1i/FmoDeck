@@ -1,12 +1,30 @@
 // src/features/sstv/hooks/useSstvDecoder.ts
 import { useEffect, useRef } from 'react'
+import i18n from '@/i18n'
 import { SstvDecoder } from '@/lib/sstv/decoder'
 import { PcmTap } from '@/lib/sstv/pcm-tap'
 import { engineRefStore } from '@/features/audio/engine-store'
 import { AUDIO_SOURCE_SAMPLE_RATE } from '@/lib/audio/engine'
 import { LivePcmPump } from '@/lib/sstv/live-pcm-pump'
+import { injectPngText } from '@/lib/sstv/png-metadata'
 import { sstvStore } from '../store'
+import { sstvControlStore } from '../control'
+import {
+  recorderFeed as devRecorderFeed,
+  recorderMarkCaptureStart as devRecorderMarkCaptureStart,
+  recorderFinalize as devRecorderFinalize
+} from '../recording'
 import { sstvRepo } from '@/lib/db/sstv-repo'
+
+// 仅 dev 模式调用真实 recorder;prod 下 import.meta.env.DEV 被替换为 false,
+// 三元表达式分支被静态消除,named import 因 unused 被 tree-shake;
+// 配合 recording.ts 内的 /* @__PURE__ */ 标记可让整个模块从 prod bundle 中剥离。
+const noop = (): void => {
+  // prod 占位:dev 路径不会走到这里
+}
+const recorderFeed = import.meta.env.DEV ? devRecorderFeed : noop
+const recorderMarkCaptureStart = import.meta.env.DEV ? devRecorderMarkCaptureStart : noop
+const recorderFinalize = import.meta.env.DEV ? devRecorderFinalize : noop
 import { settingsStore } from '@/stores/settings'
 import { notify, notificationsSupported } from '@/lib/notifications'
 import { toast } from 'sonner'
@@ -62,19 +80,32 @@ export function useSstvDecoder(): void {
       decoderRef.current?.reset()
       decoderRef.current = null
       tapRef.current = null
+      sstvControlStore.getState().setForceStartHandler(null)
       sstvStore.getState().setIdle()
+    }
+
+    const registerForceStartHandler = (sampleRate: number, getTap: () => PcmTap | null) => {
+      sstvControlStore.getState().setForceStartHandler((visCode, fromMsAgo) => {
+        const decoder = decoderRef.current
+        const tap = getTap()
+        if (!decoder || !tap) return false
+        const fromSamplesAgo = Math.round((fromMsAgo / 1000) * sampleRate)
+        return decoder.forceStart(visCode, fromSamplesAgo, tap)
+      })
     }
 
     const createDecoder = (sampleRate: number): SstvDecoder =>
       new SstvDecoder(sampleRate, {
         onStart: (mode) => {
           sstvStore.getState().onDecoderStart(mode)
+          recorderMarkCaptureStart()
         },
         onRow: (row, rgba, mode) => {
           sstvStore.getState().onDecoderRow(row, rgba, mode)
         },
         onDone: async ({ mode, rgba }) => {
           sstvStore.getState().onDecoderDone(mode)
+          recorderFinalize(mode.name)
           try {
             const { imageBlob, thumbnailBlob } = await rgbaToBlobs(rgba, mode)
             await sstvRepo.add({
@@ -85,25 +116,39 @@ export function useSstvDecoder(): void {
               thumbnailBlob
             })
             sstvStore.getState().incrementSavedCount()
-            toast.success(`SSTV 接收完成:${mode.displayName}`, {
-              description: '已存入历史'
+            toast.success(i18n.t('sstv.received.toast', { mode: mode.displayName }), {
+              description: i18n.t('sstv.received.toastDescription')
             })
             const settings = settingsStore.getState()
             if (settings.notificationsEnabled && notificationsSupported()) {
-              notify('SSTV 图像已接收', `${mode.displayName}`)
+              notify(i18n.t('sstv.received.notificationTitle'), mode.displayName)
             }
           } catch (err) {
             sstvStore.getState().setError(err instanceof Error ? err.message : String(err))
           }
         },
-        onTimeout: () => {
-          sstvStore.getState().onDecoderTimeout()
+        onTimeout: (partial) => {
+          sstvStore.getState().onDecoderTimeout(partial)
+          recorderFinalize(null)
         }
       })
 
     const tick = (analyser: AnalyserNode) => {
       if (stopped) return
-      tapRef.current?.pullFromAnalyser(analyser)
+      const tap = tapRef.current
+      if (tap) {
+        // 计算这次 pullFromAnalyser 实际写入的样本量,把这部分回放给 recorder。
+        // 第一次 tick 会一次性灌进整个 fftSize(滚动窗口快照),不算真正的实时输入,跳过。
+        const before = tap.totalWritten
+        tap.pullFromAnalyser(analyser)
+        const after = tap.totalWritten
+        const delta = after - before
+        if (delta > 0 && before > 0) {
+          const sr = (analyser.context as AudioContext).sampleRate
+          const newest = tap.slice(after - delta, delta)
+          if (newest) recorderFeed(newest, sr)
+        }
+      }
       if (tapRef.current && decoderRef.current) {
         decoderRef.current.tick(tapRef.current)
       }
@@ -133,8 +178,10 @@ export function useSstvDecoder(): void {
       decoderRef.current = decoder
       unsubscribeRawPcm = engine.subscribeRawPcm((chunk, sourceSampleRate) => {
         if (stopped) return
+        recorderFeed(chunk, sourceSampleRate)
         pump.push(chunk, sourceSampleRate)
       })
+      registerForceStartHandler(sampleRate, () => pump.tap)
       sstvStore.getState().setWaiting()
       return true
     }
@@ -152,6 +199,7 @@ export function useSstvDecoder(): void {
       stopRawPcm()
       tapRef.current = new PcmTap(Math.round(sampleRate * 3))
       decoderRef.current = createDecoder(sampleRate)
+      registerForceStartHandler(sampleRate, () => tapRef.current)
       sstvStore.getState().setWaiting()
       startPump(analyser)
       return true
@@ -206,8 +254,14 @@ async function rgbaToBlobs(
   const imageData = new ImageData(Uint8ClampedArray.from(rgba), mode.width, mode.height)
   ctx.putImageData(imageData, 0, 0)
 
-  const imageBlob = await new Promise<Blob>((resolve, reject) => {
+  const rawImageBlob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob null'))), 'image/png')
+  })
+  // 写入 mode 元数据(导出后可识别)
+  const imageBlob = await injectPngText(rawImageBlob, {
+    SSTVMode: mode.name,
+    SSTVDisplay: mode.displayName,
+    Software: 'FmoDeck'
   })
 
   const thumbW = 80

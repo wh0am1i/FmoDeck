@@ -8,6 +8,7 @@ import { logsStore } from '@/features/logs/store'
 import { useFmoAudio } from '@/hooks/useFmoAudio'
 import { useFmoSync } from '@/hooks/useFmoSync'
 import { useHudStyles } from '@/hooks/useHudStyles'
+import { useSelfInfo } from '@/hooks/useSelfInfo'
 import { useSpeakingEvents } from '@/hooks/useSpeakingEvents'
 import { useStationPolling } from '@/hooks/useStationPolling'
 import { useStationSync } from '@/hooks/useStationSync'
@@ -18,6 +19,7 @@ import { SstvSessionRunner } from '@/features/sstv/session-runner'
 
 export function App() {
   useFmoSync()
+  useSelfInfo()
   useSpeakingEvents()
   useSyncPolicy()
   useStationSync()

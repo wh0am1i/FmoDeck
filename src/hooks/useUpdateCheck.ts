@@ -14,7 +14,7 @@ const DAY = 24 * 60 * 60 * 1000
 export function useUpdateCheck(): void {
   useEffect(() => {
     if (!isAndroid()) return
-    const baseUrl = import.meta.env.VITE_UPDATE_BASE_URL as string | undefined
+    const baseUrl = import.meta.env.VITE_UPDATE_BASE_URL
     if (!baseUrl) return
     const { autoUpdateCheck, lastUpdateCheckAt, setLastUpdateCheckAt } = settingsStore.getState()
     if (!autoUpdateCheck) return

@@ -328,7 +328,10 @@
     "deleted": "消息已删除",
     "deletedAll": "已删除 {{count}} 条消息",
     "deleteFailedPrefix": "删除失败: ",
-    "deleteOneAria": "删除来自 {{from}} 的消息"
+    "deleteOneAria": "删除来自 {{from}} 的消息",
+    "toLabel": "致 {{to}}",
+    "directionOut": "发",
+    "directionIn": "收"
   },
   "compose": {
     "button": "撰写",
@@ -346,9 +349,76 @@
   "messageDetail": {
     "title": "[ 消息 ]",
     "header": "来自 {{from}} · {{time}}",
+    "headerOutgoing": "致 {{to}} · {{time}}",
     "loading": "加载中...",
     "loadFailedPrefix": "加载失败: ",
     "reply": "回复"
+  },
+  "sstv": {
+    "title": "SSTV",
+    "modes": "Robot 36 / Robot 72 / Martin M1 / Martin M2 / PD 120 / Scottie S1 / Scottie S2",
+    "notConnected": "未连接 FMO，请先在设置中连接。",
+    "audioStartHint": "点击右上角「收听」按钮启动音频。",
+    "audioConnecting": "音频连接中…",
+    "statusIdle": "等待音频连接…",
+    "statusWaiting": "监听中",
+    "statusDecoding": "{{mode}} · {{percent}}%",
+    "statusRecent": "最近接收：{{mode}} · {{relTime}}",
+    "statusTimeout": "超时,已丢弃",
+    "partialBadge": "未完整 {{done}}/{{total}}",
+    "archiveFailedPrefix": "存档失败：",
+    "relTimeSec": "{{n}} 秒前",
+    "relTimeMin": "{{n}} 分钟前",
+    "relTimeHour": "{{n}} 小时前",
+    "received": {
+      "toast": "SSTV 接收完成：{{mode}}",
+      "toastDescription": "已存入历史",
+      "notificationTitle": "SSTV 图像已接收"
+    },
+    "history": {
+      "title": "历史记录 ({{count}})",
+      "empty": "暂无历史。",
+      "emptyForFilter": "此模式下暂无记录。",
+      "deleteSelected": "删除选中 ({{count}})",
+      "clearAll": "清空全部",
+      "clearTitle": "清空 SSTV 历史",
+      "clearDescription": "这会删除所有已保存的 SSTV 解码图像，此操作不可撤销。",
+      "clearConfirm": "确认清空",
+      "clearLoading": "清理中…",
+      "deleteCountTitle": "删除 {{count}} 条记录",
+      "deleteCountDescription": "此操作不可撤销。",
+      "deleteConfirm": "删除",
+      "cancel": "取消",
+      "deleteLoading": "删除中…",
+      "loading": "加载中…",
+      "loadMore": "加载更多"
+    },
+    "filter": {
+      "all": "全部"
+    },
+    "item": {
+      "copied": "已复制到剪贴板",
+      "copyFailed": "复制失败",
+      "dialogDesc": "SSTV 解码图像",
+      "selectAria": "选中此条",
+      "downloadAria": "下载",
+      "copyAria": "复制到剪贴板",
+      "deleteAria": "删除",
+      "downloadBtn": "下载",
+      "copyBtn": "复制"
+    },
+    "signal": {
+      "leader": "1900 LEAD",
+      "sync": "1200 SYNC",
+      "image": "1700 IMG"
+    },
+    "manual": {
+      "title": "手动解码 ▾",
+      "secondsAgo": "秒前开始",
+      "go": "按此模式解码",
+      "hint": "VIS 漏掉时用。tap 缓冲 3s,只能往回扒最多 3 秒。",
+      "failed": "强制解码失败:当前不在空闲状态或音频未连接"
+    }
   },
   "aprs": {
     "modeNormal": "普通模式",

@@ -1,7 +1,9 @@
 // src/lib/sstv/modes/pd120.ts
 import type { Mode } from './types'
-import { instantFreq, toAnalytic } from '../dsp'
+import { fmDemod } from '../dsp'
+import { ycbcrToRgb } from '../colorspace'
 import { sampleBrightnessSection } from './sample-section'
+import { hampelFilter } from '../sync-filter'
 
 // PD120 规范:一个 scan line 产 2 个 image row
 const SYNC_MS = 20
@@ -11,20 +13,6 @@ const SCAN_LINE_MS = SYNC_MS + PORCH_MS + Y_MS * 4 // 508.48
 
 const WIDTH = 640
 const HEIGHT = 496
-
-/** YCbCr(full-range / JPEG-style,SSTV 通用)→ RGB。Y/Cb/Cr 都是 0-255。 */
-function yuvToRgb(y: number, cb: number, cr: number): [number, number, number] {
-  const cbb = cb - 128
-  const crr = cr - 128
-  const r = y + 1.402 * crr
-  const g = y - 0.344136 * cbb - 0.714136 * crr
-  const b = y + 1.772 * cbb
-  return [clamp(r), clamp(g), clamp(b)]
-}
-
-function clamp(v: number): number {
-  return Math.max(0, Math.min(255, Math.round(v)))
-}
 
 const CLAMP_MS = 25
 
@@ -89,37 +77,38 @@ export const pd120: Mode = {
   rowsPerScanLine: 2,
   scanLineMs: SCAN_LINE_MS,
 
-  decodeLine(samples, _scanLineIndex, state, sampleRate): Uint8ClampedArray {
-    const { i, q } = toAnalytic(samples, sampleRate)
-    const freq = instantFreq(i, q, sampleRate)
+  decodeLine(samples, _scanLineIndex, state, sampleRate, warmupSamples = 0): Uint8ClampedArray {
+    const freq = fmDemod(samples, sampleRate, warmupSamples)
 
     // per-line sync 矫正:sync pulse 宽 20ms,在前 35ms 内找
     const { raw: rawSync, clamped: syncRaw } = detectSyncOffsetMsInternal(freq, sampleRate)
     const st = state as { lastRawSyncMs?: number; syncWindow?: number[] }
     st.lastRawSyncMs = rawSync
 
-    // 中位数滤波:抑制单 scan line sync 检测抖动(避免行间水平错位)
+    // Hampel 滤波:孤立异常用中位数替换,正常 slant 变化原样通过(避免梯田台阶)
     st.syncWindow ??= []
     st.syncWindow.push(syncRaw)
     if (st.syncWindow.length > 5) st.syncWindow.shift()
-    const sorted = [...st.syncWindow].sort((a, b) => a - b)
-    const syncOffset = sorted[Math.floor(sorted.length / 2)]!
+    const syncOffset = hampelFilter(st.syncWindow)
 
     const y1Start = SYNC_MS + PORCH_MS + syncOffset
     const crStart = y1Start + Y_MS
     const cbStart = crStart + Y_MS
     const y2Start = cbStart + Y_MS
 
+    // 注:Lanczos 在合成信号上能保留更锐的峰值(见 sample-section.test.ts),
+    // 但实际 FM 解调输出的瞬时频率带噪,Lanczos sinc 旁瓣会放大噪声;
+    // box 在这里反而更稳。useLanczos 选项保留,等找到更适合带噪信号的滤波器再启用。
     const y1 = sampleBrightnessSection(freq, sampleRate, y1Start, y1Start + Y_MS, WIDTH)
     const cr = sampleBrightnessSection(freq, sampleRate, crStart, crStart + Y_MS, WIDTH)
     const cb = sampleBrightnessSection(freq, sampleRate, cbStart, cbStart + Y_MS, WIDTH)
     const y2 = sampleBrightnessSection(freq, sampleRate, y2Start, y2Start + Y_MS, WIDTH)
 
-    // 两行共用 Cr/Cb。用 Rec.601 full-range YCbCr → RGB
+    // 两行共用 Cr/Cb。色彩转换走 lib/sstv/colorspace.ts(BT.601 full-range / JPEG)
     const rgba = new Uint8ClampedArray(WIDTH * 2 * 4)
     for (let x = 0; x < WIDTH; x++) {
-      const [r1, g1, b1] = yuvToRgb(y1[x]!, cb[x]!, cr[x]!)
-      const [r2, g2, b2] = yuvToRgb(y2[x]!, cb[x]!, cr[x]!)
+      const [r1, g1, b1] = ycbcrToRgb(y1[x]!, cb[x]!, cr[x]!)
+      const [r2, g2, b2] = ycbcrToRgb(y2[x]!, cb[x]!, cr[x]!)
       // 第 0 行
       rgba[x * 4 + 0] = r1
       rgba[x * 4 + 1] = g1

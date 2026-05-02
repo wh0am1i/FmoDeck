@@ -69,7 +69,7 @@ describe('MessageService', () => {
     expect(detail.message).toBe('嗨')
   })
 
-  it('onSummary 只转发 message/summary 推送', () => {
+  it('onSummary 只转发 message/summary 推送 + 归一化', () => {
     let registered: ((msg: unknown) => void) | null = null
     const api = mockClient()
     vi.mocked(api.onPush).mockImplementation((cb) => {
@@ -81,8 +81,88 @@ describe('MessageService', () => {
     const received: unknown[] = []
     svc.onSummary((s) => received.push(s))
 
-    registered!({ type: 'message', subType: 'summary', code: 0, data: { messageId: 'a' } })
+    registered!({
+      type: 'message',
+      subType: 'summary',
+      code: 0,
+      data: {
+        messageId: 'a',
+        fromCallsign: 'BG3XYZ',
+        fromSSID: 0,
+        toCallsign: 'BH6SCA',
+        toSSID: 9,
+        timestamp: 1234,
+        read: 0
+      }
+    })
     registered!({ type: 'station', subType: 'setCurrent', code: 0, data: {} })
-    expect(received).toEqual([{ messageId: 'a' }])
+    expect(received).toEqual([
+      { messageId: 'a', from: 'BG3XYZ', to: 'BH6SCA-9', timestamp: 1234, isRead: false }
+    ])
+  })
+
+  it('getList 归一化 fromCallsign/toCallsign + SSID 为复合呼号', async () => {
+    const api = mockClient()
+    vi.mocked(api.send).mockResolvedValue({
+      type: 'message',
+      subType: 'getListResponse',
+      code: 0,
+      data: {
+        list: [
+          {
+            messageId: '1',
+            fromCallsign: 'BH6SCA',
+            fromSSID: 9,
+            toCallsign: 'BG9GOK',
+            toSSID: 0,
+            timestamp: 1000,
+            read: 1
+          }
+        ],
+        anchorId: 0,
+        nextAnchorId: 0,
+        page: 0,
+        pageSize: 20,
+        count: 1
+      }
+    })
+    const svc = new MessageService(api)
+    const page = await svc.getList()
+    expect(page.list[0]).toEqual({
+      messageId: '1',
+      from: 'BH6SCA-9',
+      to: 'BG9GOK',
+      timestamp: 1000,
+      isRead: true
+    })
+  })
+
+  it('getDetail 归一化（嵌套 wrapper 形状）', async () => {
+    const api = mockClient()
+    vi.mocked(api.send).mockResolvedValue({
+      type: 'message',
+      subType: 'getDetailResponse',
+      code: 0,
+      data: {
+        message: {
+          messageId: 'x',
+          fromCallsign: 'BH6SCA',
+          fromSSID: 9,
+          toCallsign: 'BG9GOK',
+          message: '测试',
+          timestamp: 99,
+          read: 0
+        }
+      }
+    })
+    const detail = await new MessageService(api).getDetail('x')
+    expect(detail).toEqual({
+      messageId: 'x',
+      from: 'BH6SCA-9',
+      to: 'BG9GOK',
+      message: '测试',
+      timestamp: 99,
+      isRead: false
+    })
   })
 })

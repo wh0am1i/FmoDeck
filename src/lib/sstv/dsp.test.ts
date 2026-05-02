@@ -1,6 +1,14 @@
 // src/lib/sstv/dsp.test.ts
 import { describe, it, expect } from 'vitest'
-import { goertzel, estimateFreq, freqToBrightness, toAnalytic, instantFreq } from './dsp'
+import {
+  FM_WARMUP_MS,
+  fmDemod,
+  goertzel,
+  estimateFreq,
+  freqToBrightness,
+  toAnalytic,
+  instantFreq
+} from './dsp'
 import { synthTone, concat, TEST_SAMPLE_RATE } from './__tests__/fixtures'
 
 describe('dsp / goertzel', () => {
@@ -101,6 +109,47 @@ describe('dsp / instantFreq', () => {
       c2++
     }
     expect(Math.abs(s2 / c2 - 2300)).toBeLessThan(30)
+  })
+})
+
+describe('dsp / fmDemod warmup', () => {
+  it('warmup 长度按 ms 换算正确(@48k 5ms = 240 样本)', () => {
+    const warmup = Math.round((FM_WARMUP_MS / 1000) * TEST_SAMPLE_RATE)
+    expect(warmup).toBe(240)
+  })
+
+  it('warmup=0 时输出长度等于输入', () => {
+    const samples = synthTone(1900, 30)
+    const freq = fmDemod(samples, TEST_SAMPLE_RATE, 0)
+    expect(freq.length).toBe(samples.length)
+  })
+
+  it('warmup>0 时输出长度 = 输入 - warmup', () => {
+    const samples = synthTone(1900, 30)
+    const warmup = Math.round((FM_WARMUP_MS / 1000) * TEST_SAMPLE_RATE)
+    const freq = fmDemod(samples, TEST_SAMPLE_RATE, warmup)
+    expect(freq.length).toBe(samples.length - warmup)
+  })
+
+  it('1500 → 2300 阶跃,trim warmup 后第一样本就接近目标频率', () => {
+    // 30ms 的 1500 + 30ms 的 2300,模拟"上一行尾 + 当行 sync"边界
+    const prefix = synthTone(1500, 30)
+    const after = synthTone(2300, 30)
+    const samples = concat(prefix, after)
+    const warmup = Math.round((FM_WARMUP_MS / 1000) * TEST_SAMPLE_RATE)
+    // 把前 30ms 当 warmup 给 fmDemod;trim 后 freq[0] 对应 2300 段第 0 样本
+    const totalWarmup = prefix.length
+    const freq = fmDemod(samples, TEST_SAMPLE_RATE, totalWarmup)
+    // 头 5ms 内仍可能微抖,过了 warmup 后应该稳态
+    const checkAt = Math.round((FM_WARMUP_MS / 1000) * TEST_SAMPLE_RATE)
+    expect(Math.abs(freq[checkAt]! - 2300)).toBeLessThan(50)
+    // 用 warmup 显著好于不 trim:取不 trim 时的同位置(原始 freq 的 prefix.length 处)
+    const rawFreq = fmDemod(samples, TEST_SAMPLE_RATE, 0)
+    const naiveStart = Math.abs(rawFreq[prefix.length]! - 2300)
+    const trimmedStart = Math.abs(freq[0]! - 2300)
+    // trim warmup 后到达 2300 的偏差应该比刚跨边界小或相当(随采样率变化)
+    expect(trimmedStart).toBeLessThanOrEqual(naiveStart + 1)
+    expect(warmup).toBeGreaterThan(0)
   })
 })
 

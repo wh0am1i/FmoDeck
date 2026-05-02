@@ -2,6 +2,7 @@
 import { create } from 'zustand'
 import type { SstvMode } from '@/types/sstv'
 import type { Mode } from '@/lib/sstv/modes/types'
+import type { PartialFrame } from '@/lib/sstv/decoder'
 
 type SstvStatus = 'idle' | 'waiting' | 'decoding' | 'done' | 'timeout'
 
@@ -32,12 +33,17 @@ export interface SstvState {
   lastError: string | null
   /** 最近完成的几张解码结果(不含进行中的 live),最多 5 张,最新在前。 */
   recentDecodes: RecentDecodeEntry[]
+  /**
+   * 上次超时遗留的残图信息;非 null 时 canvas 角上挂"未完整 N/M"徽章。
+   * onDecoderStart / setIdle 时清空。
+   */
+  partialInfo: { completedScanLines: number; totalScanLines: number } | null
 
   /** 内部方法,decoder session 调用 */
   onDecoderStart: (mode: Mode) => void
   onDecoderRow: (row: number, rgba: Uint8ClampedArray, mode: Mode) => void
   onDecoderDone: (mode: Mode) => void
-  onDecoderTimeout: () => void
+  onDecoderTimeout: (partial: PartialFrame | null) => void
   setWaiting: () => void
   setIdle: () => void
   setError: (e: string | null) => void
@@ -59,9 +65,10 @@ export const sstvStore = create<SstvState>((set, get) => ({
   savedCount: 0,
   lastError: null,
   recentDecodes: [],
+  partialInfo: null,
 
   onDecoderStart: (mode) => {
-    // 分配新的 rgba buffer
+    // 分配新的 rgba buffer;清掉上次的残图徽章
     const buf = new Uint8ClampedArray(mode.width * mode.height * 4)
     set({
       status: 'decoding',
@@ -70,7 +77,8 @@ export const sstvStore = create<SstvState>((set, get) => ({
       currentRgba: buf,
       currentWidth: mode.width,
       currentHeight: mode.height,
-      lastRow: -1
+      lastRow: -1,
+      partialInfo: null
     })
   },
   onDecoderRow: (row, rgba, mode) => {
@@ -107,13 +115,27 @@ export const sstvStore = create<SstvState>((set, get) => ({
     }))
     // 注意:currentRgba 保留不清空,canvas 需要
   },
-  onDecoderTimeout: () => {
-    set({
-      status: 'timeout',
-      currentRgba: null,
-      lastRow: -1
-    })
-    // 1.5s 后自动回 waiting(如果 decoder 还在监听)
+  onDecoderTimeout: (partial) => {
+    if (partial && partial.completedScanLines > 0) {
+      // 有残图:保留 currentRgba(各行已通过 onDecoderRow 渐进写入),挂徽章信息。
+      // 1.5s 后切回 waiting 时也保留,直到下一帧 onDecoderStart 才覆盖。
+      set({
+        status: 'timeout',
+        progress: partial.completedScanLines / partial.totalScanLines,
+        partialInfo: {
+          completedScanLines: partial.completedScanLines,
+          totalScanLines: partial.totalScanLines
+        }
+      })
+    } else {
+      set({
+        status: 'timeout',
+        currentRgba: null,
+        lastRow: -1,
+        partialInfo: null
+      })
+    }
+    // 1.5s 后自动回 waiting(如果 decoder 还在监听);保留 currentRgba/partialInfo 让残图可见
     setTimeout(() => {
       const st = get()
       if (st.status === 'timeout') {
@@ -128,7 +150,8 @@ export const sstvStore = create<SstvState>((set, get) => ({
       activeMode: null,
       progress: 0,
       currentRgba: null,
-      lastRow: -1
+      lastRow: -1,
+      partialInfo: null
       // recentDecodes 保留,跨 session 的最近记忆
     }),
   setError: (lastError) => set({ lastError }),

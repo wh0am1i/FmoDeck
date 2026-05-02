@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { MessageService } from '@/lib/message-service/client'
 import { connectionStore } from '@/stores/connection'
+import { isFromSelf, selfStore } from '@/stores/self'
 import { messagesStore } from '../store'
 import type { MessageDetail } from '@/types/message'
 import { Reply } from 'lucide-react'
@@ -29,6 +30,7 @@ interface Props {
 
 export function MessageDetailDialog({ messageId, onClose, onReply }: Props) {
   const { t } = useTranslation()
+  const selfCallsign = selfStore((s) => s.callsign)
   const [detail, setDetail] = useState<MessageDetail | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -70,7 +72,12 @@ export function MessageDetailDialog({ messageId, onClose, onReply }: Props) {
           <DialogTitle className="hud-title text-primary">{t('messageDetail.title')}</DialogTitle>
           <DialogDescription className="hud-mono text-xs">
             {detail
-              ? t('messageDetail.header', { from: detail.from, time: formatTs(detail.timestamp) })
+              ? detail.to !== undefined && isFromSelf(detail.from, selfCallsign)
+                ? t('messageDetail.headerOutgoing', {
+                    to: detail.to,
+                    time: formatTs(detail.timestamp)
+                  })
+                : t('messageDetail.header', { from: detail.from, time: formatTs(detail.timestamp) })
               : t('messageDetail.loading')}
           </DialogDescription>
         </DialogHeader>
@@ -84,7 +91,18 @@ export function MessageDetailDialog({ messageId, onClose, onReply }: Props) {
         )}
         {detail && onReply && (
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => onReply(detail.from)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // 出站消息的"回复"目标应是当初的收件人，而不是自己
+                const target =
+                  detail.to !== undefined && isFromSelf(detail.from, selfCallsign)
+                    ? detail.to
+                    : detail.from
+                onReply(target)
+              }}
+            >
               <Reply className="h-4 w-4" />
               {t('messageDetail.reply')}
             </Button>

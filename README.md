@@ -8,6 +8,68 @@
 
 ## 更新记录
 
+### v0.1.9 (2026-05-03)
+
+**新增**
+
+- **SSTV 新模式**:Scottie S1(VIS 0x3C)+ Scottie S2(VIS 0x38),sync 在中段
+  的 Convention B 实现,decoder 加 `preludeMs` 字段处理 VIS 后的 9ms starting sync
+- **超时残图保留**:之前帧未解完直接丢弃,现在保留已解出的部分行 + 右上角
+  挂"未完整 N/M"徽章。下次 VIS 命中或离开页面才清空
+- **手动模式选择**:VIS 漏掉时的救场入口 —— waiting 区可折叠"手动解码"面板,
+  选 mode + 秒数(0..3s,受 tap 缓冲限制)→ 跳过 VIS 强制按指定模式从 N 秒前开始解码
+- **信号指示器**:等待期 SpectrumWaveform 下方多三色能量条 —— 1900 LEAD /
+  1200 SYNC / 1700 IMG,Goertzel 100ms 轮询,直观判断"是不是 SSTV 信号要来了"
+- **PNG 元数据**:导出图片写入 SSTVMode / SSTVDisplay / Software 三个 tEXt
+  chunk(零依赖手写 CRC32),离线辨识来源
+- **消息方向**:连接后自动拉本机呼号(`user/getInfo` 优先,fallback `qso` 取 from),
+  消息列表 / 详情按 from/to 区分进出方向,不再混淆收发
+- **顶部模式列表**改成 chip 风格,每个 mode 一个独立小标签
+
+**改进**
+
+- **Hampel filter** 替换所有 mode 的 5-行固定中位数:孤立异常仍被压住,真实 slant
+  缓变直接通过(消除"5-行台阶"现象)。MIN_THRESHOLD=1.5ms 兜底 MAD=0 退化情况
+- **静音超时改时间阈值**(5s,所有 mode 统一)。原来按行数 5 行,PD120 单行 508ms
+  只要 2.5s 网络抖动就误判;改后长行 mode 不再被波动打断
+- **FM 解调瞬态丢弃**:行起始 5ms warmup 前缀经 LPF 后丢弃,sync 检测窗口不再
+  被 biquad 启动瞬态污染。新增 `dsp.fmDemod()` 一站式助手,5 个 mode 全部切换
+- **VIS 检测放宽**:仅需 ≥1 段 leader 通过(原本两段都要),弱信号 / QSB 下不再
+  漏识别。break + start + 8 bits + parity + stop 五道结构校验保留误识别保护
+- **YCbCr 色彩空间统一**:抽公共 `lib/sstv/colorspace.ts`,统一注释为 BT.601
+  full-range / JPEG。新增 12 个色彩 roundtrip 测试覆盖纯色饱和度
+- **历史筛选**改成动态从 `modeRegistry` 生成,后续加 mode 自动出现,不再硬编码
+- **SSTV 全文案 i18n**:view / canvas / history / item / signal / received toast
+  全覆盖中英双语,`relativeTime` 接受 `t` 参数走 i18n
+- **消息已读状态保留**:`load`/`refresh` 合并新数据时按 messageId 单向保留客户端
+  已设置的 `to` 和 `isRead`,跨 nav 切换不再丢失;effect deps 去掉 `list` 改用
+  store subscribe,避免 in-flight worker 被自己的写入打断
+- **网格坐标跳转**改为自家项目 `https://maidenmap.wh0am1i.com/`(原 OpenStreetMap)
+- **Update / SSTV view ESLint 清理**:多余 type assertion + 未转义引号
+
+**修复**
+
+- Scottie S1 错位 + 大斜率根因:之前误用 Convention A(sync 在行首),实际协议 sync
+  在行中段(G/B 之后、R 之前)。重写 row 结构 + 新增 `detectMidSyncOffset` ±20ms
+  滑窗精确定位 sync,slant 跟踪不受影响
+- PD120 Lanczos 实验:理论上能保留更锐峰值,但 FM 解调输出带噪、Lanczos sinc
+  旁瓣放大噪声反而劣化。已撤回 PD120 默认 box,选项保留待后续找到对噪声更温和的
+  滤波器再启用
+
+**调试工具**(仅 dev 构建,prod 构建完全剥离)
+
+- SSTV waiting 区可"录下一帧"按钮,WAV 16-bit Int16 单声道,带 2s pre-buffer
+  保留 VIS 前导,onDone / onTimeout 自动 finalize 出可下载链接
+- Vite `import.meta.env.DEV` 双层守卫(call site 三元 + UI lazy import + zustand
+  `/* @__PURE__ */`),prod build grep 8 个关键字 + 字符串全部 0 残留
+
+**工程**
+
+- 测试:从 v0.1.8 时的 ~280 涨到 **465 个**(新增 8 hampel + 12 colorspace + 4
+  Lanczos + 4 png-metadata + 8 Scottie roundtrip + 数十个其他模块覆盖)
+- `tsc --noEmit` / ESLint / 全测试三栏全绿
+- prod build 651 KB 主 chunk(gzip 205 KB),与 v0.1.8 持平
+
 ### v0.1.8 (2026-04-22)
 
 **新增**

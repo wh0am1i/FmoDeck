@@ -6,7 +6,7 @@ export interface TickDrivenDecoder {
 }
 
 export class LivePcmPump {
-  private readonly tap: PcmTap
+  private readonly _tap: PcmTap
   private resampler: LinearPcmResampler | null = null
   private resamplerSourceRate: number | null = null
 
@@ -15,7 +15,15 @@ export class LivePcmPump {
     private readonly decoder: TickDrivenDecoder,
     capacitySeconds = 3
   ) {
-    this.tap = new PcmTap(Math.round(targetSampleRate * capacitySeconds))
+    this._tap = new PcmTap(Math.round(targetSampleRate * capacitySeconds))
+  }
+
+  get tap(): PcmTap {
+    return this._tap
+  }
+
+  get sampleRate(): number {
+    return this.targetSampleRate
   }
 
   push(chunk: Float32Array, sourceSampleRate: number): void {
@@ -24,8 +32,8 @@ export class LivePcmPump {
         ? chunk
         : this.getResampler(sourceSampleRate).process(chunk)
     if (normalized.length === 0) return
-    this.tap.write(normalized)
-    this.decoder.tick(this.tap)
+    this._tap.write(normalized)
+    this.decoder.tick(this._tap)
   }
 
   private getResampler(sourceSampleRate: number): LinearPcmResampler {
