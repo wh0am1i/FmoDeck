@@ -1,12 +1,6 @@
 // src/lib/db/sstv-repo.ts
 import { nanoid } from 'nanoid'
-import {
-  deleteItem,
-  getAll,
-  getItem,
-  openDatabase,
-  putItem
-} from '@/lib/storage/indexeddb'
+import { deleteItem, getAll, getItem, openDatabase, putItem } from '@/lib/storage/indexeddb'
 import type { SstvImage } from '@/types/sstv'
 
 const DB_NAME = 'fmodeck-sstv'

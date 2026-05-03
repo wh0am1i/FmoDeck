@@ -66,8 +66,8 @@ describe('pd120', () => {
     const rgba = pd120.decodeLine(samples, 0, {}, TEST_SAMPLE_RATE)
     // 第 0 行中间像素
     const mid = 320 * 4
-    expect(rgba[mid]!).toBeGreaterThan(180)    // R 应接近 255
-    expect(rgba[mid + 1]!).toBeLessThan(80)    // G 应接近 0
-    expect(rgba[mid + 2]!).toBeLessThan(80)    // B 应接近 0
+    expect(rgba[mid]!).toBeGreaterThan(180) // R 应接近 255
+    expect(rgba[mid + 1]!).toBeLessThan(80) // G 应接近 0
+    expect(rgba[mid + 2]!).toBeLessThan(80) // B 应接近 0
   })
 })

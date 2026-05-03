@@ -2,7 +2,13 @@
 import { describe, it, expect, vi } from 'vitest'
 import { SstvDecoder } from './decoder'
 import { PcmTap } from './pcm-tap'
-import { synthVis, synthTone, concat, brightnessToFreq, TEST_SAMPLE_RATE } from './__tests__/fixtures'
+import {
+  synthVis,
+  synthTone,
+  concat,
+  brightnessToFreq,
+  TEST_SAMPLE_RATE
+} from './__tests__/fixtures'
 
 function synthRobot36Line(y: number, chroma: number, row: number) {
   const separatorHz = row % 2 === 0 ? 2300 : 1500
@@ -141,12 +147,7 @@ describe('SstvDecoder', () => {
     expect(decoder.state.type).toBe('decoding')
 
     for (let row = 0; row < 12; row++) {
-      tap.write(
-        concat(
-          synthTone(1900, row * 0.5),
-          synthRobot72Line(128, 128, 128)
-        )
-      )
+      tap.write(concat(synthTone(1900, row * 0.5), synthRobot72Line(128, 128, 128)))
       decoder.tick(tap)
     }
 
@@ -171,12 +172,7 @@ describe('SstvDecoder', () => {
 
     // 喂完 10 行 → 首次校准完成,syncSamples 应被清空
     for (let row = 0; row < 10; row++) {
-      tap.write(
-        concat(
-          synthTone(1900, row * 0.5),
-          synthRobot72Line(128, 128, 128)
-        )
-      )
+      tap.write(concat(synthTone(1900, row * 0.5), synthRobot72Line(128, 128, 128)))
       decoder.tick(tap)
     }
     expect(decoder.state.type).toBe('decoding')
@@ -188,12 +184,7 @@ describe('SstvDecoder', () => {
     // 锁定后继续喂行,slant 始终受 ±5ms 钳制,样本 buffer 不超过
     // RECALIBRATE_ROWS=20(到了就累加并清空)。
     for (let row = 10; row < 40; row++) {
-      tap.write(
-        concat(
-          synthTone(1900, row * 0.5),
-          synthRobot72Line(128, 128, 128)
-        )
-      )
+      tap.write(concat(synthTone(1900, row * 0.5), synthRobot72Line(128, 128, 128)))
       decoder.tick(tap)
     }
     if (decoder.state.type === 'decoding') {

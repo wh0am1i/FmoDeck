@@ -32,7 +32,12 @@ function readWav(filepath: string): Wav {
     throw new Error(`${filepath} 不是 RIFF/WAVE`)
   }
   let off = 12
-  let fmt: { audioFormat: number; channels: number; sampleRate: number; bitsPerSample: number } | null = null
+  let fmt: {
+    audioFormat: number
+    channels: number
+    sampleRate: number
+    bitsPerSample: number
+  } | null = null
   let data: Buffer | null = null
   while (off < buf.length - 8) {
     const id = buf.toString('ascii', off, off + 4)
@@ -107,7 +112,12 @@ function writePng(filepath: string, width: number, height: number, rgba: Uint8Cl
   const idat = zlib.deflateSync(raw)
   fs.writeFileSync(
     filepath,
-    Buffer.concat([signature, pngChunk('IHDR', ihdr), pngChunk('IDAT', idat), pngChunk('IEND', Buffer.alloc(0))])
+    Buffer.concat([
+      signature,
+      pngChunk('IHDR', ihdr),
+      pngChunk('IDAT', idat),
+      pngChunk('IEND', Buffer.alloc(0))
+    ])
   )
 }
 
@@ -127,7 +137,9 @@ function decode(wav: Wav): DecodeResult {
   const decoder = new SstvDecoder(wav.sampleRate, {
     onStart: (mode) => {
       identifiedMode = mode
-      console.log(`  [VIS] ${mode.displayName} (0x${mode.visCode.toString(16)}) ${mode.width}×${mode.height}`)
+      console.log(
+        `  [VIS] ${mode.displayName} (0x${mode.visCode.toString(16)}) ${mode.width}×${mode.height}`
+      )
     },
     onDone: ({ mode, rgba }) => {
       result = { mode, rgba }
@@ -153,31 +165,23 @@ function decode(wav: Wav): DecodeResult {
   }
 
   if (!result) {
-    throw new Error(
-      identifiedMode
-        ? '已识别模式但未完整解码'
-        : '未识别到 VIS 头'
-    )
+    throw new Error(identifiedMode ? '已识别模式但未完整解码' : '未识别到 VIS 头')
   }
   return result
 }
 
 describe.skipIf(!hasDir || wavFiles.length === 0)('真实 WAV 解码(sstv/)', () => {
   for (const filename of wavFiles) {
-    it(
-      `解 ${filename}`,
-      { timeout: 60_000 },
-      () => {
-        const inPath = path.join(SSTV_DIR, filename)
-        const outPath = inPath.replace(/\.wav$/i, '.png')
-        console.log(`\n${filename}`)
-        const wav = readWav(inPath)
-        console.log(`  ${wav.sampleRate} Hz, ${(wav.samples.length / wav.sampleRate).toFixed(2)} s`)
-        const result = decode(wav)
-        writePng(outPath, result.mode.width, result.mode.height, result.rgba)
-        console.log(`  写入 ${path.basename(outPath)}`)
-        expect(result.rgba.length).toBe(result.mode.width * result.mode.height * 4)
-      }
-    )
+    it(`解 ${filename}`, { timeout: 60_000 }, () => {
+      const inPath = path.join(SSTV_DIR, filename)
+      const outPath = inPath.replace(/\.wav$/i, '.png')
+      console.log(`\n${filename}`)
+      const wav = readWav(inPath)
+      console.log(`  ${wav.sampleRate} Hz, ${(wav.samples.length / wav.sampleRate).toFixed(2)} s`)
+      const result = decode(wav)
+      writePng(outPath, result.mode.width, result.mode.height, result.rgba)
+      console.log(`  写入 ${path.basename(outPath)}`)
+      expect(result.rgba.length).toBe(result.mode.width * result.mode.height * 4)
+    })
   }
 })

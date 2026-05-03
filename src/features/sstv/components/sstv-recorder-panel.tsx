@@ -51,19 +51,16 @@ export function SstvRecorderPanel({ decoderActive }: { decoderActive: boolean })
           </button>
         )}
       </div>
-      {recState === 'armed' && (
-        <span className="text-accent">已就绪 · 等待 VIS…</span>
-      )}
-      {recState === 'recording' && (
-        <span className="text-primary">录制中…</span>
-      )}
+      {recState === 'armed' && <span className="text-accent">已就绪 · 等待 VIS…</span>}
+      {recState === 'recording' && <span className="text-primary">录制中…</span>}
       {recState === 'idle' && decoderActive && !lastClip && (
         <span className="text-muted-foreground">当前正在解码,等本帧完成后再录</span>
       )}
       {lastClip && (
         <div className="flex items-center justify-between gap-2">
           <span className="text-muted-foreground">
-            {lastClip.mode ?? 'timeout'} · {lastClip.durationSec.toFixed(1)}s · {lastClip.sampleRate}Hz
+            {lastClip.mode ?? 'timeout'} · {lastClip.durationSec.toFixed(1)}s ·{' '}
+            {lastClip.sampleRate}Hz
           </span>
           <div className="flex gap-1">
             <a

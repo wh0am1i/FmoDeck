@@ -48,9 +48,7 @@ describe('App 烟雾测试', () => {
     expect(screen.getByRole('heading', { name: 'SSTV' })).toBeInTheDocument()
     // 测试环境无 FMO 连接 / 无音频,应显示 offline 提示之一
     // 使用 regex 匹配任一可能文案
-    expect(
-      screen.getByText(/未连接 FMO|音频未开启|音频连接中/)
-    ).toBeInTheDocument()
+    expect(screen.getByText(/未连接 FMO|音频未开启|音频连接中/)).toBeInTheDocument()
   })
 
   it('SpeakingBar 占位渲染', () => {

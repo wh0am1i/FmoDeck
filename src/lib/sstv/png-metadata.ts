@@ -49,7 +49,10 @@ export async function injectPngText(blob: Blob, entries: Record<string, string>)
       ? await blob.arrayBuffer()
       : await new Response(blob).arrayBuffer()
   const out = injectPngTextBytes(new Uint8Array(ab), entries)
-  return new Blob([out], { type: 'image/png' })
+  // Cast: TS 5.9 lib 把 Uint8Array 默认泛型从 ArrayBuffer 放宽到 ArrayBufferLike
+  // (含 SharedArrayBuffer),BlobPart 仍要求 ArrayBuffer。运行期 Uint8Array
+  // 始终是合法 BlobPart,这里只为绕过类型收紧。
+  return new Blob([out as BlobPart], { type: 'image/png' })
 }
 
 function buildTextChunk(keyword: string, text: string): Uint8Array {

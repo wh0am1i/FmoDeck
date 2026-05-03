@@ -52,7 +52,8 @@ export function RecentCallsigns() {
 
   // 今日已联过的基号集合(⭐ 标记用);全天随着新 QSO 增量扩大
   const todaysSet = useMemo(
-    () => selectTodaysContactedBaseCalls({ ...logsStore.getState(), all: allLogs, local: localLogs }),
+    () =>
+      selectTodaysContactedBaseCalls({ ...logsStore.getState(), all: allLogs, local: localLogs }),
     [allLogs, localLogs]
   )
   const isContactedToday = (cs: string): boolean => {

@@ -64,10 +64,7 @@ describe('robot72', () => {
   })
 
   it('把 raw sync 偏移写入 state,供 decoder 做 slant 校准', () => {
-    const delayedSyncLine = concat(
-      synthTone(1900, 2),
-      synthRobot72Line(128, 128, 128)
-    )
+    const delayedSyncLine = concat(synthTone(1900, 2), synthRobot72Line(128, 128, 128))
     const state: { lastRawSyncMs?: number } = {}
 
     robot72.decodeLine(delayedSyncLine, 0, state, TEST_SAMPLE_RATE)

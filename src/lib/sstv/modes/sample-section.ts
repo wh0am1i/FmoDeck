@@ -26,10 +26,7 @@ export function sampleBrightnessSection(
 ): Uint8ClampedArray {
   const out = new Uint8ClampedArray(count)
   const sectionStartIdx = Math.max(0, Math.round((startMs * sampleRate) / 1000))
-  const sectionEndIdx = Math.min(
-    freq.length,
-    Math.round((endMs * sampleRate) / 1000)
-  )
+  const sectionEndIdx = Math.min(freq.length, Math.round((endMs * sampleRate) / 1000))
   const sectionSamples = sectionEndIdx - sectionStartIdx
 
   if (sectionSamples <= 0) {
@@ -57,10 +54,7 @@ export function sampleBrightnessSection(
     const centerMs = startMs + perPixelMs * (i + 0.5)
     const centerIdx = Math.round((centerMs * sampleRate) / 1000)
     const unclampedStartIdx = centerIdx - Math.floor(windowSamples / 2)
-    const startIdx = Math.min(
-      maxStartIdx,
-      Math.max(minStartIdx, unclampedStartIdx)
-    )
+    const startIdx = Math.min(maxStartIdx, Math.max(minStartIdx, unclampedStartIdx))
     const endIdx = startIdx + windowSamples
 
     let sum = 0

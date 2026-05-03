@@ -59,7 +59,10 @@ function dominantFreqs(
   const targets = [1100, 1200, 1300, 1500, 1700, 1900, 2100, 2300]
   const energies = targets.map((f) => ({ f, e: goertzel(win, f, sampleRate) }))
   energies.sort((a, b) => b.e - a.e)
-  const top = energies.slice(0, 3).map((x) => `${x.f}:${x.e.toExponential(1)}`).join(' ')
+  const top = energies
+    .slice(0, 3)
+    .map((x) => `${x.f}:${x.e.toExponential(1)}`)
+    .join(' ')
   return top
 }
 
@@ -68,19 +71,25 @@ describe.skipIf(!hasDir || wavFiles.length === 0)('WAV 前 2 秒频率探测', (
     it(`扫 ${filename}`, () => {
       const { sampleRate, samples } = readWavSamples(path.join(SSTV_DIR, filename))
       console.log(`\n${filename}  (${sampleRate} Hz, ${(samples.length / sampleRate).toFixed(2)}s)`)
-      console.log(`  期望 VIS 结构:0-300ms 1900Hz | 300-310ms 1200Hz | 310-610ms 1900Hz | 610-640ms 1200Hz(start) | 640-880ms data bits | 880-910ms parity | 910-940ms 1200Hz(stop)`)
+      console.log(
+        `  期望 VIS 结构:0-300ms 1900Hz | 300-310ms 1200Hz | 310-610ms 1900Hz | 610-640ms 1200Hz(start) | 640-880ms data bits | 880-910ms parity | 910-940ms 1200Hz(stop)`
+      )
 
       // 每 50ms 扫一次前 1.2s
       for (let ms = 0; ms < 1200; ms += 50) {
         const top = dominantFreqs(samples, sampleRate, ms, ms + 30)
-        console.log(`  t=${ms.toString().padStart(4, ' ')}-${(ms + 30).toString().padStart(4, ' ')}ms  top3: ${top}`)
+        console.log(
+          `  t=${ms.toString().padStart(4, ' ')}-${(ms + 30).toString().padStart(4, ' ')}ms  top3: ${top}`
+        )
       }
 
       // 然后在 1.5s 附近看看图像数据起什么样
       console.log('  --- after VIS (supposed image data) ---')
       for (let ms = 1000; ms < 1500; ms += 100) {
         const top = dominantFreqs(samples, sampleRate, ms, ms + 30)
-        console.log(`  t=${ms.toString().padStart(4, ' ')}-${(ms + 30).toString().padStart(4, ' ')}ms  top3: ${top}`)
+        console.log(
+          `  t=${ms.toString().padStart(4, ' ')}-${(ms + 30).toString().padStart(4, ' ')}ms  top3: ${top}`
+        )
       }
     })
   }

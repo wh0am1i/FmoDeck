@@ -175,12 +175,21 @@ export function SstvHistory() {
                 image={img}
                 selected={selectedIds.has(img.id)}
                 onToggleSelect={() => toggleSelect(img.id)}
-                onDelete={(id) => { void handleDelete(id) }}
+                onDelete={(id) => {
+                  void handleDelete(id)
+                }}
               />
             ))}
           </div>
           {hasMore && filter === 'all' && (
-            <Button variant="outline" size="sm" onClick={() => { void loadMore() }} disabled={loading}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void loadMore()
+              }}
+              disabled={loading}
+            >
               {loading ? t('sstv.history.loading') : t('sstv.history.loadMore')}
             </Button>
           )}
@@ -197,7 +206,9 @@ export function SstvHistory() {
         destructive
         loading={clearing}
         loadingLabel={t('sstv.history.clearLoading')}
-        onConfirm={() => { void handleClear() }}
+        onConfirm={() => {
+          void handleClear()
+        }}
       />
 
       <ConfirmDialog
@@ -210,7 +221,9 @@ export function SstvHistory() {
         destructive
         loading={deletingSel}
         loadingLabel={t('sstv.history.deleteLoading')}
-        onConfirm={() => { void handleDeleteSelected() }}
+        onConfirm={() => {
+          void handleDeleteSelected()
+        }}
       />
     </div>
   )

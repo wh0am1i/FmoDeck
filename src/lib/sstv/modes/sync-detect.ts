@@ -10,10 +10,7 @@ export function detectSyncPulseOffsetMs(
   options: SyncDetectOptions
 ): { raw: number; clamped: number } {
   const { syncMs, searchMs, clampMs } = options
-  const searchSamples = Math.min(
-    freq.length,
-    Math.round((searchMs * sampleRate) / 1000)
-  )
+  const searchSamples = Math.min(freq.length, Math.round((searchMs * sampleRate) / 1000))
   const winSamples = Math.max(4, Math.round((syncMs * sampleRate) / 1000))
   // 未检测到时返回 NaN(而非 0),让 caller 区分「对齐良好」和「找不到 sync」。
   if (searchSamples < winSamples + 4) return { raw: NaN, clamped: 0 }

@@ -4,12 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Copy, Download, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { modeRegistry } from '@/lib/sstv/modes/registry'
 import type { SstvImage } from '@/types/sstv'
@@ -46,7 +41,7 @@ export function SstvHistoryItem({ image, selected, onToggleSelect, onDelete }: P
   const formatted = new Date(image.createdAt).toLocaleString()
 
   const displayName =
-    ([...modeRegistry.values()].find((m) => m.name === image.mode)?.displayName) ??
+    [...modeRegistry.values()].find((m) => m.name === image.mode)?.displayName ??
     image.mode.toUpperCase()
 
   function handleDownload() {
@@ -110,10 +105,22 @@ export function SstvHistoryItem({ image, selected, onToggleSelect, onDelete }: P
             <div className="hud-mono text-primary">{displayName}</div>
             <div className="text-muted-foreground">{formatted}</div>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleDownload} aria-label={t('sstv.item.downloadAria')}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDownload}
+            aria-label={t('sstv.item.downloadAria')}
+          >
             <Download className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => { void handleCopy() }} aria-label={t('sstv.item.copyAria')}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              void handleCopy()
+            }}
+            aria-label={t('sstv.item.copyAria')}
+          >
             <Copy className="h-4 w-4" />
           </Button>
           <Button
@@ -154,7 +161,13 @@ export function SstvHistoryItem({ image, selected, onToggleSelect, onDelete }: P
                   <Download className="h-4 w-4" />
                   {t('sstv.item.downloadBtn')}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => { void handleCopy() }}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    void handleCopy()
+                  }}
+                >
                   <Copy className="h-4 w-4" />
                   {t('sstv.item.copyBtn')}
                 </Button>

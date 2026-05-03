@@ -116,19 +116,15 @@ function meanAbsoluteError(a: Uint8ClampedArray, b: Uint8ClampedArray): number {
 }
 
 describe.skipIf(!hasRobot36)('实时 analyser 拉样仿真', () => {
-  it(
-    '当前 pullFromAnalyser 路径应接近离线直写 decode',
-    { timeout: 60_000 },
-    () => {
-      const wav = readWav(WAV_PATH)
-      const direct = decodeDirect(wav)
-      const live = decodeViaAnalyserSim(wav, 20, 8192)
+  it('当前 pullFromAnalyser 路径应接近离线直写 decode', { timeout: 60_000 }, () => {
+    const wav = readWav(WAV_PATH)
+    const direct = decodeDirect(wav)
+    const live = decodeViaAnalyserSim(wav, 20, 8192)
 
-      expect(live.mode.name).toBe(direct.mode.name)
-      expect(live.rgba.length).toBe(direct.rgba.length)
+    expect(live.mode.name).toBe(direct.mode.name)
+    expect(live.rgba.length).toBe(direct.rgba.length)
 
-      const mae = meanAbsoluteError(direct.rgba, live.rgba)
-      expect(mae).toBeLessThan(6)
-    }
-  )
+    const mae = meanAbsoluteError(direct.rgba, live.rgba)
+    expect(mae).toBeLessThan(6)
+  })
 })

@@ -36,9 +36,7 @@ export function SstvView() {
           </div>
         </div>
 
-        {!connected && (
-          <p className="hud-mono text-xs text-accent">{t('sstv.notConnected')}</p>
-        )}
+        {!connected && <p className="hud-mono text-xs text-accent">{t('sstv.notConnected')}</p>}
         {connected && !enabled && (
           <p className="hud-mono text-xs text-muted-foreground">{t('sstv.audioStartHint')}</p>
         )}

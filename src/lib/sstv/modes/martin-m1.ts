@@ -24,10 +24,7 @@ function detectSyncOffsetMsInternal(
 ): { raw: number; clamped: number } {
   const searchMs = 40 // sync 4.862ms + 大余量(给未校准期的累积漂移留空间)
   const syncWidthMs = SYNC_MS
-  const searchSamples = Math.min(
-    freq.length,
-    Math.round((searchMs * sampleRate) / 1000)
-  )
+  const searchSamples = Math.min(freq.length, Math.round((searchMs * sampleRate) / 1000))
   const winSamples = Math.max(4, Math.round((syncWidthMs * sampleRate) / 1000))
   if (searchSamples < winSamples + 4) return { raw: NaN, clamped: 0 }
 

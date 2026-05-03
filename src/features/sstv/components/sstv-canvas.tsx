@@ -14,9 +14,7 @@ import type { RecentDecodeEntry } from '../store'
 // 调试录音面板:dev 模式才动态加载,prod 构建因 import.meta.env.DEV 被替换为 false,
 // 整个 lazy chunk 不会被引用 → recording.ts + 面板代码从 prod bundle 中剥离。
 const SstvRecorderPanel = import.meta.env.DEV
-  ? lazy(() =>
-      import('./sstv-recorder-panel').then((m) => ({ default: m.SstvRecorderPanel }))
-    )
+  ? lazy(() => import('./sstv-recorder-panel').then((m) => ({ default: m.SstvRecorderPanel })))
   : null
 
 function relativeTime(ms: number, t: TFunction): string {
@@ -242,11 +240,7 @@ function RecentFrameCard({ entry }: { entry: RecentDecodeEntry }) {
     canvas.height = entry.height
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    const imgData = new ImageData(
-      Uint8ClampedArray.from(entry.rgba),
-      entry.width,
-      entry.height
-    )
+    const imgData = new ImageData(Uint8ClampedArray.from(entry.rgba), entry.width, entry.height)
     ctx.putImageData(imgData, 0, 0)
   }, [entry])
 

@@ -3,9 +3,7 @@ import 'fake-indexeddb/auto'
 import { afterEach, describe, expect, it } from 'vitest'
 import { sstvRepo } from './sstv-repo'
 
-function makeImage(
-  mode: 'robot36' = 'robot36'
-): Parameters<typeof sstvRepo.add>[0] {
+function makeImage(mode: 'robot36' = 'robot36'): Parameters<typeof sstvRepo.add>[0] {
   const imageBlob = new Blob([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], { type: 'image/png' })
   const thumbnailBlob = new Blob([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], { type: 'image/png' })
   return {

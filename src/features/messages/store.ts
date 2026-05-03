@@ -117,9 +117,7 @@ export const messagesStore = create<MessagesState>()((set, get) => ({
 
   enrichTo: (messageId: string, to: string) =>
     set((state) => ({
-      list: state.list.map((m) =>
-        m.messageId === messageId && m.to !== to ? { ...m, to } : m
-      )
+      list: state.list.map((m) => (m.messageId === messageId && m.to !== to ? { ...m, to } : m))
     })),
 
   markAllRead: async (svc: MessageService) => {

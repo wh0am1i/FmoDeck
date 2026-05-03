@@ -118,8 +118,7 @@ function isLeader1900(
 function hasPreamble(samples: Float32Array, startBitOff: number, sampleRate: number): boolean {
   const firstLeaderCoreStart =
     startBitOff - Math.round(((LEADER_MS + BREAK_MS + LEADER_MS - 250) / 1000) * sampleRate)
-  const secondLeaderCoreStart =
-    startBitOff - Math.round(((LEADER_MS - 250) / 1000) * sampleRate)
+  const secondLeaderCoreStart = startBitOff - Math.round(((LEADER_MS - 250) / 1000) * sampleRate)
   const leaderCoreSamples = Math.round((LEADER_CORE_MS / 1000) * sampleRate)
   // 放宽:只要 ≥1 段 leader 1900Hz 主导即可。弱信号 / QSB 下另一段可能被 fade,
   // 不应因此漏掉整次解码。break + start + 8 data + parity + stop 五道结构校验

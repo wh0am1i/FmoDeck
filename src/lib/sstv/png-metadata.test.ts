@@ -23,12 +23,7 @@ describe('injectPngTextBytes', () => {
     expect(Array.from(out.subarray(0, 8))).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
     let foundAt = -1
     for (let i = 0; i + 4 <= out.length; i++) {
-      if (
-        out[i] === 0x74 &&
-        out[i + 1] === 0x45 &&
-        out[i + 2] === 0x58 &&
-        out[i + 3] === 0x74
-      ) {
+      if (out[i] === 0x74 && out[i + 1] === 0x45 && out[i + 2] === 0x58 && out[i + 3] === 0x74) {
         foundAt = i
         break
       }
@@ -57,7 +52,7 @@ describe('injectPngTextBytes', () => {
 
 describe('injectPngText (Blob wrapper)', () => {
   it('返回 Blob 类型为 image/png', async () => {
-    const orig = new Blob([b64ToBytes(TINY_PNG_B64)], { type: 'image/png' })
+    const orig = new Blob([b64ToBytes(TINY_PNG_B64) as BlobPart], { type: 'image/png' })
     const out = await injectPngText(orig, { SSTVMode: 'robot36' })
     expect(out.type).toBe('image/png')
   })

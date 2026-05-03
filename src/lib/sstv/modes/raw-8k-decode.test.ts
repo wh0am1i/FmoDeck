@@ -38,12 +38,7 @@ function synthRobot72Line(yValue: number, ryValue: number, byValue: number): Flo
 
 describe('raw 8k SSTV decode', () => {
   it('Robot36 在原始 8kHz PCM 上仍能解出接近白色的亮度', () => {
-    const rgba = robot36.decodeLine(
-      synthRobot36Pair(255, 128, 255, 128),
-      0,
-      {},
-      RAW_SAMPLE_RATE
-    )
+    const rgba = robot36.decodeLine(synthRobot36Pair(255, 128, 255, 128), 0, {}, RAW_SAMPLE_RATE)
     const mid0 = 160 * 4
     const mid1 = (320 + 160) * 4
 
@@ -56,12 +51,7 @@ describe('raw 8k SSTV decode', () => {
   })
 
   it('Robot72 在原始 8kHz PCM 上仍能解出接近白色的亮度', () => {
-    const rgba = robot72.decodeLine(
-      synthRobot72Line(255, 128, 128),
-      0,
-      {},
-      RAW_SAMPLE_RATE
-    )
+    const rgba = robot72.decodeLine(synthRobot72Line(255, 128, 128), 0, {}, RAW_SAMPLE_RATE)
     const mid = 160 * 4
 
     expect(rgba[mid]!).toBeGreaterThan(200)

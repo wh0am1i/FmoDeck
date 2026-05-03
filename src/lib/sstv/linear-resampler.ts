@@ -33,7 +33,10 @@ export class LinearPcmResampler {
       this.seeded = true
     }
 
-    const outputLength = Math.max(0, Math.floor((input.length - 1 - this.position) / this.ratio) + 1)
+    const outputLength = Math.max(
+      0,
+      Math.floor((input.length - 1 - this.position) / this.ratio) + 1
+    )
     const out = new Float32Array(outputLength)
 
     let outIdx = 0

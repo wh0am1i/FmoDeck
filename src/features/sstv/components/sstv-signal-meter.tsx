@@ -36,10 +36,7 @@ export function SstvSignalMeter({ className }: { className?: string }) {
     const analyser = engine.getRawAnalyser()
     if (!analyser) return
     const sampleRate = analyser.context.sampleRate
-    const windowSamples = Math.min(
-      analyser.fftSize,
-      Math.round((WINDOW_MS / 1000) * sampleRate)
-    )
+    const windowSamples = Math.min(analyser.fftSize, Math.round((WINDOW_MS / 1000) * sampleRate))
     const buf = new Float32Array(analyser.fftSize)
     const slice = new Float32Array(windowSamples)
 
@@ -94,11 +91,7 @@ function Bar({
   tone: 'leader' | 'sync' | 'image'
 }) {
   const color =
-    tone === 'leader'
-      ? 'bg-primary'
-      : tone === 'sync'
-        ? 'bg-accent'
-        : 'bg-muted-foreground'
+    tone === 'leader' ? 'bg-primary' : tone === 'sync' ? 'bg-accent' : 'bg-muted-foreground'
   return (
     <div className="flex items-center gap-2">
       <span className="hud-mono w-[5.5rem] text-[10px] text-muted-foreground">{label}</span>

@@ -23,8 +23,7 @@ function addNoise(signal: Float32Array, amplitude: number, seed: number): Float3
 
 function stddev(values: number[]): number {
   const mean = values.reduce((sum, value) => sum + value, 0) / values.length
-  const variance =
-    values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length
+  const variance = values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length
   return Math.sqrt(variance)
 }
 

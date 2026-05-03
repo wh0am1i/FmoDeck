@@ -60,15 +60,15 @@ export const robot36: Mode = {
     const freq = fmDemod(samples, sampleRate, warmupSamples)
 
     // Row 0(偶行)的 sync 在 0~20ms 范围内检测
-    const row0SearchEnd = Math.round(20 * sampleRate / 1000)
+    const row0SearchEnd = Math.round((20 * sampleRate) / 1000)
     const { raw: rawSync0, clamped: sync0Raw } = detectSyncOffsetMsInternal(
       freq.subarray(0, Math.min(freq.length, row0SearchEnd)),
       sampleRate
     )
 
     // Row 1(奇行)的 sync 在 150~170ms 范围内检测(相对整段 300ms 音频)
-    const row1StartSamples = Math.round(LINE_MS * sampleRate / 1000)
-    const row1SearchEnd = Math.round((LINE_MS + 20) * sampleRate / 1000)
+    const row1StartSamples = Math.round((LINE_MS * sampleRate) / 1000)
+    const row1SearchEnd = Math.round(((LINE_MS + 20) * sampleRate) / 1000)
     const { clamped: sync1Raw } = detectSyncOffsetMsInternal(
       freq.subarray(row1StartSamples, Math.min(freq.length, row1SearchEnd)),
       sampleRate
