@@ -3,6 +3,7 @@ import { connectionStore } from '@/stores/connection'
 import { selfStore } from '@/stores/self'
 import { UserService } from '@/lib/user-service/client'
 import { QsoService } from '@/lib/qso-service/client'
+import { ConfigService } from '@/lib/config-service/client'
 import type { FmoApiClient } from '@/lib/fmo-api/client'
 
 /**
@@ -45,6 +46,13 @@ export function useSelfInfo(): void {
       const callsign = await resolveSelfCallsign(client)
       if (cancelled) return
       if (callsign) selfStore.getState().setCallsign(callsign)
+      try {
+        const coord = await new ConfigService(client).getCoordinate()
+        if (cancelled) return
+        if (coord) selfStore.getState().setCoordinate(coord)
+      } catch {
+        // 坐标为可选特性，失败忽略
+      }
     }
 
     void fetchOnce()
@@ -54,6 +62,7 @@ export function useSelfInfo(): void {
         void fetchOnce()
       } else if (s.status !== 'connected' && prev.status === 'connected') {
         selfStore.getState().setCallsign(null)
+        selfStore.getState().setCoordinate(null)
       }
     })
 
