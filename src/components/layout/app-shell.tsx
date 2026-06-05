@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { useLocation } from 'react-router'
+import { cn } from '@/lib/utils'
 import { ConnectionErrorBanner } from './connection-error-banner'
 import { Footer } from './footer'
 import { Header } from './header'
@@ -16,7 +17,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <WelcomeBanner />
       <ConnectionErrorBanner />
       {!isHome && <SpeakingBar />}
-      <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
+      <div className={cn('w-full flex-1 px-4 py-6', isHome ? 'mx-auto' : 'mx-auto max-w-7xl')}>
         <Nav />
         <main className="mt-6">{children}</main>
       </div>
