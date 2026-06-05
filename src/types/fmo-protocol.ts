@@ -33,7 +33,11 @@ export type UserSubType = 'getInfo' | 'getInfoResponse'
 
 export type UiSubType = 'setScreenMode' | 'setScreenModeResponse'
 
-export type ConfigSubType = 'restartAprsService' | 'restartAprsServiceResponse'
+export type ConfigSubType =
+  | 'restartAprsService'
+  | 'restartAprsServiceResponse'
+  | 'getCordinate'
+  | 'getCordinateResponse'
 
 export type FmoRequest =
   | { type: 'message'; subType: MessageSubType; reqId?: string; data?: unknown }
