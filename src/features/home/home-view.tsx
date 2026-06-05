@@ -30,8 +30,11 @@ export function HomeView() {
 
   const speaker = current ?? lastSpeaker
   const theirCoord = speaker ? gridToLatLng(speaker.grid) : null
-  const showMap =
-    theirCoord !== null && !(speaker !== null && isSameOperator(speaker.callsign, myCallsign))
+  const isSelf = speaker !== null && isSameOperator(speaker.callsign, myCallsign)
+  // 自己：地图只定位到自己单点（无连线、无距离 —— 自距离无意义且坐标解析有误差）；
+  // 对方：标对方网格 + 我方坐标 + 连线（hero 另显距离文字）。
+  const mapTarget = isSelf ? (myCoord ?? theirCoord) : theirCoord
+  const mapMe = isSelf ? null : myCoord
 
   return (
     <div className="flex flex-col gap-4">
@@ -43,8 +46,8 @@ export function HomeView() {
       <SpeakerHero />
 
       <DashboardPanel title={t('home.panelMap')}>
-        {showMap && theirCoord ? (
-          <LocationMap their={theirCoord} me={myCoord} />
+        {mapTarget ? (
+          <LocationMap their={mapTarget} me={mapMe} />
         ) : (
           <div className="flex h-[480px] items-center justify-center">
             <span className="hud-mono text-xs text-muted-foreground">{t('home.mapNoTarget')}</span>

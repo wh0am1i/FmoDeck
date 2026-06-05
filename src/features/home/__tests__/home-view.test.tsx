@@ -6,6 +6,7 @@ import { HomeView } from '../home-view'
 import { logsStore, resetLogsForTest } from '@/features/logs/store'
 import { speakingStore, resetSpeakingForTest } from '@/features/speaking/store'
 import { selfStore, resetSelfForTest } from '@/stores/self'
+import { settingsStore, resetSettingsForTest } from '@/stores/settings'
 
 // HomeView 渲染 LocationMap（依赖 leaflet）；jsdom 无法真实渲染地图，mock 掉。
 vi.mock('leaflet', () => {
@@ -73,6 +74,20 @@ describe('HomeView 地图', () => {
     resetSpeakingForTest()
     resetLogsForTest()
     resetSelfForTest()
+    resetSettingsForTest()
+  })
+
+  it('自己讲话 → 地图仍渲染（定位到自己单点，非占位）', () => {
+    settingsStore.getState().setCurrentCallsign('BG5HXX')
+    selfStore.getState().setCoordinate({ lat: 36, lng: 103 })
+    speakingStore.getState().startSpeaking({ callsign: 'BG5HXX', grid: 'OM89', isHost: false })
+    render(
+      <MemoryRouter>
+        <HomeView />
+      </MemoryRouter>
+    )
+    expect(screen.getByTestId('location-map')).toBeInTheDocument()
+    expect(screen.queryByText('暂无对方位置')).not.toBeInTheDocument()
   })
 
   it('有对方网格时 Row1 渲染地图', () => {
