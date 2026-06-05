@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { resetSpeakingForTest, speakingStore } from './store'
 
 afterEach(() => {
@@ -40,5 +40,25 @@ describe('speaking store', () => {
       { callsign: 'B', utcTime: 2 }
     ])
     expect(speakingStore.getState().history).toHaveLength(2)
+  })
+})
+
+describe('speakingStore lastSpeaker', () => {
+  beforeEach(() => resetSpeakingForTest())
+
+  it('startSpeaking 同时写入 current 与 lastSpeaker', () => {
+    speakingStore.getState().startSpeaking({ callsign: 'BG5HXX', grid: 'OM89', isHost: false })
+    const s = speakingStore.getState()
+    expect(s.current?.callsign).toBe('BG5HXX')
+    expect(s.lastSpeaker?.callsign).toBe('BG5HXX')
+  })
+
+  it('stopSpeaking 清 current 但保留 lastSpeaker（待机回显用）', () => {
+    speakingStore.getState().startSpeaking({ callsign: 'BD4ABC', grid: '', isHost: true })
+    speakingStore.getState().stopSpeaking()
+    const s = speakingStore.getState()
+    expect(s.current).toBeNull()
+    expect(s.lastSpeaker?.callsign).toBe('BD4ABC')
+    expect(s.lastSpeaker?.isHost).toBe(true)
   })
 })

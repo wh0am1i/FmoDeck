@@ -16,6 +16,7 @@ export interface CurrentSpeaker {
 
 export interface SpeakingState {
   current: CurrentSpeaker | null
+  lastSpeaker: CurrentSpeaker | null
   history: SpeakingHistoryItem[]
 
   startSpeaking: (data: { callsign: string; grid: string; isHost: boolean }) => void
@@ -25,21 +26,17 @@ export interface SpeakingState {
 
 const INITIAL = {
   current: null as CurrentSpeaker | null,
+  lastSpeaker: null as CurrentSpeaker | null,
   history: [] as SpeakingHistoryItem[]
 }
 
 export const speakingStore = create<SpeakingState>()((set) => ({
   ...INITIAL,
 
-  startSpeaking: ({ callsign, grid, isHost }) =>
-    set({
-      current: {
-        callsign,
-        grid,
-        isHost,
-        startedAtMs: Date.now()
-      }
-    }),
+  startSpeaking: ({ callsign, grid, isHost }) => {
+    const speaker: CurrentSpeaker = { callsign, grid, isHost, startedAtMs: Date.now() }
+    set({ current: speaker, lastSpeaker: speaker })
+  },
 
   stopSpeaking: () => set({ current: null }),
 
