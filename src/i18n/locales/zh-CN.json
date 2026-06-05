@@ -14,6 +14,7 @@
     "count": "次数"
   },
   "nav": {
+    "home": "首页",
     "logs": "日志",
     "top20": "排行榜",
     "oldFriends": "老朋友",
@@ -44,6 +45,16 @@
     "statsRms": "RMS",
     "statsPeakFreq": "峰值频率",
     "statsPeakMag": "峰值强度"
+  },
+  "home": {
+    "standby": "监听中",
+    "standbyHint": "STANDBY · 当前无人讲话",
+    "standbyTag": "STANDBY",
+    "lastHeard": "上次 {{ago}}",
+    "statPeople": "人",
+    "statQsos": "QSO",
+    "panelRoster": "讲话名册",
+    "panelSpectrum": "实时频谱"
   },
   "history": {
     "title": "[ 讲话历史 ]",

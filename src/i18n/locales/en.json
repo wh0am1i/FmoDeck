@@ -14,6 +14,7 @@
     "count": "COUNT"
   },
   "nav": {
+    "home": "HOME",
     "logs": "LOGS",
     "top20": "TOP 20",
     "oldFriends": "OLD FRIENDS",
@@ -44,6 +45,16 @@
     "statsRms": "RMS",
     "statsPeakFreq": "Peak freq",
     "statsPeakMag": "Peak magnitude"
+  },
+  "home": {
+    "standby": "STANDBY",
+    "standbyHint": "Monitoring — no transmission",
+    "standbyTag": "STANDBY",
+    "lastHeard": "last heard {{ago}}",
+    "statPeople": "stations today",
+    "statQsos": "QSOs today",
+    "panelRoster": "RECENT CALLSIGNS",
+    "panelSpectrum": "LIVE SPECTRUM"
   },
   "history": {
     "title": "[ SPEAKING HISTORY ]",
