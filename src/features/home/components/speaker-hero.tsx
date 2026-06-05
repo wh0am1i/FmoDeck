@@ -1,17 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GridLocation } from '@/components/shared/grid-location'
-import { SpectrumVisualizer } from '@/features/audio/components/spectrum-visualizer'
 import { AudioControl } from '@/features/audio/components/audio-control'
-import { audioStore } from '@/features/audio/store'
 import { logsStore } from '@/features/logs/store'
 import { speakingStore } from '@/features/speaking/store'
 import { settingsStore } from '@/stores/settings'
-import { parseCallsignSsid } from '@/lib/utils/callsign'
-import { cn } from '@/lib/utils'
-import { DirectionCompass } from './direction-compass'
 import { selfStore } from '@/stores/self'
+import { parseCallsignSsid } from '@/lib/utils/callsign'
 import { gridToLatLng, haversineKm, bearingDeg, cardinal8 } from '@/lib/utils/grid'
+import { cn } from '@/lib/utils'
 
 function isSameOperator(a: string, b: string): boolean {
   if (!a || !b) return false
@@ -47,7 +44,7 @@ export function SpeakerHero() {
   const logs = logsStore((s) => s.all)
   const local = logsStore((s) => s.local)
   const myCallsign = settingsStore((s) => s.currentCallsign)
-  const audioEnabled = audioStore((s) => s.enabled)
+  const myCoord = selfStore((s) => s.coordinate)
 
   const speaker = current ?? lastSpeaker
   const mode: 'live' | 'standby' | 'empty' = current ? 'live' : lastSpeaker ? 'standby' : 'empty'
@@ -74,22 +71,14 @@ export function SpeakerHero() {
     return { count, lastTime }
   })()
 
-  const myCoord = selfStore((s) => s.coordinate)
+  // 距离 + 方位（文字）。仅当有我方坐标、对方网格可解析、非本机。
   const theirCoord = mode !== 'empty' && speaker ? gridToLatLng(speaker.grid) : null
-  const showCompass = mode !== 'empty' && !isSelf && myCoord !== null && theirCoord !== null
-  const showNoCoord = mode !== 'empty' && !isSelf && myCoord === null && theirCoord !== null
-  const compass =
-    showCompass && myCoord && theirCoord
+  const distanceText =
+    mode !== 'empty' && !isSelf && myCoord && theirCoord
       ? (() => {
-          const distanceKm = haversineKm(myCoord, theirCoord)
-          const bearing = bearingDeg(myCoord, theirCoord)
-          return (
-            <DirectionCompass
-              bearingDeg={bearing}
-              distanceKm={distanceKm}
-              cardinalKey={cardinal8(bearing)}
-            />
-          )
+          const km = haversineKm(myCoord, theirCoord)
+          const dist = km < 1 ? t('home.compass.distanceLt1') : `${Math.round(km)} km`
+          return `${dist} · ${t(`home.compass.${cardinal8(bearingDeg(myCoord, theirCoord))}`)}`
         })()
       : null
 
@@ -109,121 +98,105 @@ export function SpeakerHero() {
           <span className="hud-mono text-xs text-muted-foreground">{t('home.standbyHint')}</span>
         </div>
       ) : (
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex min-w-0 flex-1 flex-col gap-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <span
-                className={cn(
-                  'h-3 w-3 rounded-full',
-                  mode === 'live' ? 'animate-pulse bg-primary' : 'bg-muted-foreground'
-                )}
-                aria-hidden="true"
-              />
-              <span
-                className={cn(
-                  'hud-title text-5xl leading-none sm:text-6xl',
-                  mode === 'live'
-                    ? 'text-primary [text-shadow:0_0_18px_var(--primary)]'
-                    : 'text-muted-foreground'
-                )}
-              >
-                {speaker!.callsign}
+        <>
+          <div className="flex flex-wrap items-center gap-3">
+            <span
+              className={cn(
+                'h-3 w-3 rounded-full',
+                mode === 'live' ? 'animate-pulse bg-primary' : 'bg-muted-foreground'
+              )}
+              aria-hidden="true"
+            />
+            <span
+              className={cn(
+                'hud-title text-5xl leading-none sm:text-6xl',
+                mode === 'live'
+                  ? 'text-primary [text-shadow:0_0_18px_var(--primary)]'
+                  : 'text-muted-foreground'
+              )}
+            >
+              {speaker!.callsign}
+            </span>
+            {mode === 'live' && speaker!.isHost && (
+              <span className="hud-mono rounded-sm border border-accent bg-accent/10 px-2 py-0.5 text-xs text-accent">
+                HOST
               </span>
-              {mode === 'live' && speaker!.isHost && (
-                <span className="hud-mono rounded-sm border border-accent bg-accent/10 px-2 py-0.5 text-xs text-accent">
-                  HOST
-                </span>
-              )}
-              {mode === 'live' && isSelf && (
-                <span className="hud-mono rounded-sm border border-primary bg-primary/10 px-2 py-0.5 text-xs text-primary">
-                  {t('speaking.self')}
-                </span>
-              )}
-              {mode === 'live' && !isSelf && stats?.count === 1 && (
-                <span
-                  className={cn(
-                    'hud-mono rounded-sm border px-2 py-0.5 text-xs',
-                    'border-[oklch(0.76_0.19_142)] bg-[oklch(0.76_0.19_142)]/15 text-[oklch(0.76_0.19_142)]'
-                  )}
-                  title={t('speaking.newBadgeTitle')}
-                >
-                  ✦ {t('speaking.newBadge')}
-                </span>
-              )}
-              {mode === 'standby' && (
-                <span className="hud-mono rounded-sm border border-border px-2 py-0.5 text-xs text-muted-foreground">
-                  {t('home.standbyTag')}
-                </span>
-              )}
-              <div className="flex-1" />
-              {mode === 'live' && (
-                <span className="hud-mono text-base text-accent">
-                  {formatElapsed(Math.max(0, nowMs - speaker!.startedAtMs))}
-                </span>
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-              {speaker!.grid && (
-                <span className="hud-mono text-base">
-                  <GridLocation grid={speaker!.grid} emphasized />
-                </span>
-              )}
-              {mode === 'standby' && (
-                <span className="hud-mono text-xs text-muted-foreground">
-                  {t('home.lastHeard', {
-                    ago: formatTimeAgo(
-                      Math.floor(speaker!.startedAtMs / 1000),
-                      nowMs,
-                      t('speaking.agoSuffix')
-                    )
-                  })}
-                </span>
-              )}
-              {mode === 'live' &&
-                !isSelf &&
-                (stats && stats.count > 0 ? (
-                  <span className="hud-mono text-sm">
-                    <span className="text-muted-foreground">{t('speaking.workedPrefix')}</span>
-                    <span className="text-primary">{stats.count}</span>
-                    <span className="text-muted-foreground">{t('speaking.workedSuffix')}</span>
-                    {stats.lastTime !== null && (
-                      <>
-                        <span className="text-muted-foreground">{t('speaking.lastPrefix')}</span>
-                        <span className="text-primary">
-                          {formatTimeAgo(stats.lastTime, nowMs, t('speaking.agoSuffix'))}
-                        </span>
-                      </>
-                    )}
-                  </span>
-                ) : (
-                  <span className="hud-mono text-sm text-muted-foreground">
-                    {t('speaking.notWorked')}
-                  </span>
-                ))}
-            </div>
-
-            <div className="flex items-center gap-3">
-              {audioEnabled && (
-                <div className="w-32 flex-shrink-0 sm:w-48" aria-hidden="true">
-                  <SpectrumVisualizer height={28} bars={20} gap={2} smoothing={0.3} />
-                </div>
-              )}
-              <div className="flex-1" />
-              <AudioControl />
-            </div>
+            )}
+            {mode === 'live' && isSelf && (
+              <span className="hud-mono rounded-sm border border-primary bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                {t('speaking.self')}
+              </span>
+            )}
+            {mode === 'live' && !isSelf && stats?.count === 1 && (
+              <span
+                className={cn(
+                  'hud-mono rounded-sm border px-2 py-0.5 text-xs',
+                  'border-[oklch(0.76_0.19_142)] bg-[oklch(0.76_0.19_142)]/15 text-[oklch(0.76_0.19_142)]'
+                )}
+                title={t('speaking.newBadgeTitle')}
+              >
+                ✦ {t('speaking.newBadge')}
+              </span>
+            )}
+            {mode === 'standby' && (
+              <span className="hud-mono rounded-sm border border-border px-2 py-0.5 text-xs text-muted-foreground">
+                {t('home.standbyTag')}
+              </span>
+            )}
+            <div className="flex-1" />
+            {mode === 'live' && (
+              <span className="hud-mono text-base text-accent">
+                {formatElapsed(Math.max(0, nowMs - speaker!.startedAtMs))}
+              </span>
+            )}
           </div>
-          {(compass !== null || showNoCoord) && (
-            <div className="flex shrink-0 items-center justify-center sm:w-28">
-              {compass}
-              {showNoCoord && (
-                <span className="hud-mono text-center text-xs text-muted-foreground">
-                  {t('home.compass.noCoordinate')}
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            {speaker!.grid && (
+              <span className="hud-mono text-base">
+                <GridLocation grid={speaker!.grid} emphasized />
+              </span>
+            )}
+            {distanceText && <span className="hud-mono text-sm text-primary">{distanceText}</span>}
+            {mode === 'standby' && (
+              <span className="hud-mono text-xs text-muted-foreground">
+                {t('home.lastHeard', {
+                  ago: formatTimeAgo(
+                    Math.floor(speaker!.startedAtMs / 1000),
+                    nowMs,
+                    t('speaking.agoSuffix')
+                  )
+                })}
+              </span>
+            )}
+            {mode === 'live' &&
+              !isSelf &&
+              (stats && stats.count > 0 ? (
+                <span className="hud-mono text-sm">
+                  <span className="text-muted-foreground">{t('speaking.workedPrefix')}</span>
+                  <span className="text-primary">{stats.count}</span>
+                  <span className="text-muted-foreground">{t('speaking.workedSuffix')}</span>
+                  {stats.lastTime !== null && (
+                    <>
+                      <span className="text-muted-foreground">{t('speaking.lastPrefix')}</span>
+                      <span className="text-primary">
+                        {formatTimeAgo(stats.lastTime, nowMs, t('speaking.agoSuffix'))}
+                      </span>
+                    </>
+                  )}
                 </span>
-              )}
-            </div>
-          )}
-        </div>
+              ) : (
+                <span className="hud-mono text-sm text-muted-foreground">
+                  {t('speaking.notWorked')}
+                </span>
+              ))}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex-1" />
+            <AudioControl />
+          </div>
+        </>
       )}
     </section>
   )

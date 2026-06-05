@@ -34,32 +34,30 @@ describe('SpeakerHero', () => {
   })
 })
 
-describe('SpeakerHero 罗盘', () => {
+describe('SpeakerHero 距离方位文字', () => {
   beforeEach(() => {
     resetSpeakingForTest()
     resetLogsForTest()
     resetSelfForTest()
   })
 
-  it('有我方坐标 + 对方网格 + 非本机 → 显示罗盘', () => {
-    selfStore.getState().setCoordinate({ lat: 31, lng: 121 })
+  it('有我方坐标 + 对方网格 + 非本机 → 显示距离方位文字（含 km）', () => {
+    selfStore.getState().setCoordinate({ lat: 36, lng: 103 })
     speakingStore.getState().startSpeaking({ callsign: 'BG5HXX', grid: 'OM89', isHost: false })
     render(<SpeakerHero />)
-    expect(screen.getByTestId('direction-compass')).toBeInTheDocument()
+    expect(screen.getByTestId('speaker-hero')).toHaveTextContent('km')
   })
 
-  it('缺我方坐标但对方有网格 → 显示设备坐标未知提示，无罗盘', () => {
+  it('缺我方坐标 → 不显示距离文字', () => {
+    speakingStore.getState().startSpeaking({ callsign: 'BG5HXX', grid: 'OM89', isHost: false })
+    render(<SpeakerHero />)
+    expect(screen.getByTestId('speaker-hero')).not.toHaveTextContent('km')
+  })
+
+  it('hero 不再渲染罗盘', () => {
+    selfStore.getState().setCoordinate({ lat: 36, lng: 103 })
     speakingStore.getState().startSpeaking({ callsign: 'BG5HXX', grid: 'OM89', isHost: false })
     render(<SpeakerHero />)
     expect(screen.queryByTestId('direction-compass')).not.toBeInTheDocument()
-    expect(screen.getByText('设备坐标未知')).toBeInTheDocument()
-  })
-
-  it('对方无网格 → 既无罗盘也无提示', () => {
-    selfStore.getState().setCoordinate({ lat: 31, lng: 121 })
-    speakingStore.getState().startSpeaking({ callsign: 'BD4ABC', grid: '', isHost: false })
-    render(<SpeakerHero />)
-    expect(screen.queryByTestId('direction-compass')).not.toBeInTheDocument()
-    expect(screen.queryByText('设备坐标未知')).not.toBeInTheDocument()
   })
 })
