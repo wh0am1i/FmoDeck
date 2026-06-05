@@ -5,9 +5,9 @@ import { App } from '@/App'
 import { APP_VERSION } from '@/lib/utils/app-version'
 
 describe('App 烟雾测试', () => {
-  it('默认渲染 LOGS 视图', () => {
+  it('默认渲染首页仪表盘', () => {
     render(<App />)
-    expect(screen.getByText('[ 日志 ]')).toBeInTheDocument()
+    expect(screen.getByText('讲话名册')).toBeInTheDocument()
   })
 
   it('Header 显示应用标识和版本', () => {
@@ -51,8 +51,10 @@ describe('App 烟雾测试', () => {
     expect(screen.getByText(/未连接 FMO|音频未开启|音频连接中/)).toBeInTheDocument()
   })
 
-  it('SpeakingBar 占位渲染', () => {
+  it('SpeakingBar 在非首页渲染', async () => {
+    const user = userEvent.setup()
     render(<App />)
+    await user.click(screen.getByRole('link', { name: '日志' }))
     expect(screen.getByLabelText('讲话状态栏')).toBeInTheDocument()
   })
 })

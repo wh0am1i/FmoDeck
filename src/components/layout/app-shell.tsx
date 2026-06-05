@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useLocation } from 'react-router'
 import { ConnectionErrorBanner } from './connection-error-banner'
 import { Footer } from './footer'
 import { Header } from './header'
@@ -8,12 +9,13 @@ import { SpeakingBar } from './speaking-bar'
 import { WelcomeBanner } from './welcome-banner'
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const isHome = useLocation().pathname === '/'
   return (
     <div className="relative flex min-h-screen flex-col bg-background text-foreground">
       <Header />
       <WelcomeBanner />
       <ConnectionErrorBanner />
-      <SpeakingBar />
+      {!isHome && <SpeakingBar />}
       <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
         <Nav />
         <main className="mt-6">{children}</main>

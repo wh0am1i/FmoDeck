@@ -13,6 +13,7 @@ interface NavItem {
 const ENABLE_APRS = import.meta.env.VITE_ENABLE_APRS !== 'false'
 
 const items: readonly NavItem[] = [
+  { to: '/', labelKey: 'nav.home' },
   { to: '/logs', labelKey: 'nav.logs' },
   { to: '/top20', labelKey: 'nav.top20' },
   { to: '/old-friends', labelKey: 'nav.oldFriends' },
@@ -35,6 +36,7 @@ export function Nav() {
         <NavLink
           key={item.to}
           to={item.to}
+          end={item.to === '/'}
           className={({ isActive }) =>
             cn(
               'hud-mono hud-title whitespace-nowrap px-3 py-2 text-sm transition-colors sm:px-4',
