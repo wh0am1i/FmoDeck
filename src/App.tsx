@@ -13,6 +13,7 @@ import { useSpeakingEvents } from '@/hooks/useSpeakingEvents'
 import { useStationPolling } from '@/hooks/useStationPolling'
 import { useStationSync } from '@/hooks/useStationSync'
 import { useSyncPolicy } from '@/hooks/useSyncPolicy'
+import { useLogsSync } from '@/hooks/useLogsSync'
 import { UpdateDialog } from '@/features/updater/update-dialog'
 import { useUpdateCheck } from '@/hooks/useUpdateCheck'
 import { SstvSessionRunner } from '@/features/sstv/session-runner'
@@ -22,6 +23,7 @@ export function App() {
   useSelfInfo()
   useSpeakingEvents()
   useSyncPolicy()
+  useLogsSync()
   useStationSync()
   useStationPolling()
   useFmoAudio()
