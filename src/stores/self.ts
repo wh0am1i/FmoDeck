@@ -1,15 +1,21 @@
 import { create } from 'zustand'
 import { parseCallsignSsid } from '@/lib/utils/callsign'
+import type { LatLng } from '@/lib/utils/grid'
 
 export interface SelfState {
   /** 当前设备的复合呼号（如 `BH6SCA-9`），未知时为 null。 */
   callsign: string | null
+  /** 设备坐标（我的位置），未知时为 null。 */
+  coordinate: LatLng | null
   setCallsign: (c: string | null) => void
+  setCoordinate: (c: LatLng | null) => void
 }
 
 export const selfStore = create<SelfState>()((set) => ({
   callsign: null,
-  setCallsign: (callsign) => set({ callsign })
+  coordinate: null,
+  setCallsign: (callsign) => set({ callsign }),
+  setCoordinate: (coordinate) => set({ coordinate })
 }))
 
 /** 取基号（去 SSID）。无法解析时回退原串大写。 */
@@ -32,5 +38,5 @@ export function isFromSelf(from: string, selfCallsign: string | null): boolean {
 }
 
 export function resetSelfForTest(): void {
-  selfStore.setState({ callsign: null })
+  selfStore.setState({ callsign: null, coordinate: null })
 }
