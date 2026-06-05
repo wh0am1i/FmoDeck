@@ -63,7 +63,6 @@ describe('HomeView 冒烟', () => {
       </MemoryRouter>
     )
     expect(screen.getByTestId('speaker-hero')).toHaveTextContent('BG5HXX')
-    expect(screen.getByTestId('today-people')).toBeInTheDocument()
     expect(screen.getByText('讲话名册')).toBeInTheDocument()
   })
 })

@@ -1,9 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { SpeakerHero } from './components/speaker-hero'
-import { TodayStats } from './components/today-stats'
 import { DashboardPanel } from './components/dashboard-panel'
 import { LocationMap } from './components/location-map'
-import { StationSwitcher } from '@/features/station/components/station-switcher'
 import { RecentCallsigns } from '@/features/spectrum/components/recent-callsigns'
 import { SpectrumWaveform } from '@/features/audio/components/spectrum-waveform'
 import { speakingStore } from '@/features/speaking/store'
@@ -38,12 +36,8 @@ export function HomeView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="hud-frame flex items-center gap-3 px-4 py-2">
-        <StationSwitcher />
-        <div className="min-w-0 flex-1">
-          <SpectrumWaveform height={32} />
-        </div>
-        <TodayStats />
+      <div className="hud-frame px-4 py-2">
+        <SpectrumWaveform height={32} />
       </div>
 
       <SpeakerHero />
