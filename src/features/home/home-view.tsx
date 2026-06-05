@@ -5,7 +5,7 @@ import { DashboardPanel } from './components/dashboard-panel'
 import { LocationMap } from './components/location-map'
 import { StationSwitcher } from '@/features/station/components/station-switcher'
 import { RecentCallsigns } from '@/features/spectrum/components/recent-callsigns'
-import { SpectrumVisualizer } from '@/features/audio/components/spectrum-visualizer'
+import { SpectrumWaveform } from '@/features/audio/components/spectrum-waveform'
 import { speakingStore } from '@/features/speaking/store'
 import { selfStore } from '@/stores/self'
 import { settingsStore } from '@/stores/settings'
@@ -38,8 +38,11 @@ export function HomeView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="hud-frame flex flex-wrap items-center justify-between gap-2 px-4 py-2">
+      <div className="hud-frame flex items-center gap-3 px-4 py-2">
         <StationSwitcher />
+        <div className="min-w-0 flex-1">
+          <SpectrumWaveform height={32} />
+        </div>
         <TodayStats />
       </div>
 
@@ -55,24 +58,9 @@ export function HomeView() {
         )}
       </DashboardPanel>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <DashboardPanel title={t('home.panelRoster')}>
-          <RecentCallsigns />
-        </DashboardPanel>
-        <DashboardPanel title={t('home.panelSpectrum')}>
-          <div className="p-3">
-            <SpectrumVisualizer
-              height={160}
-              bars={28}
-              gap={4}
-              smoothing={0.25}
-              mirror
-              peakHold
-              grid
-            />
-          </div>
-        </DashboardPanel>
-      </div>
+      <DashboardPanel title={t('home.panelRoster')}>
+        <RecentCallsigns />
+      </DashboardPanel>
     </div>
   )
 }
