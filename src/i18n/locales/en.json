@@ -54,7 +54,19 @@
     "statPeople": "stations today",
     "statQsos": "QSOs today",
     "panelRoster": "RECENT CALLSIGNS",
-    "panelSpectrum": "LIVE SPECTRUM"
+    "panelSpectrum": "LIVE SPECTRUM",
+    "compass": {
+      "N": "N",
+      "NE": "NE",
+      "E": "E",
+      "SE": "SE",
+      "S": "S",
+      "SW": "SW",
+      "W": "W",
+      "NW": "NW",
+      "distanceLt1": "<1 km",
+      "noCoordinate": "Device location unknown"
+    }
   },
   "history": {
     "title": "[ SPEAKING HISTORY ]",

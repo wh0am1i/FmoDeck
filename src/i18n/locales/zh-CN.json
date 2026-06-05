@@ -54,7 +54,19 @@
     "statPeople": "人",
     "statQsos": "QSO",
     "panelRoster": "讲话名册",
-    "panelSpectrum": "实时频谱"
+    "panelSpectrum": "实时频谱",
+    "compass": {
+      "N": "北",
+      "NE": "东北",
+      "E": "东",
+      "SE": "东南",
+      "S": "南",
+      "SW": "西南",
+      "W": "西",
+      "NW": "西北",
+      "distanceLt1": "<1 km",
+      "noCoordinate": "设备坐标未知"
+    }
   },
   "history": {
     "title": "[ 讲话历史 ]",
