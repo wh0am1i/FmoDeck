@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatLatLng, gridToLatLng, mapUrl } from './grid'
+import { cardinal8, bearingDeg, formatLatLng, gridToLatLng, haversineKm, mapUrl } from './grid'
 
 describe('gridToLatLng', () => {
   it('4 字符 OM89 解为方块中心（北京附近）', () => {
@@ -92,5 +92,51 @@ describe('mapUrl', () => {
   it('生成 MaidenMap 链接', () => {
     const url = mapUrl('OM89bn')
     expect(url).toBe('https://maidenmap.wh0am1i.com/?grid=OM89bn')
+  })
+})
+
+describe('haversineKm', () => {
+  it('同点距离为 0', () => {
+    expect(haversineKm({ lat: 0, lng: 0 }, { lat: 0, lng: 0 })).toBe(0)
+  })
+  it('赤道上经度差 1° ≈ 111.19 km', () => {
+    const d = haversineKm({ lat: 0, lng: 0 }, { lat: 0, lng: 1 })
+    expect(d).toBeGreaterThan(110.5)
+    expect(d).toBeLessThan(111.9)
+  })
+  it('纬度差 1° ≈ 111.19 km', () => {
+    const d = haversineKm({ lat: 0, lng: 0 }, { lat: 1, lng: 0 })
+    expect(d).toBeGreaterThan(110.5)
+    expect(d).toBeLessThan(111.9)
+  })
+})
+
+describe('bearingDeg', () => {
+  const o = { lat: 0, lng: 0 }
+  it('正北 ≈ 0°', () => {
+    expect(bearingDeg(o, { lat: 1, lng: 0 })).toBeCloseTo(0, 1)
+  })
+  it('正东 ≈ 90°', () => {
+    expect(bearingDeg(o, { lat: 0, lng: 1 })).toBeCloseTo(90, 1)
+  })
+  it('正南 ≈ 180°', () => {
+    expect(bearingDeg(o, { lat: -1, lng: 0 })).toBeCloseTo(180, 1)
+  })
+  it('正西 ≈ 270°', () => {
+    expect(bearingDeg(o, { lat: 0, lng: -1 })).toBeCloseTo(270, 1)
+  })
+})
+
+describe('cardinal8', () => {
+  it('映射八方位边界', () => {
+    expect(cardinal8(0)).toBe('N')
+    expect(cardinal8(45)).toBe('NE')
+    expect(cardinal8(90)).toBe('E')
+    expect(cardinal8(135)).toBe('SE')
+    expect(cardinal8(180)).toBe('S')
+    expect(cardinal8(225)).toBe('SW')
+    expect(cardinal8(270)).toBe('W')
+    expect(cardinal8(315)).toBe('NW')
+    expect(cardinal8(359)).toBe('N')
   })
 })
