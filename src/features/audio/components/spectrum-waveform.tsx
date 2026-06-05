@@ -11,6 +11,9 @@ interface Props {
  * 时域波形示波器：把 `getByteTimeDomainData()` 以线条形式画出来。
  * 带淡出拖尾（semi-transparent clear 覆盖上一帧）营造发光余辉，
  * HUD 栅格 + 冷蓝线条 + 中心亮线。
+ *
+ * 无音频引擎（未开收听）时仅画静态栅格 + 中轴基线，让波形区始终可见；
+ * 引擎就绪后跑实时动画。
  */
 export function SpectrumWaveform({ height = 120, className }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -18,11 +21,10 @@ export function SpectrumWaveform({ height = 120, className }: Props) {
 
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas || !engine) return
-    const analyser = engine.getAnalyser()
-    if (!analyser) return
+    if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
+    const analyser = engine?.getAnalyser() ?? null
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1
@@ -67,54 +69,57 @@ export function SpectrumWaveform({ height = 120, className }: Props) {
     const resizeObs = new ResizeObserver(resize)
     resizeObs.observe(canvas)
 
-    const timeData = new Uint8Array(analyser.fftSize)
     let raf = 0
     let stopped = false
 
-    const draw = () => {
-      if (stopped) return
-      raf = requestAnimationFrame(draw)
-      if (document.visibilityState === 'hidden') return
+    if (analyser) {
+      const timeData = new Uint8Array(analyser.fftSize)
 
-      const cssW = canvas.clientWidth
-      const cssH = height
+      const draw = () => {
+        if (stopped) return
+        raf = requestAnimationFrame(draw)
+        if (document.visibilityState === 'hidden') return
 
-      // 覆盖半透明黑色制造拖尾衰减
-      ctx.fillStyle = 'rgba(4, 10, 18, 0.35)'
-      ctx.fillRect(0, 0, cssW, cssH)
+        const cssW = canvas.clientWidth
+        const cssH = height
 
-      // 中轴线在每次拖尾后被覆盖，补一笔维持可见
-      ctx.strokeStyle = 'rgba(0, 217, 255, 0.18)'
-      ctx.lineWidth = 1
-      ctx.beginPath()
-      ctx.moveTo(0, cssH / 2)
-      ctx.lineTo(cssW, cssH / 2)
-      ctx.stroke()
+        // 覆盖半透明黑色制造拖尾衰减
+        ctx.fillStyle = 'rgba(4, 10, 18, 0.35)'
+        ctx.fillRect(0, 0, cssW, cssH)
 
-      const { muted, status } = audioStore.getState()
-      const idle = muted || status !== 'playing'
+        // 中轴线在每次拖尾后被覆盖，补一笔维持可见
+        ctx.strokeStyle = 'rgba(0, 217, 255, 0.18)'
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.moveTo(0, cssH / 2)
+        ctx.lineTo(cssW, cssH / 2)
+        ctx.stroke()
 
-      analyser.getByteTimeDomainData(timeData)
+        const { muted, status } = audioStore.getState()
+        const idle = muted || status !== 'playing'
 
-      ctx.lineWidth = 2
-      ctx.strokeStyle = idle ? 'rgba(0, 217, 255, 0.25)' : 'rgba(0, 217, 255, 1)'
-      ctx.shadowColor = 'rgba(0, 217, 255, 0.9)'
-      ctx.shadowBlur = idle ? 0 : 6
-      ctx.beginPath()
-      const step = timeData.length / cssW
-      for (let x = 0; x < cssW; x++) {
-        const v = timeData[Math.floor(x * step)] ?? 128
-        // 128 = 0 振幅；归一到 -1~1，再映射到画布
-        const norm = (v - 128) / 128
-        const y = cssH / 2 + norm * (cssH / 2 - 4)
-        if (x === 0) ctx.moveTo(x, y)
-        else ctx.lineTo(x, y)
+        analyser.getByteTimeDomainData(timeData)
+
+        ctx.lineWidth = 2
+        ctx.strokeStyle = idle ? 'rgba(0, 217, 255, 0.25)' : 'rgba(0, 217, 255, 1)'
+        ctx.shadowColor = 'rgba(0, 217, 255, 0.9)'
+        ctx.shadowBlur = idle ? 0 : 6
+        ctx.beginPath()
+        const step = timeData.length / cssW
+        for (let x = 0; x < cssW; x++) {
+          const v = timeData[Math.floor(x * step)] ?? 128
+          // 128 = 0 振幅；归一到 -1~1，再映射到画布
+          const norm = (v - 128) / 128
+          const y = cssH / 2 + norm * (cssH / 2 - 4)
+          if (x === 0) ctx.moveTo(x, y)
+          else ctx.lineTo(x, y)
+        }
+        ctx.stroke()
+        ctx.shadowBlur = 0
       }
-      ctx.stroke()
-      ctx.shadowBlur = 0
-    }
 
-    draw()
+      draw()
+    }
 
     return () => {
       stopped = true
