@@ -87,12 +87,12 @@ export function SpeakerHero() {
       data-testid="speaker-hero"
       data-mode={mode}
       aria-label={t('speaking.barAria')}
-      className="hud-frame flex flex-col gap-4 p-6 sm:p-8"
+      className="hud-frame flex flex-col gap-4 p-4 sm:p-6 md:p-8"
     >
       {mode === 'empty' ? (
         <div className="flex flex-col items-center justify-center gap-2 py-6">
           <span className="h-3 w-3 rounded-full bg-muted-foreground" aria-hidden="true" />
-          <span className="hud-title text-4xl text-muted-foreground sm:text-5xl">
+          <span className="hud-title text-3xl text-muted-foreground sm:text-4xl md:text-5xl">
             {t('home.standby')}
           </span>
           <span className="hud-mono text-xs text-muted-foreground">{t('home.standbyHint')}</span>
@@ -109,7 +109,7 @@ export function SpeakerHero() {
             />
             <span
               className={cn(
-                'hud-title text-5xl leading-none sm:text-6xl',
+                'hud-title min-w-0 break-all text-4xl leading-none sm:text-5xl md:text-6xl',
                 mode === 'live'
                   ? 'text-primary [text-shadow:0_0_18px_var(--primary)]'
                   : 'text-muted-foreground'

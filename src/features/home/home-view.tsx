@@ -46,7 +46,7 @@ export function HomeView() {
         {mapTarget ? (
           <LocationMap their={mapTarget} me={mapMe} />
         ) : (
-          <div className="flex h-[480px] items-center justify-center">
+          <div className="flex h-[300px] items-center justify-center sm:h-[400px] lg:h-[480px]">
             <span className="hud-mono text-xs text-muted-foreground">{t('home.mapNoTarget')}</span>
           </div>
         )}
