@@ -1,10 +1,11 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   logsStore,
   resetLogsForTest,
   selectFiltered,
   selectPageSlice,
   selectSyncedAll,
+  selectTodaysStats,
   selectTotalPages
 } from './store'
 import type { QsoService } from '@/lib/qso-service/client'
@@ -252,5 +253,36 @@ describe('syncMode', () => {
     const first = res[0]
     expect(first?.source).toBe('server')
     if (first?.source === 'server') expect(first.logId).toBe(2)
+  })
+})
+
+describe('selectTodaysStats', () => {
+  beforeEach(() => resetLogsForTest())
+
+  it('统计今日去重人数与 QSO 数（合并 server+local，跨界过滤）', () => {
+    const now = Math.floor(Date.now() / 1000)
+    const yesterday = now - 86400
+    logsStore.setState({
+      all: [
+        { logId: 1, timestamp: now, toCallsign: 'BG5HXX', grid: 'OM89' },
+        { logId: 2, timestamp: now - 10, toCallsign: 'BG5HXX', grid: 'OM89' },
+        { logId: 3, timestamp: yesterday, toCallsign: 'BD4ABC', grid: '' }
+      ],
+      local: [
+        { id: 'l1', timestamp: now - 20, toCallsign: 'BA0XYZ', grid: '' }
+      ]
+    })
+    const { people, qsos } = selectTodaysStats(logsStore.getState())
+    expect(people).toBe(2)
+    expect(qsos).toBe(3)
+  })
+
+  it('server 与 local 同一条 (呼号,时间戳) 去重，只计一次', () => {
+    const now = Math.floor(Date.now() / 1000)
+    logsStore.setState({
+      all: [{ logId: 1, timestamp: now, toCallsign: 'BG5HXX', grid: 'OM89' }],
+      local: [{ id: 'l1', timestamp: now, toCallsign: 'BG5HXX', grid: 'OM89' }]
+    })
+    expect(selectTodaysStats(logsStore.getState()).qsos).toBe(1)
   })
 })

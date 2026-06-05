@@ -205,6 +205,28 @@ export function selectTodaysContactedBaseCalls(s: LogsState): Set<string> {
 }
 
 /**
+ * 今日（本地 00:00 起）统计：去重人数 + QSO 条数。
+ * 人数复用 selectTodaysContactedBaseCalls（按基号去 SSID）；
+ * QSO 数按 (呼号, 时间戳) 去重，合并 server+local，与 selectMergedRows 同口径。
+ */
+export function selectTodaysStats(s: LogsState): { people: number; qsos: number } {
+  const cutoff = startOfLocalToday()
+  const people = selectTodaysContactedBaseCalls(s).size
+  const seen = new Set<string>()
+  let qsos = 0
+  const tally = (callsign: string, ts: number): void => {
+    if (ts < cutoff) return
+    const key = `${callsign}${ts}`
+    if (seen.has(key)) return
+    seen.add(key)
+    qsos++
+  }
+  for (const r of s.all) tally(r.toCallsign, r.timestamp)
+  for (const r of s.local) tally(r.toCallsign, r.timestamp)
+  return { people, qsos }
+}
+
+/**
  * @deprecated 保留以防下游误用；优先 selectMergedRows。
  * 应用 syncMode 后的**服务器** "有效全量"，不含 local。
  */
