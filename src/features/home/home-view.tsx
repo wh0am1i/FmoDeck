@@ -42,36 +42,34 @@ export function HomeView() {
 
       <SpeakerHero />
 
+      <DashboardPanel title={t('home.panelMap')}>
+        {showMap && theirCoord ? (
+          <LocationMap their={theirCoord} me={myCoord} />
+        ) : (
+          <div className="flex h-[480px] items-center justify-center">
+            <span className="hud-mono text-xs text-muted-foreground">{t('home.mapNoTarget')}</span>
+          </div>
+        )}
+      </DashboardPanel>
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <DashboardPanel title={t('home.panelMap')}>
-          {showMap && theirCoord ? (
-            <LocationMap their={theirCoord} me={myCoord} />
-          ) : (
-            <div className="flex h-[220px] items-center justify-center">
-              <span className="hud-mono text-xs text-muted-foreground">
-                {t('home.mapNoTarget')}
-              </span>
-            </div>
-          )}
-        </DashboardPanel>
         <DashboardPanel title={t('home.panelRoster')}>
           <RecentCallsigns />
         </DashboardPanel>
+        <DashboardPanel title={t('home.panelSpectrum')}>
+          <div className="p-3">
+            <SpectrumVisualizer
+              height={160}
+              bars={28}
+              gap={4}
+              smoothing={0.25}
+              mirror
+              peakHold
+              grid
+            />
+          </div>
+        </DashboardPanel>
       </div>
-
-      <DashboardPanel title={t('home.panelSpectrum')}>
-        <div className="p-3">
-          <SpectrumVisualizer
-            height={160}
-            bars={28}
-            gap={4}
-            smoothing={0.25}
-            mirror
-            peakHold
-            grid
-          />
-        </div>
-      </DashboardPanel>
     </div>
   )
 }
