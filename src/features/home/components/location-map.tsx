@@ -54,7 +54,7 @@ export function LocationMap({ their, me }: { their: LatLng; me: LatLng | null })
     return () => {
       map.remove()
     }
-  }, [their.lat, their.lng, me?.lat, me?.lng])
+  }, [their.lat, their.lng, me])
 
   return <div ref={containerRef} data-testid="location-map" className="h-[220px] w-full" />
 }
