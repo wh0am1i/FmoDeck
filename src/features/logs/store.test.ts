@@ -268,9 +268,7 @@ describe('selectTodaysStats', () => {
         { logId: 2, timestamp: now - 10, toCallsign: 'BG5HXX', grid: 'OM89' },
         { logId: 3, timestamp: yesterday, toCallsign: 'BD4ABC', grid: '' }
       ],
-      local: [
-        { id: 'l1', timestamp: now - 20, toCallsign: 'BA0XYZ', grid: '' }
-      ]
+      local: [{ id: 'l1', timestamp: now - 20, toCallsign: 'BA0XYZ', grid: '', fields: {} }]
     })
     const { people, qsos } = selectTodaysStats(logsStore.getState())
     expect(people).toBe(2)
@@ -281,7 +279,7 @@ describe('selectTodaysStats', () => {
     const now = Math.floor(Date.now() / 1000)
     logsStore.setState({
       all: [{ logId: 1, timestamp: now, toCallsign: 'BG5HXX', grid: 'OM89' }],
-      local: [{ id: 'l1', timestamp: now, toCallsign: 'BG5HXX', grid: 'OM89' }]
+      local: [{ id: 'l1', timestamp: now, toCallsign: 'BG5HXX', grid: 'OM89', fields: {} }]
     })
     expect(selectTodaysStats(logsStore.getState()).qsos).toBe(1)
   })
