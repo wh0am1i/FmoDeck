@@ -1,10 +1,33 @@
 import { render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { TodayStats } from '../components/today-stats'
 import { HomeView } from '../home-view'
 import { logsStore, resetLogsForTest } from '@/features/logs/store'
 import { speakingStore, resetSpeakingForTest } from '@/features/speaking/store'
+import { selfStore, resetSelfForTest } from '@/stores/self'
+
+// HomeView 渲染 LocationMap（依赖 leaflet）；jsdom 无法真实渲染地图，mock 掉。
+vi.mock('leaflet', () => {
+  const chainable: Record<string, unknown> = {}
+  const ret = () => chainable
+  Object.assign(chainable, {
+    addTo: ret,
+    setView: ret,
+    fitBounds: ret,
+    remove: ret,
+    pad: ret
+  })
+  return {
+    default: {
+      map: ret,
+      tileLayer: ret,
+      circleMarker: ret,
+      polyline: ret,
+      latLngBounds: ret
+    }
+  }
+})
 
 describe('TodayStats', () => {
   beforeEach(() => resetLogsForTest())
@@ -28,6 +51,7 @@ describe('HomeView 冒烟', () => {
   beforeEach(() => {
     resetSpeakingForTest()
     resetLogsForTest()
+    resetSelfForTest()
   })
 
   it('渲染 hero + 今日统计 + 名册/频谱面板', () => {
@@ -41,5 +65,34 @@ describe('HomeView 冒烟', () => {
     expect(screen.getByTestId('today-people')).toBeInTheDocument()
     expect(screen.getByText('讲话名册')).toBeInTheDocument()
     expect(screen.getByText('实时频谱')).toBeInTheDocument()
+  })
+})
+
+describe('HomeView 地图', () => {
+  beforeEach(() => {
+    resetSpeakingForTest()
+    resetLogsForTest()
+    resetSelfForTest()
+  })
+
+  it('有对方网格时 Row1 渲染地图', () => {
+    selfStore.getState().setCoordinate({ lat: 36, lng: 103 })
+    speakingStore.getState().startSpeaking({ callsign: 'BG5HXX', grid: 'OM89', isHost: false })
+    render(
+      <MemoryRouter>
+        <HomeView />
+      </MemoryRouter>
+    )
+    expect(screen.getByTestId('location-map')).toBeInTheDocument()
+  })
+
+  it('无对方（empty）时不渲染地图，显示占位', () => {
+    render(
+      <MemoryRouter>
+        <HomeView />
+      </MemoryRouter>
+    )
+    expect(screen.queryByTestId('location-map')).not.toBeInTheDocument()
+    expect(screen.getByText('暂无对方位置')).toBeInTheDocument()
   })
 })

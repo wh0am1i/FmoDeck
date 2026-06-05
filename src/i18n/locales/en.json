@@ -55,6 +55,8 @@
     "statQsos": "QSOs today",
     "panelRoster": "RECENT CALLSIGNS",
     "panelSpectrum": "LIVE SPECTRUM",
+    "panelMap": "STATION MAP",
+    "mapNoTarget": "No active station location",
     "compass": {
       "N": "N",
       "NE": "NE",
