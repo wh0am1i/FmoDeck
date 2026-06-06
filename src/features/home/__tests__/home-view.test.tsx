@@ -17,7 +17,9 @@ vi.mock('leaflet', () => {
     setView: ret,
     fitBounds: ret,
     remove: ret,
-    pad: ret
+    pad: ret,
+    clearLayers: ret,
+    invalidateSize: ret
   })
   return {
     default: {
@@ -25,7 +27,9 @@ vi.mock('leaflet', () => {
       tileLayer: ret,
       circleMarker: ret,
       polyline: ret,
-      latLngBounds: ret
+      latLngBounds: ret,
+      layerGroup: ret,
+      point: ret
     }
   }
 })
@@ -99,13 +103,12 @@ describe('HomeView 地图', () => {
     expect(screen.getByTestId('location-map')).toBeInTheDocument()
   })
 
-  it('无对方（empty）时不渲染地图，显示占位', () => {
+  it('无对方（empty）时也渲染地图（idle 视角）', () => {
     render(
       <MemoryRouter>
         <HomeView />
       </MemoryRouter>
     )
-    expect(screen.queryByTestId('location-map')).not.toBeInTheDocument()
-    expect(screen.getByText('暂无对方位置')).toBeInTheDocument()
+    expect(screen.getByTestId('location-map')).toBeInTheDocument()
   })
 })

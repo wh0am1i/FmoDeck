@@ -43,13 +43,9 @@ export function HomeView() {
       <SpeakerHero />
 
       <DashboardPanel title={t('home.panelMap')}>
-        {mapTarget ? (
-          <LocationMap their={mapTarget} me={mapMe} />
-        ) : (
-          <div className="flex h-[300px] items-center justify-center sm:h-[400px] lg:h-[480px]">
-            <span className="hud-mono text-xs text-muted-foreground">{t('home.mapNoTarget')}</span>
-          </div>
-        )}
+        <div className="relative h-[300px] w-full sm:h-[400px] lg:h-[480px]">
+          <LocationMap target={mapTarget} me={mapMe} />
+        </div>
       </DashboardPanel>
 
       <DashboardPanel title={t('home.panelRoster')}>
