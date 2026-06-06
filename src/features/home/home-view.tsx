@@ -71,11 +71,13 @@ export function HomeView() {
 
       {/* 左下：讲话名册 */}
       <div className="absolute bottom-3 left-3 z-10 w-[min(640px,55vw)]">
-        <div className="hud-frame hud-overlay">
+        <div className="hud-frame hud-overlay flex max-h-[30dvh] flex-col">
           <div className="hud-mono px-3 pt-2 text-[10px] uppercase tracking-widest text-muted-foreground">
             {t('home.panelRoster')}
           </div>
-          <RecentCallsigns />
+          <div className="min-h-0 overflow-y-auto">
+            <RecentCallsigns />
+          </div>
         </div>
       </div>
     </div>
