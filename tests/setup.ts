@@ -12,6 +12,9 @@ beforeAll(async () => {
 
 afterEach(() => {
   cleanup()
+  // BrowserRouter 依赖 window.location；测试之间重置 URL 到根路径，
+  // 避免前一个测试导航到非首页后影响下一个测试。
+  window.history.pushState({}, '', '/')
 })
 
 if (!window.matchMedia) {
