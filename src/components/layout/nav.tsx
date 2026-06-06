@@ -2,7 +2,7 @@ import { NavLink } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
-interface NavItem {
+export interface NavItem {
   to: string
   /** i18n key（nav.*）。与 label 二选一。 */
   labelKey?: string
@@ -12,7 +12,8 @@ interface NavItem {
 
 const ENABLE_APRS = import.meta.env.VITE_ENABLE_APRS !== 'false'
 
-const items: readonly NavItem[] = [
+/** 全部页面入口。Nav 与首页 ☰ 菜单共用。 */
+export const NAV_ITEMS: readonly NavItem[] = [
   { to: '/', labelKey: 'nav.home' },
   { to: '/logs', labelKey: 'nav.logs' },
   { to: '/top20', labelKey: 'nav.top20' },
@@ -32,7 +33,7 @@ export function Nav() {
       aria-label="主导航"
       className="hud-frame flex gap-0 overflow-x-auto bg-card/50 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      {items.map((item) => (
+      {NAV_ITEMS.map((item) => (
         <NavLink
           key={item.to}
           to={item.to}
