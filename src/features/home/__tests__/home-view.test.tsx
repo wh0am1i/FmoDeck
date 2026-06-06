@@ -5,8 +5,8 @@ import { TodayStats } from '../components/today-stats'
 import { HomeView } from '../home-view'
 import { logsStore, resetLogsForTest } from '@/features/logs/store'
 import { speakingStore, resetSpeakingForTest } from '@/features/speaking/store'
-import { selfStore, resetSelfForTest } from '@/stores/self'
-import { settingsStore, resetSettingsForTest } from '@/stores/settings'
+import { resetSelfForTest } from '@/stores/self'
+import { resetSettingsForTest } from '@/stores/settings'
 
 // HomeView 渲染 LocationMap（依赖 leaflet）；jsdom 无法真实渲染地图，mock 掉。
 vi.mock('leaflet', () => {
@@ -34,6 +34,14 @@ vi.mock('leaflet', () => {
   }
 })
 
+function renderHome() {
+  return render(
+    <MemoryRouter>
+      <HomeView />
+    </MemoryRouter>
+  )
+}
+
 describe('TodayStats', () => {
   beforeEach(() => resetLogsForTest())
 
@@ -52,26 +60,7 @@ describe('TodayStats', () => {
   })
 })
 
-describe('HomeView 冒烟', () => {
-  beforeEach(() => {
-    resetSpeakingForTest()
-    resetLogsForTest()
-    resetSelfForTest()
-  })
-
-  it('渲染 hero + 今日统计 + 名册/频谱面板', () => {
-    speakingStore.getState().startSpeaking({ callsign: 'BG5HXX', grid: 'OM89', isHost: false })
-    render(
-      <MemoryRouter>
-        <HomeView />
-      </MemoryRouter>
-    )
-    expect(screen.getByTestId('speaker-hero')).toHaveTextContent('BG5HXX')
-    expect(screen.getByText('讲话名册')).toBeInTheDocument()
-  })
-})
-
-describe('HomeView 地图', () => {
+describe('HomeView v3 满屏仪表盘', () => {
   beforeEach(() => {
     resetSpeakingForTest()
     resetLogsForTest()
@@ -79,36 +68,45 @@ describe('HomeView 地图', () => {
     resetSettingsForTest()
   })
 
-  it('自己讲话 → 地图仍渲染（定位到自己单点，非占位）', () => {
-    settingsStore.getState().setCurrentCallsign('BG5HXX')
-    selfStore.getState().setCoordinate({ lat: 36, lng: 103 })
+  it('渲染地图 + 五浮层（hero/时钟/菜单/QSO流/名册）', () => {
     speakingStore.getState().startSpeaking({ callsign: 'BG5HXX', grid: 'OM89', isHost: false })
-    render(
-      <MemoryRouter>
-        <HomeView />
-      </MemoryRouter>
-    )
+    renderHome()
     expect(screen.getByTestId('location-map')).toBeInTheDocument()
-    expect(screen.queryByText('暂无对方位置')).not.toBeInTheDocument()
+    expect(screen.getByTestId('speaker-hero')).toHaveTextContent('BG5HXX')
+    expect(screen.getByTestId('clock-panel')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '页面菜单' })).toBeInTheDocument()
+    expect(screen.getByTestId('qso-feed-panel')).toBeInTheDocument()
+    expect(screen.getByText('讲话名册')).toBeInTheDocument()
   })
 
-  it('有对方网格时 Row1 渲染地图', () => {
-    selfStore.getState().setCoordinate({ lat: 36, lng: 103 })
-    speakingStore.getState().startSpeaking({ callsign: 'BG5HXX', grid: 'OM89', isHost: false })
-    render(
-      <MemoryRouter>
-        <HomeView />
-      </MemoryRouter>
-    )
+  it('无讲话者也渲染地图（idle 默认视角）', () => {
+    renderHome()
     expect(screen.getByTestId('location-map')).toBeInTheDocument()
+    expect(screen.getByTestId('speaker-hero')).toHaveAttribute('data-mode', 'empty')
   })
 
-  it('无对方（empty）时也渲染地图（idle 视角）', () => {
-    render(
-      <MemoryRouter>
-        <HomeView />
-      </MemoryRouter>
-    )
-    expect(screen.getByTestId('location-map')).toBeInTheDocument()
+  it('手机竖屏 → 只渲染旋转提示，不渲染浮层', () => {
+    const original = window.matchMedia
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: (query: string) => ({
+        matches: query.includes('portrait'),
+        media: query,
+        onchange: null,
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        dispatchEvent: () => false
+      })
+    })
+    try {
+      renderHome()
+      expect(screen.getByTestId('portrait-hint')).toBeInTheDocument()
+      expect(screen.queryByTestId('speaker-hero')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('location-map')).not.toBeInTheDocument()
+    } finally {
+      Object.defineProperty(window, 'matchMedia', { writable: true, value: original })
+    }
   })
 })
