@@ -79,3 +79,4 @@ latest.json
 /sstv/
 # SSTV 调试录制:dev 构建运行时生成的 WAV,由用户手动下载或丢弃,不入库
 sstv-*.wav
+.superpowers/
