@@ -255,9 +255,6 @@
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
   }
-  .light .hud-overlay {
-    background: hsl(var(--background) / 0.85);
-  }
   /* QSO 流新行闪入：挂载时从主色高亮淡出到透明。 */
   .hud-flash-in {
     animation: hud-flash-in 1.2s ease-out 1;
@@ -273,12 +270,16 @@
 .dark .hud-map .leaflet-tile-pane {
   filter: invert(0.92) hue-rotate(180deg) brightness(0.95) contrast(0.9) saturate(0.6);
 }
+/* 浅色主题下 hud-overlay 背景透明度略高（移出 utilities 层，避免与 bg-* 工具类顺序竞争）。 */
+.light .hud-overlay {
+  background: hsl(var(--background) / 0.85);
+}
 
 @keyframes hud-flash-in {
   from {
     background-color: hsl(var(--primary) / 0.35);
   }
   to {
-    background-color: transparent;
+    background-color: hsl(var(--primary) / 0);
   }
 }
