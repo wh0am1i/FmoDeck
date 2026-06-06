@@ -128,6 +128,70 @@ describe('logs store · load', () => {
   })
 })
 
+describe('logs store · loadNew', () => {
+  it('按已有最大 logId 边界拉新增，并入后倒序在前', async () => {
+    const existing = [
+      makeSummary({ logId: 100, timestamp: 2000 }),
+      makeSummary({ logId: 99, timestamp: 1000 })
+    ]
+    logsStore.setState({ all: existing })
+    const getListAll = vi.fn(({ stopAt }: { stopAt: (r: QsoSummary) => boolean }) => {
+      // 模拟服务器倒序翻页 + stopAt early-break（同 QsoService.getListAll 语义）
+      const serverList = [
+        makeSummary({ logId: 102, timestamp: 4000 }),
+        makeSummary({ logId: 101, timestamp: 3000 }),
+        makeSummary({ logId: 100, timestamp: 2000 })
+      ]
+      const out: QsoSummary[] = []
+      for (const r of serverList) {
+        if (stopAt(r)) break
+        out.push(r)
+      }
+      return Promise.resolve(out)
+    })
+    const svc = { getListAll } as unknown as QsoService
+
+    await logsStore.getState().loadNew(svc)
+
+    expect(logsStore.getState().all.map((r) => r.logId)).toEqual([102, 101, 100, 99])
+    // 不动 page/status
+    expect(logsStore.getState().page).toBe(0)
+    expect(logsStore.getState().status).toBe('idle')
+  })
+
+  it('无新记录时 all 引用不变', async () => {
+    const existing = [makeSummary({ logId: 100 })]
+    logsStore.setState({ all: existing })
+    const svc = { getListAll: vi.fn().mockResolvedValue([]) } as unknown as QsoService
+
+    await logsStore.getState().loadNew(svc)
+
+    expect(logsStore.getState().all).toBe(existing)
+  })
+
+  it('svc 抛错时静默：state 不变、不置 error', async () => {
+    const existing = [makeSummary({ logId: 100 })]
+    logsStore.setState({ all: existing })
+    const svc = { getListAll: vi.fn().mockRejectedValue(new Error('boom')) } as unknown as QsoService
+
+    await expect(logsStore.getState().loadNew(svc)).resolves.toBeUndefined()
+
+    expect(logsStore.getState().all).toBe(existing)
+    expect(logsStore.getState().status).toBe('idle')
+    expect(logsStore.getState().error).toBeNull()
+  })
+
+  it('status=loading 时跳过（不与全量 load 竞争）', async () => {
+    const getListAll = vi.fn().mockResolvedValue([makeSummary({ logId: 1 })])
+    const svc = { getListAll } as unknown as QsoService
+    logsStore.setState({ status: 'loading' })
+
+    await logsStore.getState().loadNew(svc)
+
+    expect(getListAll).not.toHaveBeenCalled()
+  })
+})
+
 describe('logs store · filter/page', () => {
   it('setFilter 重置 page', () => {
     logsStore.setState({ page: 3 })

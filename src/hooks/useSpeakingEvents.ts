@@ -4,6 +4,7 @@ import { FmoEventsClient } from '@/lib/fmo-events/client'
 import { notify } from '@/lib/notifications'
 import { parseCallsignSsid } from '@/lib/utils/callsign'
 import { normalizeHost } from '@/lib/utils/url'
+import { QsoService } from '@/lib/qso-service/client'
 import { connectionStore } from '@/stores/connection'
 import { settingsStore } from '@/stores/settings'
 import { logsStore } from '@/features/logs/store'
@@ -72,6 +73,9 @@ export function useSpeakingEvents(): void {
         } else if (ev.subType === 'history') {
           const list = ev.data as SpeakingHistoryItem[]
           speakingStore.getState().setHistory(list)
+          // 有新 QSO 入库的信号：增量刷新服务器日志（喂首页 QSO 实时流等消费者）
+          const { client: wsClient } = connectionStore.getState()
+          if (wsClient) void logsStore.getState().loadNew(new QsoService(wsClient))
         }
       })
       client.connect()

@@ -41,6 +41,8 @@ export interface LogsState {
   syncMode: SyncMode
 
   load: (svc: QsoService) => Promise<void>
+  /** 增量拉取新记录（事件驱动）：按已有最大 logId 边界只拉新增，不动 page/status，静默失败。 */
+  loadNew: (svc: QsoService) => Promise<void>
   loadLocal: () => Promise<void>
   /** 导入 ADIF 文本 / bytes → 解析 → 入 IndexedDB → 更新内存。 */
   importAdif: (input: string | ArrayBuffer | Uint8Array) => Promise<{
@@ -106,6 +108,22 @@ export const logsStore = create<LogsState>()((set, get) => ({
         status: 'error',
         error: err instanceof Error ? err : new Error(String(err))
       })
+    }
+  },
+
+  loadNew: async (svc: QsoService) => {
+    const { all, status } = get()
+    if (status === 'loading') return
+    const maxExistingLogId = all[0]?.logId ?? 0
+    try {
+      const fresh = await svc.getListAll({
+        stopAt: (r) => r.logId <= maxExistingLogId
+      })
+      if (fresh.length > 0) {
+        set({ all: sortByTimeDesc([...fresh, ...get().all]) })
+      }
+    } catch {
+      // 事件驱动的静默刷新：失败不打扰值守（下一个事件会再试）
     }
   },
 
