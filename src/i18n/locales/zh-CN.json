@@ -57,6 +57,12 @@
     "panelSpectrum": "实时频谱",
     "panelMap": "对方位置",
     "mapNoTarget": "暂无对方位置",
+    "clockUtc": "UTC",
+    "clockLocal": "本地",
+    "panelQsoFeed": "QSO 实时流",
+    "qsoFeedEmpty": "暂无日志记录",
+    "menuAria": "页面菜单",
+    "portraitHint": "请旋转至横屏使用",
     "compass": {
       "N": "北",
       "NE": "东北",

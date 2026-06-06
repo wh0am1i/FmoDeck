@@ -57,6 +57,12 @@
     "panelSpectrum": "LIVE SPECTRUM",
     "panelMap": "STATION MAP",
     "mapNoTarget": "No active station location",
+    "clockUtc": "UTC",
+    "clockLocal": "LOCAL",
+    "panelQsoFeed": "QSO LIVE FEED",
+    "qsoFeedEmpty": "No QSO records yet",
+    "menuAria": "Page menu",
+    "portraitHint": "Please rotate to landscape",
     "compass": {
       "N": "N",
       "NE": "NE",

@@ -249,4 +249,36 @@
     box-shadow: 0 0 calc(6px * var(--hud-intensity))
       hsl(var(--primary) / calc(0.6 * var(--hud-intensity)));
   }
+  /* HUD 浮层面板底：半透明深底 + 背景模糊，配合 .hud-frame 使用（叠加在满屏地图上）。 */
+  .hud-overlay {
+    background: hsl(var(--background) / 0.72);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  .light .hud-overlay {
+    background: hsl(var(--background) / 0.85);
+  }
+  /* QSO 流新行闪入：挂载时从主色高亮淡出到透明。 */
+  .hud-flash-in {
+    animation: hud-flash-in 1.2s ease-out 1;
+  }
+}
+
+/* ==========================================================
+   首页满屏地图
+   ========================================================== */
+
+/* 深色主题下把高德浅色瓦片反色成"夜图"；浅色主题不滤。
+   （只滤瓦片层，不影响 marker / 连线的覆盖层颜色。） */
+.dark .hud-map .leaflet-tile-pane {
+  filter: invert(0.92) hue-rotate(180deg) brightness(0.95) contrast(0.9) saturate(0.6);
+}
+
+@keyframes hud-flash-in {
+  from {
+    background-color: hsl(var(--primary) / 0.35);
+  }
+  to {
+    background-color: transparent;
+  }
 }
