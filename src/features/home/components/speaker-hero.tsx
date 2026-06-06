@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GridLocation } from '@/components/shared/grid-location'
 import { AudioControl } from '@/features/audio/components/audio-control'
+import { SpectrumWaveform } from '@/features/audio/components/spectrum-waveform'
 import { logsStore } from '@/features/logs/store'
 import { speakingStore } from '@/features/speaking/store'
 import { settingsStore } from '@/stores/settings'
@@ -87,12 +88,12 @@ export function SpeakerHero() {
       data-testid="speaker-hero"
       data-mode={mode}
       aria-label={t('speaking.barAria')}
-      className="hud-frame flex flex-col gap-4 p-4 sm:p-6 md:p-8"
+      className="hud-frame hud-overlay flex flex-col gap-2 p-3 sm:p-4"
     >
       {mode === 'empty' ? (
-        <div className="flex flex-col items-center justify-center gap-2 py-6">
+        <div className="flex flex-col items-center justify-center gap-2 py-3">
           <span className="h-3 w-3 rounded-full bg-muted-foreground" aria-hidden="true" />
-          <span className="hud-title text-3xl text-muted-foreground sm:text-4xl md:text-5xl">
+          <span className="hud-title text-2xl text-muted-foreground sm:text-3xl">
             {t('home.standby')}
           </span>
           <span className="hud-mono text-xs text-muted-foreground">{t('home.standbyHint')}</span>
@@ -109,7 +110,7 @@ export function SpeakerHero() {
             />
             <span
               className={cn(
-                'hud-title min-w-0 break-all text-4xl leading-none sm:text-5xl md:text-6xl',
+                'hud-title min-w-0 break-all text-3xl leading-none sm:text-4xl',
                 mode === 'live'
                   ? 'text-primary [text-shadow:0_0_18px_var(--primary)]'
                   : 'text-muted-foreground'
@@ -193,7 +194,9 @@ export function SpeakerHero() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex-1" />
+            <div className="min-w-0 flex-1">
+              <SpectrumWaveform height={24} />
+            </div>
             <AudioControl />
           </div>
         </>
