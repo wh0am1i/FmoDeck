@@ -193,14 +193,15 @@ export function SpeakerHero() {
               ))}
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <SpectrumWaveform height={24} />
-            </div>
-            <AudioControl />
-          </div>
         </>
       )}
+
+      <div className="flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <SpectrumWaveform height={24} />
+        </div>
+        <AudioControl />
+      </div>
     </section>
   )
 }
