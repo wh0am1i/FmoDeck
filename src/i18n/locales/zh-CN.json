@@ -55,8 +55,7 @@
     "statQsos": "QSO",
     "panelRoster": "讲话名册",
     "panelSpectrum": "实时频谱",
-    "panelMap": "对方位置",
-    "mapNoTarget": "暂无对方位置",
+
     "clockUtc": "UTC",
     "clockLocal": "本地",
     "panelQsoFeed": "QSO 实时流",

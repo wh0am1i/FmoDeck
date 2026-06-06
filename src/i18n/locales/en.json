@@ -55,8 +55,7 @@
     "statQsos": "QSOs today",
     "panelRoster": "RECENT CALLSIGNS",
     "panelSpectrum": "LIVE SPECTRUM",
-    "panelMap": "STATION MAP",
-    "mapNoTarget": "No active station location",
+
     "clockUtc": "UTC",
     "clockLocal": "LOCAL",
     "panelQsoFeed": "QSO LIVE FEED",
