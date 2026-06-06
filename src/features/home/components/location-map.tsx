@@ -19,7 +19,16 @@ const IDLE_ZOOM = 4
  * - 仅 me：单点居中 zoom 7
  * - 都没有：idle 中国全境
  */
-export function LocationMap({ target, me }: { target: LatLng | null; me: LatLng | null }) {
+export function LocationMap({
+  target,
+  me,
+  hold = false
+}: {
+  target: LatLng | null
+  me: LatLng | null
+  /** true=讲话者存在但无可解析坐标：照常重建覆盖层，但不改变视角。 */
+  hold?: boolean
+}) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<L.Map | null>(null)
   const layersRef = useRef<L.LayerGroup | null>(null)
@@ -92,20 +101,26 @@ export function LocationMap({ target, me }: { target: LatLng | null; me: LatLng 
         dashArray: '4 4',
         opacity: 0.7
       }).addTo(layers)
-      // 不对称 padding：左上 Hero 约占 36% 宽，右侧 QSO 流约占 26% 宽
-      const w = containerRef.current?.clientWidth ?? 0
-      map.fitBounds(L.latLngBounds([meLL, targetLL]), {
-        paddingTopLeft: L.point(Math.round(w * 0.36), 96),
-        paddingBottomRight: L.point(Math.round(w * 0.26), 96)
-      })
-    } else if (targetLL) {
-      map.setView(targetLL, 9)
-    } else if (meLL) {
-      map.setView(meLL, 7)
-    } else {
-      map.setView(IDLE_CENTER, IDLE_ZOOM)
     }
-  }, [tLat, tLng, mLat, mLng])
+
+    // hold：讲话者在但坐标解析不出 —— 覆盖层照常重建，视角保持不动
+    if (!hold) {
+      if (targetLL && meLL) {
+        // 不对称 padding：左上 Hero 约占 36% 宽，右侧 QSO 流约占 26% 宽
+        const w = containerRef.current?.clientWidth ?? 0
+        map.fitBounds(L.latLngBounds([meLL, targetLL]), {
+          paddingTopLeft: L.point(Math.round(w * 0.36), 96),
+          paddingBottomRight: L.point(Math.round(w * 0.26), 96)
+        })
+      } else if (targetLL) {
+        map.setView(targetLL, 9)
+      } else if (meLL) {
+        map.setView(meLL, 7)
+      } else {
+        map.setView(IDLE_CENTER, IDLE_ZOOM)
+      }
+    }
+  }, [tLat, tLng, mLat, mLng, hold])
 
   return <div ref={containerRef} data-testid="location-map" className="hud-map absolute inset-0 z-0" />
 }

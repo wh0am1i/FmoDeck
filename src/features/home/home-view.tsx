@@ -41,6 +41,8 @@ export function HomeView() {
   // 对方：标对方网格 + 我方坐标 + 连线（hero 另显距离文字）。
   const mapTarget = isSelf ? (myCoord ?? theirCoord) : theirCoord
   const mapMe = isSelf ? null : myCoord
+  // 讲话者在但坐标解析不出（无网格）：地图保持当前视角，不跳 idle/仅我
+  const mapHold = speaker !== null && mapTarget === null
 
   if (portrait) {
     return (
@@ -52,7 +54,7 @@ export function HomeView() {
 
   return (
     <div data-testid="home-dashboard" className="relative h-full w-full overflow-hidden">
-      <LocationMap target={mapTarget} me={mapMe} />
+      <LocationMap target={mapTarget} me={mapMe} hold={mapHold} />
 
       {/* 左上：讲话者 Hero */}
       <div className="absolute left-3 top-3 z-10 w-[min(420px,40vw)]">

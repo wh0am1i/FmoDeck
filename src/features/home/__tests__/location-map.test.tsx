@@ -45,4 +45,9 @@ describe('LocationMap v3', () => {
     render(<LocationMap target={null} me={null} />)
     expect(screen.getByTestId('location-map')).toBeInTheDocument()
   })
+
+  it('hold 模式（讲话者无网格）渲染正常，不抛错', () => {
+    render(<LocationMap target={null} me={{ lat: 36, lng: 103.8 }} hold />)
+    expect(screen.getByTestId('location-map')).toBeInTheDocument()
+  })
 })
