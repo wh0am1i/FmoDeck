@@ -120,7 +120,13 @@ export const logsStore = create<LogsState>()((set, get) => ({
         stopAt: (r) => r.logId <= maxExistingLogId
       })
       if (fresh.length > 0) {
-        set({ all: sortByTimeDesc([...fresh, ...get().all]) })
+        // 并发 loadNew / load 竞态防护：已存在的 logId 不重复并入
+        const current = get().all
+        const known = new Set(current.map((r) => r.logId))
+        const dedup = fresh.filter((r) => !known.has(r.logId))
+        if (dedup.length > 0) {
+          set({ all: sortByTimeDesc([...dedup, ...current]) })
+        }
       }
     } catch {
       // 事件驱动的静默刷新：失败不打扰值守（下一个事件会再试）

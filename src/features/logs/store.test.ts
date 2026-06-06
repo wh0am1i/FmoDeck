@@ -190,6 +190,25 @@ describe('logs store · loadNew', () => {
 
     expect(getListAll).not.toHaveBeenCalled()
   })
+
+  it('并发竞态去重：svc 返回一新一重复，重复 logId 不被二次并入', async () => {
+    const existing = [makeSummary({ logId: 100, timestamp: 2000 })]
+    logsStore.setState({ all: existing })
+    // svc 返回 [102(新), 100(重复)]
+    const svc = {
+      getListAll: vi.fn().mockResolvedValue([
+        makeSummary({ logId: 102, timestamp: 4000 }),
+        makeSummary({ logId: 100, timestamp: 2000 })
+      ])
+    } as unknown as QsoService
+
+    await logsStore.getState().loadNew(svc)
+
+    const ids = logsStore.getState().all.map((r) => r.logId)
+    expect(ids).toEqual([102, 100])
+    // 100 只出现一次
+    expect(ids.filter((id) => id === 100)).toHaveLength(1)
+  })
 })
 
 describe('logs store · filter/page', () => {
