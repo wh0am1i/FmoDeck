@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Menu } from 'lucide-react'
-import { NAV_ITEMS } from '@/components/layout/nav'
+import { NAV_ITEMS } from '@/components/layout/nav-items'
 import {
   DropdownMenu,
   DropdownMenuContent,

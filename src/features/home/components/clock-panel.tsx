@@ -1,19 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-
-function pad2(n: number): string {
-  return n.toString().padStart(2, '0')
-}
-
-/** UTC 时间 HH:MM:SS。 */
-export function formatUtcTime(d: Date): string {
-  return `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`
-}
-
-/** 本地时间 HH:MM:SS。 */
-export function formatLocalTime(d: Date): string {
-  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`
-}
+import { formatUtcTime, formatLocalTime } from '@/lib/utils/clock'
 
 /** 右上角双时钟浮层：UTC + 本地，秒级刷新。纯本地计算，无网络依赖。 */
 export function ClockPanel() {

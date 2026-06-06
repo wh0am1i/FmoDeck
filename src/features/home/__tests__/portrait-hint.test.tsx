@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { PortraitHint, usePortraitPhone } from '../components/portrait-hint'
+import { PortraitHint } from '../components/portrait-hint'
+import { usePortraitPhone } from '../hooks/use-portrait-phone'
 
 function Probe() {
   const portrait = usePortraitPhone()

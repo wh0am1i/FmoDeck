@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { ClockPanel, formatLocalTime, formatUtcTime } from '../components/clock-panel'
+import { ClockPanel } from '../components/clock-panel'
+import { formatLocalTime, formatUtcTime } from '@/lib/utils/clock'
 
 describe('ClockPanel 时间格式化', () => {
   it('formatUtcTime 按 UTC 输出 HH:MM:SS（补零）', () => {
