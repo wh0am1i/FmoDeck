@@ -283,3 +283,17 @@
     background-color: hsl(var(--primary) / 0);
   }
 }
+
+/* LIVE 态浮层边框呼吸辉光（强度随 --hud-intensity）。 */
+@keyframes hud-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 calc(12px * var(--hud-intensity)) hsl(var(--primary) / 0.15);
+  }
+  50% {
+    box-shadow: 0 0 calc(24px * var(--hud-intensity)) hsl(var(--primary) / 0.5);
+  }
+}
+.hud-breathe {
+  animation: hud-breathe 2.4s ease-in-out infinite;
+}

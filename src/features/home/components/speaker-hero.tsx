@@ -88,7 +88,10 @@ export function SpeakerHero() {
       data-testid="speaker-hero"
       data-mode={mode}
       aria-label={t('speaking.barAria')}
-      className="hud-frame hud-overlay flex flex-col gap-2 p-3 sm:p-4"
+      className={cn(
+        'hud-frame hud-overlay flex flex-col gap-2 p-3 sm:p-4',
+        mode === 'live' && 'hud-breathe'
+      )}
     >
       {mode === 'empty' ? (
         <div className="flex flex-col items-center justify-center gap-2 py-3">
