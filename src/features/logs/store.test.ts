@@ -172,7 +172,9 @@ describe('logs store · loadNew', () => {
   it('svc 抛错时静默：state 不变、不置 error', async () => {
     const existing = [makeSummary({ logId: 100 })]
     logsStore.setState({ all: existing })
-    const svc = { getListAll: vi.fn().mockRejectedValue(new Error('boom')) } as unknown as QsoService
+    const svc = {
+      getListAll: vi.fn().mockRejectedValue(new Error('boom'))
+    } as unknown as QsoService
 
     await expect(logsStore.getState().loadNew(svc)).resolves.toBeUndefined()
 
@@ -196,10 +198,12 @@ describe('logs store · loadNew', () => {
     logsStore.setState({ all: existing })
     // svc 返回 [102(新), 100(重复)]
     const svc = {
-      getListAll: vi.fn().mockResolvedValue([
-        makeSummary({ logId: 102, timestamp: 4000 }),
-        makeSummary({ logId: 100, timestamp: 2000 })
-      ])
+      getListAll: vi
+        .fn()
+        .mockResolvedValue([
+          makeSummary({ logId: 102, timestamp: 4000 }),
+          makeSummary({ logId: 100, timestamp: 2000 })
+        ])
     } as unknown as QsoService
 
     await logsStore.getState().loadNew(svc)

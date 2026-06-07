@@ -201,7 +201,6 @@ export function SpeakerHero() {
                 </span>
               ))}
           </div>
-
         </>
       )}
 

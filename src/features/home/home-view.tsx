@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next'
 import { SpeakerHero } from './components/speaker-hero'
 import { ClockPanel } from './components/clock-panel'
 import { MenuPanel } from './components/menu-panel'
-import { QsoFeedPanel } from './components/qso-feed-panel'
 import { LocationMap } from './components/location-map'
 import { PortraitHint } from './components/portrait-hint'
 import { usePortraitPhone } from './hooks/use-portrait-phone'
@@ -56,7 +55,7 @@ export function HomeView() {
     <div data-testid="home-dashboard" className="relative h-full w-full overflow-hidden">
       <LocationMap target={mapTarget} me={mapMe} hold={mapHold} />
 
-      {/* 右侧 HUD 信息列：时钟+菜单 → Hero → QSO 流 → 名册（地图独占左侧） */}
+      {/* 右侧 HUD 信息列：时钟+菜单 → Hero → 名册（地图独占左侧） */}
       <div className="absolute bottom-3 right-3 top-3 z-10 flex w-[min(440px,38vw)] flex-col gap-2">
         <div className="flex items-stretch gap-2">
           <div className="min-w-0 flex-1">
@@ -66,10 +65,6 @@ export function HomeView() {
         </div>
 
         <SpeakerHero />
-
-        <div className="min-h-0 flex-1">
-          <QsoFeedPanel />
-        </div>
 
         <div className="hud-frame hud-overlay flex max-h-[26dvh] shrink-0 flex-col">
           <div className="hud-mono px-3 pt-2 text-[10px] uppercase tracking-widest text-muted-foreground">

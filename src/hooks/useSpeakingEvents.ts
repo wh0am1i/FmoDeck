@@ -73,7 +73,7 @@ export function useSpeakingEvents(): void {
         } else if (ev.subType === 'history') {
           const list = ev.data as SpeakingHistoryItem[]
           speakingStore.getState().setHistory(list)
-          // 有新 QSO 入库的信号：增量刷新服务器日志（喂首页 QSO 实时流等消费者）
+          // 有新 QSO 入库的信号：增量刷新服务器日志（喂今日已联⭐/今日统计等 logsStore 消费者）
           const { client: wsClient } = connectionStore.getState()
           if (wsClient) void logsStore.getState().loadNew(new QsoService(wsClient))
         }

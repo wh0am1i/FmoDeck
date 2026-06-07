@@ -122,5 +122,7 @@ export function LocationMap({
     }
   }, [tLat, tLng, mLat, mLng, hold])
 
-  return <div ref={containerRef} data-testid="location-map" className="hud-map absolute inset-0 z-0" />
+  return (
+    <div ref={containerRef} data-testid="location-map" className="hud-map absolute inset-0 z-0" />
+  )
 }

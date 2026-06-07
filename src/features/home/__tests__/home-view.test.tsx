@@ -68,14 +68,13 @@ describe('HomeView v3 满屏仪表盘', () => {
     resetSettingsForTest()
   })
 
-  it('渲染地图 + 五浮层（hero/时钟/菜单/QSO流/名册）', () => {
+  it('渲染地图 + 四浮层（hero/时钟/菜单/名册）', () => {
     speakingStore.getState().startSpeaking({ callsign: 'BG5HXX', grid: 'OM89', isHost: false })
     renderHome()
     expect(screen.getByTestId('location-map')).toBeInTheDocument()
     expect(screen.getByTestId('speaker-hero')).toHaveTextContent('BG5HXX')
     expect(screen.getByTestId('clock-panel')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '页面菜单' })).toBeInTheDocument()
-    expect(screen.getByTestId('qso-feed-panel')).toBeInTheDocument()
     expect(screen.getByText('讲话名册')).toBeInTheDocument()
   })
 

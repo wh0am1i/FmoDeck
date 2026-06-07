@@ -54,11 +54,8 @@
     "statPeople": "stations today",
     "statQsos": "QSOs today",
     "panelRoster": "RECENT CALLSIGNS",
-
     "clockUtc": "UTC",
     "clockLocal": "LOCAL",
-    "panelQsoFeed": "QSO LIVE FEED",
-    "qsoFeedEmpty": "No QSO records yet",
     "menuAria": "Page menu",
     "portraitHint": "Please rotate to landscape",
     "compass": {
