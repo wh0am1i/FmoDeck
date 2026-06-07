@@ -48,6 +48,14 @@ describe('SpeakerHero 距离方位文字', () => {
     expect(screen.getByTestId('speaker-hero')).toHaveTextContent('km')
   })
 
+  it('settings 未填呼号、但服务器已知本机呼号（selfStore）→ 识别为本机不显示距离', () => {
+    selfStore.getState().setCoordinate({ lat: 36, lng: 103 })
+    selfStore.getState().setCallsign('BG5HXX-9')
+    speakingStore.getState().startSpeaking({ callsign: 'BG5HXX', grid: 'OM89', isHost: false })
+    render(<SpeakerHero />)
+    expect(screen.getByTestId('speaker-hero')).not.toHaveTextContent('km')
+  })
+
   it('缺我方坐标 → 不显示距离文字', () => {
     speakingStore.getState().startSpeaking({ callsign: 'BG5HXX', grid: 'OM89', isHost: false })
     render(<SpeakerHero />)

@@ -7,7 +7,7 @@ import { SpectrumWaveform } from '@/features/audio/components/spectrum-waveform'
 import { logsStore } from '@/features/logs/store'
 import { speakingStore } from '@/features/speaking/store'
 import { settingsStore } from '@/stores/settings'
-import { selfStore } from '@/stores/self'
+import { isFromSelf, selfStore } from '@/stores/self'
 import { parseCallsignSsid } from '@/lib/utils/callsign'
 import { gridToLatLng, haversineKm, bearingDeg, cardinal8 } from '@/lib/utils/grid'
 import { cn } from '@/lib/utils'
@@ -47,6 +47,7 @@ export function SpeakerHero() {
   const local = logsStore((s) => s.local)
   const myCallsign = settingsStore((s) => s.currentCallsign)
   const myCoord = selfStore((s) => s.coordinate)
+  const selfCallsign = selfStore((s) => s.callsign)
 
   const speaker = current ?? lastSpeaker
   const mode: 'live' | 'standby' | 'empty' = current ? 'live' : lastSpeaker ? 'standby' : 'empty'
@@ -58,7 +59,10 @@ export function SpeakerHero() {
     return () => clearInterval(id)
   }, [current, lastSpeaker])
 
-  const isSelf = speaker !== null && isSameOperator(speaker.callsign, myCallsign)
+  // 本机判定：服务器返回的呼号（连接后自动获取）优先，设置页手动呼号兜底
+  const isSelf =
+    speaker !== null &&
+    (isFromSelf(speaker.callsign, selfCallsign) || isSameOperator(speaker.callsign, myCallsign))
 
   const stats = (() => {
     if (!speaker) return null

@@ -5,6 +5,7 @@ import { normalizeHost } from '@/lib/utils/url'
 import { audioStore } from '@/features/audio/store'
 import { engineRefStore } from '@/features/audio/engine-store'
 import { connectionStore } from '@/stores/connection'
+import { isFromSelf, selfStore } from '@/stores/self'
 import { settingsStore } from '@/stores/settings'
 import { speakingStore } from '@/features/speaking/store'
 
@@ -104,8 +105,11 @@ export function useFmoAudio(): void {
 
     const isSelfSpeaking = (): boolean => {
       const current = speakingStore.getState().current
+      if (!current) return false
+      // 本机判定：服务器返回的呼号优先，设置页手动呼号兜底（与首页 Hero/地图同口径）
+      const serverSelf = selfStore.getState().callsign
       const my = settingsStore.getState().currentCallsign
-      return !!current && isSameOperator(current.callsign, my)
+      return isFromSelf(current.callsign, serverSelf) || isSameOperator(current.callsign, my)
     }
 
     const applySuppress = () => {
@@ -148,11 +152,17 @@ export function useFmoAudio(): void {
       if (s.current?.callsign !== prev.current?.callsign) applySuppress()
     })
 
+    // 连接后 user/getInfo 异步写入本机呼号——到位时重算静音（可能正轮到自己讲话）
+    const unsubSelf = selfStore.subscribe((s, prev) => {
+      if (s.callsign !== prev.callsign) applySuppress()
+    })
+
     return () => {
       unsubAudio()
       unsubConn()
       unsubSettings()
       unsubSpeaking()
+      unsubSelf()
       uninstallResumeListener()
       engineRef.current?.stop()
       engineRef.current = null

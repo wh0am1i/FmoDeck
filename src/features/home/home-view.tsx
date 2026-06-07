@@ -11,7 +11,7 @@ import { usePortraitPhone } from './hooks/use-portrait-phone'
 import { RecentCallsigns } from '@/features/spectrum/components/recent-callsigns'
 import { logsStore } from '@/features/logs/store'
 import { speakingStore } from '@/features/speaking/store'
-import { selfStore } from '@/stores/self'
+import { isFromSelf, selfStore } from '@/stores/self'
 import { settingsStore } from '@/stores/settings'
 import { parseCallsignSsid } from '@/lib/utils/callsign'
 import { gridToLatLng, type LatLng } from '@/lib/utils/grid'
@@ -55,6 +55,7 @@ export function HomeView() {
   const lastSpeaker = speakingStore((s) => s.lastSpeaker)
   const myCallsign = settingsStore((s) => s.currentCallsign)
   const myCoord = selfStore((s) => s.coordinate)
+  const selfCallsign = selfStore((s) => s.callsign)
   const allLogs = logsStore((s) => s.all)
   const localLogs = logsStore((s) => s.local)
   const portrait = usePortraitPhone()
@@ -70,7 +71,10 @@ export function HomeView() {
 
   const speaker = current ?? lastSpeaker
   const theirCoord = speaker ? gridToLatLng(speaker.grid) : null
-  const isSelf = speaker !== null && isSameOperator(speaker.callsign, myCallsign)
+  // 本机判定：服务器返回的呼号（连接后自动获取）优先，设置页手动呼号兜底
+  const isSelf =
+    speaker !== null &&
+    (isFromSelf(speaker.callsign, selfCallsign) || isSameOperator(speaker.callsign, myCallsign))
   // 自己：地图只定位到自己单点（无连线 —— 自距离无意义且坐标解析有误差）；
   // 对方：标对方网格 + 我方坐标 + 连线（hero 另显距离文字）。
   const speakerTarget = isSelf ? (myCoord ?? theirCoord) : theirCoord
