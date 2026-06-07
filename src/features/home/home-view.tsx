@@ -23,7 +23,7 @@ function isSameOperator(a: string, b: string): boolean {
 }
 
 /**
- * 首页 v3：值守监控屏。地图满屏铺底，HUD 浮层叠四角。
+ * 首页 v3：值守监控屏。地图满屏铺底，右侧一列 HUD 信息浮层。
  * 设计：docs/superpowers/specs/2026-06-07-dashboard-v3-design.md
  */
 export function HomeView() {
@@ -56,25 +56,22 @@ export function HomeView() {
     <div data-testid="home-dashboard" className="relative h-full w-full overflow-hidden">
       <LocationMap target={mapTarget} me={mapMe} hold={mapHold} />
 
-      {/* 左上：讲话者 Hero */}
-      <div className="absolute left-3 top-3 z-10 w-[min(420px,40vw)]">
+      {/* 右侧 HUD 信息列：时钟+菜单 → Hero → QSO 流 → 名册（地图独占左侧） */}
+      <div className="absolute bottom-3 right-3 top-3 z-10 flex w-[min(440px,38vw)] flex-col gap-2">
+        <div className="flex items-stretch gap-2">
+          <div className="min-w-0 flex-1">
+            <ClockPanel />
+          </div>
+          <MenuPanel />
+        </div>
+
         <SpeakerHero />
-      </div>
 
-      {/* 右上：时钟 + 菜单 */}
-      <div className="absolute right-3 top-3 z-10 flex items-stretch gap-2">
-        <ClockPanel />
-        <MenuPanel />
-      </div>
+        <div className="min-h-0 flex-1">
+          <QsoFeedPanel />
+        </div>
 
-      {/* 右侧：QSO 实时流（顶部让开时钟，底部到底） */}
-      <div className="absolute bottom-3 right-3 top-32 z-10 w-[min(280px,24vw)]">
-        <QsoFeedPanel />
-      </div>
-
-      {/* 左下：讲话名册 */}
-      <div className="absolute bottom-3 left-3 z-10 w-[min(640px,55vw)]">
-        <div className="hud-frame hud-overlay flex max-h-[30dvh] flex-col">
+        <div className="hud-frame hud-overlay flex max-h-[26dvh] shrink-0 flex-col">
           <div className="hud-mono px-3 pt-2 text-[10px] uppercase tracking-widest text-muted-foreground">
             {t('home.panelRoster')}
           </div>

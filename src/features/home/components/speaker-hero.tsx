@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GridLocation } from '@/components/shared/grid-location'
 import { AudioControl } from '@/features/audio/components/audio-control'
+import { StationSwitcher } from '@/features/station/components/station-switcher'
 import { SpectrumWaveform } from '@/features/audio/components/spectrum-waveform'
 import { logsStore } from '@/features/logs/store'
 import { speakingStore } from '@/features/speaking/store'
@@ -89,14 +90,19 @@ export function SpeakerHero() {
       data-mode={mode}
       aria-label={t('speaking.barAria')}
       className={cn(
-        'hud-frame hud-overlay flex flex-col gap-2 p-3 sm:p-4',
+        'hud-frame hud-overlay flex flex-col gap-3 p-4 sm:p-5',
         mode === 'live' && 'hud-breathe'
       )}
     >
+      {/* 群组行：当前群组名 + 切换（未连接时 StationSwitcher 自隐藏） */}
+      <div className="-mx-2 -mt-1 flex items-center border-b border-border/40 pb-1">
+        <StationSwitcher />
+      </div>
+
       {mode === 'empty' ? (
-        <div className="flex flex-col items-center justify-center gap-2 py-3">
+        <div className="flex flex-col items-center justify-center gap-2 py-4">
           <span className="h-3 w-3 rounded-full bg-muted-foreground" aria-hidden="true" />
-          <span className="hud-title text-2xl text-muted-foreground sm:text-3xl">
+          <span className="hud-title text-3xl text-muted-foreground sm:text-4xl">
             {t('home.standby')}
           </span>
           <span className="hud-mono text-xs text-muted-foreground">{t('home.standbyHint')}</span>
@@ -113,7 +119,7 @@ export function SpeakerHero() {
             />
             <span
               className={cn(
-                'hud-title min-w-0 break-all text-3xl leading-none sm:text-4xl',
+                'hud-title min-w-0 break-all text-4xl leading-none sm:text-5xl',
                 mode === 'live'
                   ? 'text-primary [text-shadow:0_0_18px_var(--primary)]'
                   : 'text-muted-foreground'

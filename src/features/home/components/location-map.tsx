@@ -106,11 +106,11 @@ export function LocationMap({
     // hold：讲话者在但坐标解析不出 —— 覆盖层照常重建，视角保持不动
     if (!hold) {
       if (targetLL && meLL) {
-        // 不对称 padding：左上 Hero 约占 36% 宽，右侧 QSO 流约占 26% 宽
+        // 不对称 padding：右侧 HUD 信息列约占 38% 宽，左/上/下留小边距
         const w = containerRef.current?.clientWidth ?? 0
         map.fitBounds(L.latLngBounds([meLL, targetLL]), {
-          paddingTopLeft: L.point(Math.round(w * 0.36), 96),
-          paddingBottomRight: L.point(Math.round(w * 0.26), 96)
+          paddingTopLeft: L.point(48, 48),
+          paddingBottomRight: L.point(Math.round(w * 0.42), 48)
         })
       } else if (targetLL) {
         map.setView(targetLL, 9)
