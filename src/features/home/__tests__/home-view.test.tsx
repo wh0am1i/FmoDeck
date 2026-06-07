@@ -78,6 +78,18 @@ describe('HomeView v3 满屏仪表盘', () => {
     expect(screen.getByText('讲话名册')).toBeInTheDocument()
   })
 
+  it('浅色主题下进入首页强制深色，卸载时还原', () => {
+    document.documentElement.classList.add('light')
+    document.documentElement.classList.remove('dark')
+    const { unmount } = renderHome()
+    expect(document.documentElement.classList.contains('dark')).toBe(true)
+    expect(document.documentElement.classList.contains('light')).toBe(false)
+    unmount()
+    expect(document.documentElement.classList.contains('light')).toBe(true)
+    expect(document.documentElement.classList.contains('dark')).toBe(false)
+    document.documentElement.classList.remove('light', 'dark')
+  })
+
   it('无讲话者也渲染地图（idle 默认视角）', () => {
     renderHome()
     expect(screen.getByTestId('location-map')).toBeInTheDocument()

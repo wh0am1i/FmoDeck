@@ -64,7 +64,20 @@ export function RecentCallsigns() {
     }
   }
 
-  const sorted = [...history].sort((a, b) => b.utcTime - a.utcTime).slice(0, 12)
+  // 按呼号去重：每人只留最近一次 + 累计讲话次数（同一人连续讲话不再刷屏）
+  const sorted = (() => {
+    const byCall = new Map<string, { callsign: string; utcTime: number; count: number }>()
+    for (const item of history) {
+      const prev = byCall.get(item.callsign)
+      if (!prev) {
+        byCall.set(item.callsign, { callsign: item.callsign, utcTime: item.utcTime, count: 1 })
+      } else {
+        prev.count++
+        if (item.utcTime > prev.utcTime) prev.utcTime = item.utcTime
+      }
+    }
+    return [...byCall.values()].sort((a, b) => b.utcTime - a.utcTime).slice(0, 12)
+  })()
 
   function gotoLogs(callsign: string) {
     logsStore.getState().setFilter(callsign)
@@ -130,6 +143,7 @@ export function RecentCallsigns() {
                 {t('speaking.selfShort')}
               </span>
             )}
+            {item.count > 1 && <span className="text-muted-foreground/70">×{item.count}</span>}
             <span className="text-muted-foreground/70">{formatTimeAgo(item.utcTime, nowMs)}</span>
           </button>
         )

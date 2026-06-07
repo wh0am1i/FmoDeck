@@ -4,6 +4,7 @@ import { ClockPanel } from './components/clock-panel'
 import { MenuPanel } from './components/menu-panel'
 import { LocationMap } from './components/location-map'
 import { PortraitHint } from './components/portrait-hint'
+import { useForceDark } from './hooks/use-force-dark'
 import { usePortraitPhone } from './hooks/use-portrait-phone'
 import { RecentCallsigns } from '@/features/spectrum/components/recent-callsigns'
 import { speakingStore } from '@/features/speaking/store'
@@ -32,6 +33,7 @@ export function HomeView() {
   const myCallsign = settingsStore((s) => s.currentCallsign)
   const myCoord = selfStore((s) => s.coordinate)
   const portrait = usePortraitPhone()
+  useForceDark()
 
   const speaker = current ?? lastSpeaker
   const theirCoord = speaker ? gridToLatLng(speaker.grid) : null
@@ -66,7 +68,7 @@ export function HomeView() {
 
         <SpeakerHero />
 
-        <div className="hud-frame hud-overlay flex max-h-[26dvh] shrink-0 flex-col">
+        <div className="hud-frame hud-overlay flex min-h-0 flex-1 flex-col">
           <div className="hud-mono px-3 pt-2 text-[10px] uppercase tracking-widest text-muted-foreground">
             {t('home.panelRoster')}
           </div>
