@@ -117,10 +117,7 @@ export function LocationMap({
 
       // 连线中点挂距离标签（按 WGS-84 原始坐标算大圆距离）
       // 此分支内 targetLL/meLL 已建成，四个原始值必非 null
-      const km = haversineKm(
-        { lat: mLat as number, lng: mLng as number },
-        { lat: tLat as number, lng: tLng as number }
-      )
+      const km = haversineKm({ lat: mLat!, lng: mLng! }, { lat: tLat!, lng: tLng! })
       const label = km < 1 ? '< 1 km' : `${Math.round(km)} km`
       L.marker([(meLL[0] + targetLL[0]) / 2, (meLL[1] + targetLL[1]) / 2], {
         icon: L.divIcon({
