@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Menu } from 'lucide-react'
-import { NAV_ITEMS } from '@/components/layout/nav-items'
+import { DASHBOARD_PATH, NAV_ITEMS } from '@/components/layout/nav-items'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +13,7 @@ import {
 export function MenuPanel() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const items = NAV_ITEMS.filter((i) => i.to !== '/')
+  const items = NAV_ITEMS.filter((i) => i.to !== DASHBOARD_PATH)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger

@@ -19,7 +19,9 @@ const AprsView = ENABLE_APRS
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<HomeView />} />
+      {/* 默认落地日志页；全屏值守屏退居独立路由，按需进入 */}
+      <Route path="/" element={<Navigate to="/logs" replace />} />
+      <Route path="/dashboard" element={<HomeView />} />
       <Route path="/logs" element={<LogsView />} />
       <Route path="/top20" element={<Top20View />} />
       <Route path="/old-friends" element={<OldFriendsView />} />

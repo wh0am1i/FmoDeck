@@ -38,23 +38,19 @@ async function gotoViaMenu(user: ReturnType<typeof userEvent.setup>, label: stri
   await user.click(screen.getByRole('menuitem', { name: label }))
 }
 
-describe('App 烟雾测试', () => {
-  it('默认渲染首页满屏仪表盘，不渲染 Header/Nav/Footer', () => {
-    render(<App />)
-    expect(screen.getByText('讲话名册')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '页面菜单' })).toBeInTheDocument()
-    expect(screen.queryByText('[ FMODECK ]')).not.toBeInTheDocument()
-    expect(screen.queryByRole('navigation', { name: '主导航' })).not.toBeInTheDocument()
-  })
+/** 进入全屏值守屏（默认落地日志页，经 Nav 的"值守"tab）。 */
+async function gotoDashboard(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('link', { name: '值守' }))
+}
 
-  it('经 ☰ 菜单跳日志页后，Header / Nav / SpeakingBar 正常渲染', async () => {
-    const user = userEvent.setup()
+describe('App 烟雾测试', () => {
+  it('默认落地日志页，Header / Nav / SpeakingBar 正常渲染', () => {
     render(<App />)
-    await gotoViaMenu(user, '日志')
     expect(screen.getByText('[ FMODECK ]')).toBeInTheDocument()
     expect(screen.getByText(`v${APP_VERSION}`)).toBeInTheDocument()
     expect(screen.getByLabelText('讲话状态栏')).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: '主导航' })
+    expect(nav).toHaveTextContent('值守')
     expect(nav).toHaveTextContent('日志')
     expect(nav).toHaveTextContent('排行榜')
     expect(nav).toHaveTextContent('老朋友')
@@ -64,27 +60,38 @@ describe('App 烟雾测试', () => {
     expect(nav).toHaveTextContent('设置')
   })
 
-  it('经 ☰ 菜单跳排行榜', async () => {
+  it('点值守 tab → 满屏仪表盘，不渲染 Header/Nav/Footer', async () => {
     const user = userEvent.setup()
     render(<App />)
+    await gotoDashboard(user)
+    expect(screen.getByText('讲话名册')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '页面菜单' })).toBeInTheDocument()
+    expect(screen.queryByText('[ FMODECK ]')).not.toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: '主导航' })).not.toBeInTheDocument()
+  })
+
+  it('值守屏经 ☰ 菜单跳排行榜', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await gotoDashboard(user)
     await gotoViaMenu(user, '排行榜')
     expect(screen.getByText(/排行榜 TOP 20/)).toBeInTheDocument()
   })
 
-  it('经 ☰ 菜单跳 SSTV，显示 offline 提示', async () => {
+  it('Nav 跳 SSTV，显示 offline 提示', async () => {
     const user = userEvent.setup()
     render(<App />)
-    await gotoViaMenu(user, 'SSTV')
+    await user.click(screen.getByRole('link', { name: 'SSTV' }))
     expect(screen.getByRole('heading', { name: 'SSTV' })).toBeInTheDocument()
     expect(screen.getByText(/未连接 FMO|音频未开启|音频连接中/)).toBeInTheDocument()
   })
 
-  it('从其他页经 Nav 点首页 tab 回到满屏仪表盘', async () => {
+  it('☰ 菜单不含值守自身入口', async () => {
     const user = userEvent.setup()
     render(<App />)
-    await gotoViaMenu(user, '日志')
-    await user.click(screen.getByRole('link', { name: '首页' }))
-    expect(screen.getByRole('button', { name: '页面菜单' })).toBeInTheDocument()
-    expect(screen.queryByRole('navigation', { name: '主导航' })).not.toBeInTheDocument()
+    await gotoDashboard(user)
+    await user.click(screen.getByRole('button', { name: '页面菜单' }))
+    expect(screen.queryByRole('menuitem', { name: '值守' })).not.toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: '日志' })).toBeInTheDocument()
   })
 })

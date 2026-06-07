@@ -4,15 +4,16 @@ import { ConnectionErrorBanner } from './connection-error-banner'
 import { Footer } from './footer'
 import { Header } from './header'
 import { Nav } from './nav'
+import { DASHBOARD_PATH } from './nav-items'
 import { ScanlineOverlay } from './scanline-overlay'
 import { SpeakingBar } from './speaking-bar'
 import { WelcomeBanner } from './welcome-banner'
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const isHome = useLocation().pathname === '/'
+  const isDashboard = useLocation().pathname === DASHBOARD_PATH
 
-  // 首页 = 值守监控屏：满屏满高、无 Header/Nav/Footer（导航走页内 ☰ 菜单）。
-  if (isHome) {
+  // 值守监控屏：满屏满高、无 Header/Nav/Footer（导航走页内 ☰ 菜单）。
+  if (isDashboard) {
     return (
       <div className="relative flex h-dvh flex-col overflow-hidden bg-background text-foreground">
         <WelcomeBanner />

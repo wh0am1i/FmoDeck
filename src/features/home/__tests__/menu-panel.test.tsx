@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router'
 import { MenuPanel } from '../components/menu-panel'
 
 describe('MenuPanel', () => {
-  it('点击 ☰ 展开全部页面入口（不含首页自身）', async () => {
+  it('点击 ☰ 展开全部页面入口（不含值守屏自身）', async () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
@@ -16,6 +16,6 @@ describe('MenuPanel', () => {
     for (const label of ['日志', '排行榜', '老朋友', '消息', '频谱', '控制', 'SSTV', '设置']) {
       expect(screen.getByRole('menuitem', { name: label })).toBeInTheDocument()
     }
-    expect(screen.queryByRole('menuitem', { name: '首页' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('menuitem', { name: '值守' })).not.toBeInTheDocument()
   })
 })
