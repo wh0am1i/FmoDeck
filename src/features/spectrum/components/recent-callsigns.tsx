@@ -34,7 +34,15 @@ function formatElapsed(ms: number): string {
   return `${m}m${s % 60}s`
 }
 
-export function RecentCallsigns() {
+export function RecentCallsigns({
+  onSelect,
+  selected
+}: {
+  /** 自定义 chip 点击行为（如首页地图聚焦）；缺省时跳日志页并过滤该呼号。 */
+  onSelect?: (callsign: string) => void
+  /** 当前被选中（如地图聚焦中）的呼号，高亮其 chip。 */
+  selected?: string | null
+} = {}) {
   const { t } = useTranslation()
   const history = speakingStore((s) => s.history)
   const current = speakingStore((s) => s.current)
@@ -79,7 +87,11 @@ export function RecentCallsigns() {
     return [...byCall.values()].sort((a, b) => b.utcTime - a.utcTime).slice(0, 12)
   })()
 
-  function gotoLogs(callsign: string) {
+  function handleChipClick(callsign: string) {
+    if (onSelect) {
+      onSelect(callsign)
+      return
+    }
     logsStore.getState().setFilter(callsign)
     void navigate('/logs')
   }
@@ -91,7 +103,7 @@ export function RecentCallsigns() {
       {current && (
         <button
           type="button"
-          onClick={() => gotoLogs(current.callsign)}
+          onClick={() => handleChipClick(current.callsign)}
           className={cn(
             'hud-mono flex items-center gap-1.5 rounded-sm border border-primary bg-primary/15 px-2.5 py-1 text-xs text-primary',
             'hover:bg-primary/25'
@@ -124,12 +136,13 @@ export function RecentCallsigns() {
           <button
             key={`${item.callsign}-${item.utcTime}-${idx}`}
             type="button"
-            onClick={() => gotoLogs(item.callsign)}
+            onClick={() => handleChipClick(item.callsign)}
             className={cn(
               'hud-mono flex items-center gap-1.5 rounded-sm border px-2 py-0.5 text-[11px]',
-              'border-border/60 text-muted-foreground hover:border-primary hover:text-primary'
+              'border-border/60 text-muted-foreground hover:border-primary hover:text-primary',
+              selected === item.callsign && 'border-accent bg-accent/10 text-accent'
             )}
-            title={t('speaking.viewQsoWith')}
+            title={onSelect ? t('home.focusOnMap') : t('speaking.viewQsoWith')}
           >
             <span className="text-primary">{item.callsign}</span>
             {isContactedToday(item.callsign) && (

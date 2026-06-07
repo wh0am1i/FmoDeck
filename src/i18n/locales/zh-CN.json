@@ -69,7 +69,9 @@
       "NW": "西北",
       "distanceLt1": "<1 km",
       "noCoordinate": "设备坐标未知"
-    }
+    },
+    "focusOnMap": "在地图上聚焦",
+    "focusNoPosition": "{{callsign}} 暂无位置记录"
   },
   "history": {
     "title": "[ 讲话历史 ]",

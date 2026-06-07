@@ -69,7 +69,9 @@
       "NW": "NW",
       "distanceLt1": "<1 km",
       "noCoordinate": "Device location unknown"
-    }
+    },
+    "focusOnMap": "Focus on map",
+    "focusNoPosition": "No position record for {{callsign}}"
   },
   "history": {
     "title": "[ SPEAKING HISTORY ]",
