@@ -115,7 +115,9 @@
     font-size: 16px;
   }
   body {
-    min-height: 100vh;
+    /* dvh 而非 vh：iOS Safari 的 vh 按"URL 栏收起"的大视口算，
+       会让 body 比可视区高出一截、整页可滚，把满屏首页顶部推出屏幕 */
+    min-height: 100dvh;
     /* 关键：防止移动端某个子元素超宽导致整个页面横向滚动 */
     overflow-x: hidden;
   }
