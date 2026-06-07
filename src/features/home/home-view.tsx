@@ -123,7 +123,7 @@ export function HomeView() {
             {t('home.panelRoster')}
           </div>
           <div className="min-h-0 overflow-y-auto">
-            <RecentCallsigns onSelect={handleRosterSelect} selected={focusCall} />
+            <RecentCallsigns onSelect={handleRosterSelect} selected={focusCall} roomy />
           </div>
         </div>
       </div>

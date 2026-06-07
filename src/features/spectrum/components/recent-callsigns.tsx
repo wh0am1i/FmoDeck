@@ -36,12 +36,15 @@ function formatElapsed(ms: number): string {
 
 export function RecentCallsigns({
   onSelect,
-  selected
+  selected,
+  roomy = false
 }: {
   /** 自定义 chip 点击行为（如首页地图聚焦）；缺省时跳日志页并过滤该呼号。 */
   onSelect?: (callsign: string) => void
   /** 当前被选中（如地图聚焦中）的呼号，高亮其 chip。 */
   selected?: string | null
+  /** 宽松列表形态：每人一整行、字号加大（首页右列空间充裕时用）；默认紧凑 chips。 */
+  roomy?: boolean
 } = {}) {
   const { t } = useTranslation()
   const history = speakingStore((s) => s.history)
@@ -99,13 +102,20 @@ export function RecentCallsigns({
   const hasAny = current !== null || sorted.length > 0
 
   return (
-    <div className="flex max-h-24 flex-wrap items-center gap-2 overflow-y-auto p-3 sm:max-h-none">
+    <div
+      className={cn(
+        roomy
+          ? 'flex flex-col gap-1.5 p-3'
+          : 'flex max-h-24 flex-wrap items-center gap-2 overflow-y-auto p-3 sm:max-h-none'
+      )}
+    >
       {current && (
         <button
           type="button"
           onClick={() => handleChipClick(current.callsign)}
           className={cn(
-            'hud-mono flex items-center gap-1.5 rounded-sm border border-primary bg-primary/15 px-2.5 py-1 text-xs text-primary',
+            'hud-mono flex items-center rounded-sm border border-primary bg-primary/15 text-primary',
+            roomy ? 'w-full gap-2.5 px-3 py-2.5 text-base' : 'gap-1.5 px-2.5 py-1 text-xs',
             'hover:bg-primary/25'
           )}
           title={t('spectrum.rosterCurrent')}
@@ -123,6 +133,7 @@ export function RecentCallsigns({
               {t('speaking.selfShort')}
             </span>
           )}
+          {roomy && <span className="flex-1" aria-hidden="true" />}
           <span className="text-primary/70">{formatElapsed(nowMs - current.startedAtMs)}</span>
         </button>
       )}
@@ -138,13 +149,14 @@ export function RecentCallsigns({
             type="button"
             onClick={() => handleChipClick(item.callsign)}
             className={cn(
-              'hud-mono flex items-center gap-1.5 rounded-sm border px-2 py-0.5 text-[11px]',
+              'hud-mono flex items-center rounded-sm border',
+              roomy ? 'w-full gap-2.5 px-3 py-2 text-sm' : 'gap-1.5 px-2 py-0.5 text-[11px]',
               'border-border/60 text-muted-foreground hover:border-primary hover:text-primary',
               selected === item.callsign && 'border-accent bg-accent/10 text-accent'
             )}
             title={onSelect ? t('home.focusOnMap') : t('speaking.viewQsoWith')}
           >
-            <span className="text-primary">{item.callsign}</span>
+            <span className={cn('text-primary', roomy && 'text-base')}>{item.callsign}</span>
             {isContactedToday(item.callsign) && (
               <Star
                 className="h-3 w-3 fill-yellow-400 text-yellow-400"
@@ -156,6 +168,7 @@ export function RecentCallsigns({
                 {t('speaking.selfShort')}
               </span>
             )}
+            {roomy && <span className="flex-1" aria-hidden="true" />}
             {item.count > 1 && <span className="text-muted-foreground/70">×{item.count}</span>}
             <span className="text-muted-foreground/70">{formatTimeAgo(item.utcTime, nowMs)}</span>
           </button>
