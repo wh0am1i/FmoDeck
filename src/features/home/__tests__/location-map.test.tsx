@@ -21,7 +21,9 @@ vi.mock('leaflet', () => {
       polyline: ret,
       latLngBounds: ret,
       layerGroup: ret,
-      point: ret
+      point: ret,
+      marker: ret,
+      divIcon: ret
     }
   }
 })

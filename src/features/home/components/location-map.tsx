@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import { wgs84ToGcj02 } from '@/lib/utils/geo-convert'
-import type { LatLng } from '@/lib/utils/grid'
+import { haversineKm, type LatLng } from '@/lib/utils/grid'
 
 // 高德栅格瓦片（GCJ-02）。style=7 为标准路网图，无需 key。
 const AMAP_TILE_URL =
@@ -113,6 +113,23 @@ export function LocationMap({
         weight: 2.5,
         dashArray: '8 6',
         opacity: 0.95
+      }).addTo(layers)
+
+      // 连线中点挂距离标签（按 WGS-84 原始坐标算大圆距离）
+      // 此分支内 targetLL/meLL 已建成，四个原始值必非 null
+      const km = haversineKm(
+        { lat: mLat as number, lng: mLng as number },
+        { lat: tLat as number, lng: tLng as number }
+      )
+      const label = km < 1 ? '< 1 km' : `${Math.round(km)} km`
+      L.marker([(meLL[0] + targetLL[0]) / 2, (meLL[1] + targetLL[1]) / 2], {
+        icon: L.divIcon({
+          className: 'hud-distance-label',
+          html: `<span>${label}</span>`,
+          iconSize: [0, 0]
+        }),
+        interactive: false,
+        keyboard: false
       }).addTo(layers)
     }
 

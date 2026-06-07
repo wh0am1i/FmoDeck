@@ -297,3 +297,18 @@
 .hud-breathe {
   animation: hud-breathe 2.4s ease-in-out infinite;
 }
+
+/* 连线中点的距离标签（leaflet divIcon，深浅主题统一深底 HUD 风格） */
+.hud-distance-label span {
+  display: inline-block;
+  transform: translate(-50%, -130%);
+  white-space: nowrap;
+  padding: 1px 8px;
+  border: 1px solid rgba(0, 217, 255, 0.6);
+  border-radius: 2px;
+  background: rgba(8, 8, 20, 0.78);
+  color: #00d9ff;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
