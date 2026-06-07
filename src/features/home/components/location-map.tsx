@@ -36,7 +36,14 @@ export function LocationMap({
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    const map = L.map(el, { zoomControl: false, attributionControl: false })
+    const map = L.map(el, {
+      zoomControl: false,
+      attributionControl: false,
+      // 缩放/平移约束：不许缩到世界条带 + 不许拖出地图到灰板
+      minZoom: 4,
+      maxBounds: L.latLngBounds([-85, -180], [85, 180]),
+      maxBoundsViscosity: 1.0
+    })
     L.tileLayer(AMAP_TILE_URL, { subdomains: ['1', '2', '3', '4'], maxZoom: 18 }).addTo(map)
     const layers = L.layerGroup().addTo(map)
     map.setView(IDLE_CENTER, IDLE_ZOOM)
