@@ -13,7 +13,7 @@ export function ClockPanel() {
   return (
     <div
       data-testid="clock-panel"
-      className="hud-frame hud-overlay flex h-full items-center justify-evenly gap-4 px-3 py-2 text-center"
+      className="hud-frame hud-overlay flex h-full items-center justify-evenly gap-4 px-3 py-1 text-center tall:py-2"
     >
       <div>
         <div className="hud-mono text-[10px] uppercase tracking-widest text-muted-foreground">

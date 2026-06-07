@@ -2,6 +2,8 @@
 @import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
+/* 高度断点：≥640px 视为"高屏"（桌面/平板），矮于此（手机横屏 ~390-430px）走紧凑样式 */
+@custom-variant tall (@media (min-height: 640px));
 
 /* ==========================================================
    HUD 主题 · CSS 变量

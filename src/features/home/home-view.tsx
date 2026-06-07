@@ -107,8 +107,9 @@ export function HomeView() {
     <div data-testid="home-dashboard" className="relative h-full w-full overflow-hidden">
       <LocationMap target={mapTarget} me={mapMe} hold={mapHold} />
 
-      {/* 右侧 HUD 信息列：时钟+菜单 → Hero → 名册（地图独占左侧） */}
-      <div className="absolute bottom-3 right-3 top-3 z-10 flex w-[min(440px,38vw)] flex-col gap-2">
+      {/* 右侧 HUD 信息列：时钟+菜单 → Hero → 名册（地图独占左侧）。
+          矮屏（手机横屏）整列可滚动 + iOS 刘海/Home 指示条安全区避让。 */}
+      <div className="absolute bottom-[max(0.75rem,env(safe-area-inset-bottom))] right-[max(0.75rem,env(safe-area-inset-right))] top-[max(0.75rem,env(safe-area-inset-top))] z-10 flex w-[min(440px,38vw)] flex-col gap-2 overflow-y-auto">
         <div className="flex items-stretch gap-2">
           <div className="min-w-0 flex-1">
             <ClockPanel />
@@ -118,7 +119,7 @@ export function HomeView() {
 
         <SpeakerHero />
 
-        <div className="hud-frame hud-overlay flex min-h-0 flex-1 flex-col">
+        <div className="hud-frame hud-overlay flex min-h-28 flex-1 shrink-0 flex-col tall:min-h-0 tall:shrink">
           <div className="hud-mono px-3 pt-2 text-[10px] uppercase tracking-widest text-muted-foreground">
             {t('home.panelRoster')}
           </div>
