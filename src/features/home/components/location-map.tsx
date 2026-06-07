@@ -95,11 +95,17 @@ export function LocationMap({
     }
 
     if (targetLL && meLL) {
+      // 白色衬底光环 + 加粗虚线主线：浅色路网/深色夜图上都清晰可辨
+      L.polyline([meLL, targetLL], {
+        color: '#FFFFFF',
+        weight: 6,
+        opacity: 0.55
+      }).addTo(layers)
       L.polyline([meLL, targetLL], {
         color: '#00D9FF',
-        weight: 1.5,
-        dashArray: '4 4',
-        opacity: 0.7
+        weight: 2.5,
+        dashArray: '8 6',
+        opacity: 0.95
       }).addTo(layers)
     }
 
