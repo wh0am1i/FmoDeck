@@ -4,5 +4,9 @@
   "description": "安卓专属能力：SSTV 图片存相册(MediaStore)+ 系统分享。仅在 android 平台生效,桌面端不加载此能力。",
   "platforms": ["android"],
   "windows": ["main"],
-  "permissions": ["android-fs:default"]
+  "permissions": [
+    "android-fs:default",
+    "android-fs:allow-write-file",
+    "android-fs:allow-remove-file"
+  ]
 }
