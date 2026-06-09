@@ -41,9 +41,15 @@ fn install_apk(_path: String) -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_fs::init());
+
+    // android-fs 仅在安卓平台编译/注册；桌面端不引入(crate 本身只面向 Android target)。
+    #[cfg(target_os = "android")]
+    let builder = builder.plugin(tauri_plugin_android_fs::init());
+
+    builder
         .invoke_handler(tauri::generate_handler![install_apk])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

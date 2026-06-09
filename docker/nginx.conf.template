@@ -40,4 +40,15 @@ server {
         add_header Cache-Control "no-cache, no-store, must-revalidate";
         expires    0;
     }
+
+    # Service Worker 不缓存 —— 否则改了 sw.js 旧版本会赖在客户端
+    location = /sw.js {
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        expires    0;
+    }
+
+    # PWA manifest 正确 MIME（基础镜像 mime.types 不含 .webmanifest）
+    location = /manifest.webmanifest {
+        default_type application/manifest+json;
+    }
 }

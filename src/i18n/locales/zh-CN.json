@@ -427,13 +427,18 @@
     "item": {
       "copied": "已复制到剪贴板",
       "copyFailed": "复制失败",
+      "savedToGallery": "已存到相册",
+      "saveFailed": "保存失败",
+      "shareFailed": "分享失败",
       "dialogDesc": "SSTV 解码图像",
       "selectAria": "选中此条",
       "downloadAria": "下载",
       "copyAria": "复制到剪贴板",
+      "shareAria": "分享",
       "deleteAria": "删除",
       "downloadBtn": "下载",
-      "copyBtn": "复制"
+      "copyBtn": "复制",
+      "shareBtn": "分享"
     },
     "signal": {
       "leader": "1900 LEAD",

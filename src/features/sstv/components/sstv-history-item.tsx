@@ -1,11 +1,13 @@
 // src/features/sstv/components/sstv-history-item.tsx
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Copy, Download, Trash2 } from 'lucide-react'
+import { Copy, Download, Share2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
+import { isAndroid } from '@/lib/utils/platform'
+import { saveImage, shareImage } from '@/lib/utils/image-export'
 import { modeRegistry } from '@/lib/sstv/modes/registry'
 import type { SstvImage } from '@/types/sstv'
 
@@ -44,18 +46,34 @@ export function SstvHistoryItem({ image, selected, onToggleSelect, onDelete }: P
     [...modeRegistry.values()].find((m) => m.name === image.mode)?.displayName ??
     image.mode.toUpperCase()
 
-  function handleDownload() {
-    const url = URL.createObjectURL(image.imageBlob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `sstv_${image.mode}_${new Date(image.createdAt).toISOString().replace(/[:.]/g, '-')}.png`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+  // 安卓 WebView 不支持 <a download> 与图片剪贴板,下载走相册、复制退化为系统分享。
+  const android = isAndroid()
+  const fileName = `sstv_${image.mode}_${new Date(image.createdAt).toISOString().replace(/[:.]/g, '-')}.png`
+
+  async function handleDownload() {
+    try {
+      const where = await saveImage(image.imageBlob, fileName)
+      if (where === 'native') toast.success(t('sstv.item.savedToGallery'))
+    } catch (err) {
+      toast.error(t('sstv.item.saveFailed'), {
+        description: err instanceof Error ? err.message : String(err)
+      })
+    }
   }
 
-  async function handleCopy() {
+  async function handleShareOrCopy() {
+    // 安卓:拉起系统分享面板。
+    if (android) {
+      try {
+        await shareImage(image.imageBlob, fileName)
+      } catch (err) {
+        toast.error(t('sstv.item.shareFailed'), {
+          description: err instanceof Error ? err.message : String(err)
+        })
+      }
+      return
+    }
+    // 桌面/浏览器:复制到剪贴板。
     try {
       const clipItem = new ClipboardItem({ 'image/png': image.imageBlob })
       await navigator.clipboard.write([clipItem])
@@ -108,7 +126,9 @@ export function SstvHistoryItem({ image, selected, onToggleSelect, onDelete }: P
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleDownload}
+            onClick={() => {
+              void handleDownload()
+            }}
             aria-label={t('sstv.item.downloadAria')}
           >
             <Download className="h-4 w-4" />
@@ -117,11 +137,11 @@ export function SstvHistoryItem({ image, selected, onToggleSelect, onDelete }: P
             variant="ghost"
             size="sm"
             onClick={() => {
-              void handleCopy()
+              void handleShareOrCopy()
             }}
-            aria-label={t('sstv.item.copyAria')}
+            aria-label={android ? t('sstv.item.shareAria') : t('sstv.item.copyAria')}
           >
-            <Copy className="h-4 w-4" />
+            {android ? <Share2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
           </Button>
           <Button
             variant="ghost"
@@ -157,7 +177,13 @@ export function SstvHistoryItem({ image, selected, onToggleSelect, onDelete }: P
                 <span>
                   {image.width} × {image.height}
                 </span>
-                <Button variant="ghost" size="sm" onClick={handleDownload}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    void handleDownload()
+                  }}
+                >
                   <Download className="h-4 w-4" />
                   {t('sstv.item.downloadBtn')}
                 </Button>
@@ -165,11 +191,11 @@ export function SstvHistoryItem({ image, selected, onToggleSelect, onDelete }: P
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    void handleCopy()
+                    void handleShareOrCopy()
                   }}
                 >
-                  <Copy className="h-4 w-4" />
-                  {t('sstv.item.copyBtn')}
+                  {android ? <Share2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {android ? t('sstv.item.shareBtn') : t('sstv.item.copyBtn')}
                 </Button>
               </div>
             </div>

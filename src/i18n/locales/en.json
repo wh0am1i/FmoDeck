@@ -427,13 +427,18 @@
     "item": {
       "copied": "Copied to clipboard",
       "copyFailed": "Copy failed",
+      "savedToGallery": "Saved to gallery",
+      "saveFailed": "Save failed",
+      "shareFailed": "Share failed",
       "dialogDesc": "SSTV decoded image",
       "selectAria": "Select this item",
       "downloadAria": "Download",
       "copyAria": "Copy to clipboard",
+      "shareAria": "Share",
       "deleteAria": "Delete",
       "downloadBtn": "Download",
-      "copyBtn": "Copy"
+      "copyBtn": "Copy",
+      "shareBtn": "Share"
     },
     "signal": {
       "leader": "1900 LEAD",

@@ -1,6 +1,6 @@
 {
   "name": "fmodeck",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "private": true,
   "packageManager": "pnpm@10.33.0",
@@ -44,6 +44,7 @@
     "react-i18next": "^17.0.4",
     "react-router": "^7.1.0",
     "sonner": "^1.7.4",
+    "tauri-plugin-android-fs-api": "28.1.0",
     "sql.js": "^1.14.1",
     "tailwind-merge": "^3.5.0",
     "zustand": "^5.0.12"

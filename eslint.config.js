@@ -46,5 +46,12 @@ export default tseslint.config(
       '@typescript-eslint/unbound-method': 'off'
     }
   },
+  {
+    // Service Worker:运行在 worker 全局环境(self/clients 等),非浏览器 window。
+    files: ['public/sw.js'],
+    languageOptions: {
+      globals: { ...globals.serviceworker }
+    }
+  },
   prettier
 )

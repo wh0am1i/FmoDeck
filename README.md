@@ -8,6 +8,16 @@
 
 ## 更新记录
 
+### v0.2.2 (2026-06-09)
+
+**新增**
+
+- 网页版支持「添加到主屏幕」以独立窗口(PWA · `display: standalone`)打开,隐藏浏览器地址栏(需 HTTPS · Tauri 壳内不注册 Service Worker)
+
+**修复**
+
+- 安卓 App 收到 SSTV 图片后无法下载/复制:安卓 WebView 不支持 `<a download>` 与图片剪贴板。下载改为存系统相册(`tauri-plugin-android-fs` · MediaStore + 图库扫描),复制改为系统分享面板。Web/桌面行为不变
+
 ### v0.2.1 (2026-06-07)
 
 **调整**
