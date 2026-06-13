@@ -1,0 +1,32 @@
+/* ============================================================
+   仅 legacy 包(Chromium ~61)注入的结构性 CSS 兜底。
+   只修「会破坏布局/可用性」的,不修装饰(color-mix/oklch/@property 等
+   在老 WebView 上自然降级,属可接受项)。
+   ============================================================ */
+
+/* dvh:Chromium <108 不认 → 高度塌缩成 0 → 白屏观感。用 vh 兜底。
+   app-shell 值守屏用 .h-dvh;globals.css 的 #root/body 用 100dvh。 */
+.h-dvh {
+  height: 100vh;
+}
+html,
+body,
+#root {
+  min-height: 100vh;
+}
+
+/* home-view 右侧信息列定位 + 宽度依赖 min()/max()/env()(Chromium <79/<69 不认)
+   → 宽度/定位丢失。用结构选择器兜底,避免改源码(保持主包不变)。
+   选中 [data-testid="home-dashboard"] 下那个 .absolute.z-10 信息列。 */
+[data-testid='home-dashboard'] > .absolute.z-10 {
+  top: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  width: 320px;
+}
+
+/* footer 安全区 padding 用 env() → Chromium <69 失效,padding 丢失。
+   给朴素 padding 兜底。 */
+footer {
+  padding-bottom: 1rem;
+}
