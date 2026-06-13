@@ -8,7 +8,15 @@ import globals from 'globals'
 
 export default tseslint.config(
   {
-    ignores: ['dist', 'dist-legacy', 'node_modules', 'coverage', 'src/components/ui', 'scripts/**', 'src-tauri/**']
+    ignores: [
+      'dist',
+      'dist-legacy',
+      'node_modules',
+      'coverage',
+      'src/components/ui',
+      'scripts/**',
+      'src-tauri/**'
+    ]
   },
   js.configs.recommended,
   {
