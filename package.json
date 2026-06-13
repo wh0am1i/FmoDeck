@@ -17,9 +17,11 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "build:legacy": "tsc -b && vite build --mode legacy",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "tauri:build:legacy": "tauri build -c src-tauri/tauri.legacy.conf.json"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
