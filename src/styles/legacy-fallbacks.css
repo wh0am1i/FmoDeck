@@ -30,3 +30,18 @@ body,
 footer {
   padding-bottom: 1rem;
 }
+
+/* inset 简写(及 inset-block / inset-inline 逻辑属性)Chromium <87 不支持,
+   Lightning CSS 也不展开 → 绝对定位元素塌缩。值守屏满屏地图容器是
+   .hud-map.absolute.inset-0,inset 丢了地图就 0 尺寸 → 值守屏一片空白。
+   用 top/right/bottom/left 长属性兜底。 */
+.inset-0 {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+.inset-y-0 {
+  top: 0;
+  bottom: 0;
+}
