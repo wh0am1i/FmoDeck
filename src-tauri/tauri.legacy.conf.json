@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "FmoDeck Legacy",
+  "version": "0.2.3-legacy",
+  "identifier": "com.wh0am1i.fmodeck.legacy",
+  "build": {
+    "beforeBuildCommand": "pnpm build:legacy",
+    "frontendDist": "../dist-legacy"
+  }
+}
