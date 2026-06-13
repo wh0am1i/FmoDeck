@@ -1,4 +1,4 @@
-import { defineConfig, type PluginOption } from 'vite'
+import { defineConfig, transformWithEsbuild, type PluginOption } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import checker from 'vite-plugin-checker'
@@ -42,6 +42,38 @@ function legacyHtmlPlugin(): PluginOption {
   }
 }
 
+// 仅 legacy:@vitejs/plugin-legacy 的 babel 产物并未把 ?. / ?? / 数字分隔符
+// 等语法降级(它在 Vite 的 esbuild build.target 之后用自己的 pass 生成最终
+// chunk,build.target 够不着)。Chromium 61 解析到这些语法会 SyntaxError →
+// 白屏。这里以 enforce:'post' 在所有插件之后,用 esbuild 把最终 legacy 产物
+// (chunk + asset 形式的 .js)再降一遍到 chrome61,作为兜底保证可解析。
+function legacyLowerPlugin(): PluginOption {
+  return {
+    name: 'fmodeck-legacy-es-lower',
+    enforce: 'post',
+    async generateBundle(_options, bundle) {
+      for (const [fileName, item] of Object.entries(bundle)) {
+        if (!fileName.endsWith('.js')) continue
+        if (item.type === 'chunk') {
+          const r = await transformWithEsbuild(item.code, fileName, {
+            target: 'chrome61',
+            minify: true,
+            legalComments: 'none'
+          })
+          item.code = r.code
+        } else if (typeof item.source === 'string') {
+          const r = await transformWithEsbuild(item.source, fileName, {
+            target: 'chrome61',
+            minify: true,
+            legalComments: 'none'
+          })
+          item.source = r.code
+        }
+      }
+    }
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const isLegacy = mode === 'legacy'
   return {
@@ -63,7 +95,8 @@ export default defineConfig(({ mode }) => {
               // 只产单一 legacy 包(SystemJS + core-js polyfill),不产现代包。
               renderModernChunks: false
             }),
-            legacyHtmlPlugin()
+            legacyHtmlPlugin(),
+            legacyLowerPlugin()
           ]
         : [])
     ],
@@ -74,7 +107,7 @@ export default defineConfig(({ mode }) => {
     },
     // Tauri 需要固定端口 + 禁用其他端口抢占
     clearScreen: false,
-    build: isLegacy ? { outDir: 'dist-legacy' } : {},
+    build: isLegacy ? { outDir: 'dist-legacy', target: ['chrome61'] } : {},
     server: {
       port: 5173,
       strictPort: true,
