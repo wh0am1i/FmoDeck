@@ -1,11 +1,14 @@
 name: Tauri Android Legacy Release
 
 # 老设备(安卓 8.1 / Chromium 61)专用 legacy APK。手动触发为主;
-# 打 legacy tag(v*-legacy)时也会跑。独立 identifier com.wh0am1i.fmodeck.legacy。
+# 打 legacy tag(legacy-v*)时也会跑。独立 identifier com.wh0am1i.fmodeck.legacy。
+# 注意:tag 用 legacy-v* 而非 v*-legacy —— 正式发布 workflow 监听 v*,
+# 会把 v*-legacy 也吃掉造成误触发;legacy-v* 不以 v 开头,正式 workflow 不匹配,
+# 且本 workflow 里 "refs/tags/v" 判定不成立 → 走 artifact 上传(不建 release)。
 on:
   push:
     tags:
-      - 'v*-legacy'
+      - 'legacy-v*'
   workflow_dispatch:
 
 permissions:
