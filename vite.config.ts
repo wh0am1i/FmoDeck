@@ -1,61 +1,15 @@
+// autoprefixer 无 .d.ts 类型声明(tailwindcss3 走别名包自带类型)
+declare module 'autoprefixer'
+
 import { defineConfig, transformWithEsbuild, type PluginOption } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import checker from 'vite-plugin-checker'
 import legacy from '@vitejs/plugin-legacy'
-// 用整体命名空间导入,而不是具名解构。Tailwind v4 会扫描本文件的纯文本(含注释)
-// 找 class 候选;具名解构会把别名前的原名暴露成裸 token,被误当成 utility 注入
-// 主包 CSS。命名空间导入避免裸 token,保持主包产物不变。
-import * as lightningcss from 'lightningcss'
+import tailwindcssV3 from 'tailwindcss3'
+import autoprefixer from 'autoprefixer'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-
-// legacy CSS 降级目标(Chromium 61)。Lightning CSS 的版本编码是 major<<16,
-// 据此把 oklch / 静态 color-mix 等降级成老 WebView 认得的颜色。
-const legacyCssTargets = { chrome: 61 << 16 }
-
-// 摊平 Tailwind v4 的级联层 @layer:Chromium <99 不认 @layer,遇到会把整个
-// {…} 块直接丢弃 → 几乎全部样式失效(白底黑字)。Lightning CSS 不摊平 layer
-// (它保留 layer 语义),所以这里手工去掉 @layer 包裹、保留内部规则。Tailwind
-// 输出本就按 theme→base→components→utilities 顺序排,摊平后源码顺序即优先级,够用。
-function stripCascadeLayers(css: string): string {
-  // 语句式:@layer a, b, c;
-  let s = css.replace(/@layer[^{};]*;/g, '')
-  // 块式:@layer name { ... } —— 去包裹留内容(可能多层,循环到稳定)
-  for (let pass = 0; pass < 5 && s.includes('@layer'); pass++) {
-    let res = ''
-    let i = 0
-    while (i < s.length) {
-      if (s.startsWith('@layer', i)) {
-        const brace = s.indexOf('{', i)
-        if (brace === -1) {
-          res += s.slice(i)
-          break
-        }
-        i = brace + 1
-        let depth = 1
-        while (i < s.length && depth > 0) {
-          const ch = s.charAt(i)
-          if (ch === '{') {
-            depth++
-            res += ch
-          } else if (ch === '}') {
-            depth--
-            if (depth > 0) res += ch
-          } else {
-            res += ch
-          }
-          i++
-        }
-      } else {
-        res += s.charAt(i)
-        i++
-      }
-    }
-    s = res
-  }
-  return s
-}
 
 // 让同一个 dev server 既服务浏览器版也服务 Tauri 壳。Tauri 会在
 // 启动时设 TAURI_DEV_HOST 环境变量;有这个变量时我们让 Vite 监听
@@ -95,47 +49,45 @@ function legacyHtmlPlugin(): PluginOption {
   }
 }
 
-// 仅 legacy 的产物兜底降级(enforce:'post',在所有插件之后跑):
-//  · JS:@vitejs/plugin-legacy 的 babel 产物并未把 ?. / ?? / 数字分隔符等语法
-//    降级(它在 Vite 的 esbuild build.target 之后用自己的 pass 生成最终 chunk,
-//    build.target 够不着),Chromium 61 解析会 SyntaxError → 白屏。用 esbuild
-//    把最终 .js 再降一遍到 chrome61。
-//  · CSS:Lightning CSS 把 oklch / 静态 color-mix 等降级成老 WebView 认得的颜色,
-//    再手工摊平 @layer(否则 Chromium 61 整块丢弃 → 几乎裸样式)。
+// 仅 legacy:把主入口 import 的 globals.css(Tailwind v4)重定向到 legacy.css
+// (Tailwind v3,Chromium 61 兼容)。不改 main.tsx,故主构建不受影响。
+function legacyCssRedirectPlugin(): PluginOption {
+  const legacyCss = path.resolve(__dirname, 'src/styles/legacy.css')
+  return {
+    name: 'fmodeck-legacy-css-redirect',
+    enforce: 'pre',
+    resolveId(source) {
+      if (source.endsWith('styles/globals.css')) return legacyCss
+      return null
+    }
+  }
+}
+
+// 仅 legacy:@vitejs/plugin-legacy 的 babel 产物并未把 ?. / ?? / 数字分隔符等语法
+// 降级(它在 esbuild 之后用自己的 pass 生成最终 chunk),Chromium 61 解析会
+// SyntaxError → 白屏。这里 enforce:'post' 用 esbuild 把最终 .js 再降一遍到 chrome61。
+// (CSS 由 Tailwind v3 + autoprefixer + build.cssTarget=chrome61 处理,无需再降。)
 function legacyLowerPlugin(): PluginOption {
   return {
     name: 'fmodeck-legacy-es-lower',
     enforce: 'post',
     async generateBundle(_options, bundle) {
       for (const [fileName, item] of Object.entries(bundle)) {
-        if (fileName.endsWith('.js')) {
-          if (item.type === 'chunk') {
-            const r = await transformWithEsbuild(item.code, fileName, {
-              target: 'chrome61',
-              minify: true,
-              legalComments: 'none'
-            })
-            item.code = r.code
-          } else if (typeof item.source === 'string') {
-            const r = await transformWithEsbuild(item.source, fileName, {
-              target: 'chrome61',
-              minify: true,
-              legalComments: 'none'
-            })
-            item.source = r.code
-          }
-        } else if (
-          fileName.endsWith('.css') &&
-          item.type === 'asset' &&
-          typeof item.source === 'string'
-        ) {
-          const out = lightningcss.transform({
-            filename: fileName,
-            code: Buffer.from(item.source),
-            targets: legacyCssTargets,
-            minify: true
+        if (!fileName.endsWith('.js')) continue
+        if (item.type === 'chunk') {
+          const r = await transformWithEsbuild(item.code, fileName, {
+            target: 'chrome61',
+            minify: true,
+            legalComments: 'none'
           })
-          item.source = stripCascadeLayers(out.code.toString())
+          item.code = r.code
+        } else if (typeof item.source === 'string') {
+          const r = await transformWithEsbuild(item.source, fileName, {
+            target: 'chrome61',
+            minify: true,
+            legalComments: 'none'
+          })
+          item.source = r.code
         }
       }
     }
@@ -147,7 +99,8 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
-      tailwindcss(),
+      // 主包用 Tailwind v4 vite 插件;legacy 改用 PostCSS + Tailwind v3(见下 css 配置)
+      ...(isLegacy ? [] : [tailwindcss()]),
       checker({
         typescript: true,
         eslint: {
@@ -163,6 +116,7 @@ export default defineConfig(({ mode }) => {
               // 只产单一 legacy 包(SystemJS + core-js polyfill),不产现代包。
               renderModernChunks: false
             }),
+            legacyCssRedirectPlugin(),
             legacyHtmlPlugin(),
             legacyLowerPlugin()
           ]
@@ -175,7 +129,19 @@ export default defineConfig(({ mode }) => {
     },
     // Tauri 需要固定端口 + 禁用其他端口抢占
     clearScreen: false,
-    build: isLegacy ? { outDir: 'dist-legacy' } : {},
+    // legacy:用 Tailwind v3 + autoprefixer 生成 Chromium 61 兼容的 CSS。
+    css: isLegacy
+      ? {
+          postcss: {
+            plugins: [
+              tailwindcssV3(path.resolve(__dirname, 'tailwind.legacy.config.cjs')),
+              autoprefixer({ overrideBrowserslist: ['Chrome >= 61', 'Android >= 5'] })
+            ]
+          }
+        }
+      : {},
+    // legacy:esbuild 压缩 CSS 时也按 chrome61(避免输出现代颜色/语法)
+    build: isLegacy ? { outDir: 'dist-legacy', cssTarget: 'chrome61' } : {},
     server: {
       port: 5173,
       strictPort: true,

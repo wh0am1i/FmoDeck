@@ -1,6 +1,11 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* legacy 专属文件(Tailwind v3 入口/配置)不参与主包 v4 的 class 扫描,
+   否则其类名/配置 token 会被误注入主包 CSS,破坏主包产物。 */
+@source not "./legacy.css";
+@source not "../../tailwind.legacy.config.cjs";
+
 @custom-variant dark (&:is(.dark *));
 /* 高度断点：≥640px 视为"高屏"（桌面/平板），矮于此（手机横屏 ~390-430px）走紧凑样式 */
 @custom-variant tall (@media (min-height: 640px));
