@@ -30,6 +30,15 @@ function legacyHtmlPlugin(): PluginOption {
       handler() {
         return [
           {
+            // 慢设备性能兜底:把 requestAnimationFrame 限到 ~30fps。四个频谱可视化
+            // (收听/值守内嵌波形)每帧画 canvas,会把主线程占满 → 喂不上下一个音频
+            // buffer → 音频卡顿(播放本身走 AudioContext 时钟,降帧不影响音准)。
+            // 内联同步脚本,先于异步 app bundle 执行;cancelAnimationFrame 同步改写。
+            tag: 'script',
+            children: `(function(){var F=33;window.requestAnimationFrame=function(cb){return setTimeout(function(){cb(Date.now());},F);};window.cancelAnimationFrame=function(id){clearTimeout(id);};})();`,
+            injectTo: 'head'
+          },
+          {
             tag: 'style',
             attrs: { 'data-legacy-fallback': '' },
             children: fallbackCss,
