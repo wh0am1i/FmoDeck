@@ -114,7 +114,16 @@ export default defineConfig(({ mode }) => {
             legacy({
               targets: ['Chrome 61'],
               // 只产单一 legacy 包(SystemJS + core-js polyfill),不产现代包。
-              renderModernChunks: false
+              renderModernChunks: false,
+              // core-js 不含 DOM API,这里补两个 Chromium 61 缺失、会致崩溃的:
+              // · ResizeObserver(Chrome 64):音频频谱组件(收听)+ 值守屏内嵌波形
+              //   用 new ResizeObserver,缺失即抛错崩溃白屏。
+              // · AbortController/AbortSignal(Chrome 66):更新器下载用,缺失即抛错。
+              // 两个 global 构建都在缺失时自装到 window(原生存在则不覆盖)。
+              additionalLegacyPolyfills: [
+                'resize-observer-polyfill/dist/ResizeObserver.global.js',
+                'abortcontroller-polyfill/dist/abortcontroller-polyfill-only.js'
+              ]
             }),
             legacyCssRedirectPlugin(),
             legacyHtmlPlugin(),
